@@ -1,32 +1,32 @@
 package vn.edu.nlu.fit.auction.entity;
 import jakarta.persistence.*;
 
-@Entity
-@Table(name = "users")
-public class User {
+@Entity 
+@Table(name = "users") 
+public class User { 
+    @Id 
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    @Column(name = "user_id") 
+    private int userId; 
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private Integer userId;
+    @Column(nullable = false, length = 100) 
+    private String username; 
 
-    @Column(nullable = false, length = 100)
-    private String username;
+    @Column(nullable = false, unique = true, length = 150) 
+    private String email; 
 
-    @Column(nullable = false, unique = true, length = 150)
-    private String email;
-
-    @Column(nullable = false)
+    @Column(nullable = false) 
     private String password;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 50) 
     private String role;
 
+    // Constructor
     public User() {
     }
 
     // Getters and Setters
-    public Integer getUserId() {
+    public int getUserId() {
         return userId;
     }
     public void setUserId(int userId) {
