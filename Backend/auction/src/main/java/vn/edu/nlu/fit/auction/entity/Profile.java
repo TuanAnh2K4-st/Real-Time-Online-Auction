@@ -1,6 +1,7 @@
 package vn.edu.nlu.fit.auction.entity;
 
 import jakarta.persistence.*;
+import vn.edu.nlu.fit.auction.enums.Gender;
 import java.time.LocalDate;
 
 @Entity
@@ -18,51 +19,111 @@ public class Profile {
     @Column(name = "full_name", length = 150)
     private String fullName;
 
+    @Column(length = 20)
     private String phone;
+
+    @Column(length = 250)
     private String address;
-    private String sex;
+
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    @Column(length = 250)
     private String job;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String bio;
 
     @Column(name = "created_at")
     private LocalDate createdAt;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JoinColumn(name = "user_id")
     private User user;
 
-    public Profile() {}
+    //Constructor
+    public Profile() {
+    }
 
-    // Getter Setter
-    public Integer getProfileId() { return profileId; }
-    public void setProfileId(Integer profileId) { this.profileId = profileId; }
+    //Getters and Setters
 
-    public String getAvatarUrl() { return avatarUrl; }
-    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public Integer getProfileId() {
+        return profileId;
+    }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setProfileId(Integer profileId) {
+        this.profileId = profileId;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
 
-    public String getSex() { return sex; }
-    public void setSex(String sex) { this.sex = sex; }
+    public String getFullName() {
+        return fullName;
+    }
 
-    public String getJob() { return job; }
-    public void setJob(String job) { this.job = job; }
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
-    public String getBio() { return bio; }
-    public void setBio(String bio) { this.bio = bio; }
+    public String getPhone() {
+        return phone;
+    }
 
-    public LocalDate getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    public String getJob() {
+        return job;
+    }
+
+    public void setJob(String job) {
+        this.job = job;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 }
