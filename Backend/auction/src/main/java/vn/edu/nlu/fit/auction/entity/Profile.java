@@ -2,7 +2,7 @@ package vn.edu.nlu.fit.auction.entity;
 
 import jakarta.persistence.*;
 import vn.edu.nlu.fit.auction.enums.Gender;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "profiles")
@@ -35,10 +35,10 @@ public class Profile {
     private String bio;
 
     @Column(name = "created_at")
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
     private User user;
 
     //Constructor
@@ -111,11 +111,11 @@ public class Profile {
         this.bio = bio;
     }
 
-    public LocalDate getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDate createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
