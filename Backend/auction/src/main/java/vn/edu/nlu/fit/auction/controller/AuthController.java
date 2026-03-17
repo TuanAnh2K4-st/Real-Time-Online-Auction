@@ -7,7 +7,6 @@ import vn.edu.nlu.fit.auction.dto.request.LoginRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterRequest;
 import vn.edu.nlu.fit.auction.dto.request.GoogleLoginRequest;
 import vn.edu.nlu.fit.auction.service.AuthService;
-import vn.edu.nlu.fit.auction.entity.User;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,7 +26,15 @@ public class AuthController {
     // LOGIN
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request){
-        String result = authService.login(request);
+
+        Object result = authService.login(request);
+
+        // nếu là lỗi (String)
+        if(result instanceof String){
+            return ResponseEntity.badRequest().body(result);
+        }
+
+        // nếu thành công (AuthResponse)
         return ResponseEntity.ok(result);
     }
 
@@ -35,12 +42,12 @@ public class AuthController {
     @PostMapping("/google")
     public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest request){
 
-        User user = authService.googleLogin(request.getIdToken());
+        Object result = authService.googleLogin(request.getIdToken());
 
-        if(user == null){
-            return ResponseEntity.badRequest().body("Google login failed");
+        if(result instanceof String){
+            return ResponseEntity.badRequest().body(result);
         }
 
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(result);
     }
 }

@@ -1,27 +1,13 @@
 package vn.edu.nlu.fit.auction.dto.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import vn.edu.nlu.fit.auction.entity.User;
+
+@Data
+@AllArgsConstructor
 public class AuthResponse {
 
-    private String message;
-    private String email;
-    private String username;
-
-    public AuthResponse(String message, String email, String username) {
-        this.message = message;
-        this.email = email;
-        this.username = username;
-    }
-
-    // Getters and setters
-    public String getMessage() {
-        return message;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getUsername() {
-        return username;
-    }
+    private String token;
+    private User user;
 }

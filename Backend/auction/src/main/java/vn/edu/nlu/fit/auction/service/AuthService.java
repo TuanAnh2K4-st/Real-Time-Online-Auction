@@ -14,6 +14,7 @@ import com.google.api.client.json.gson.GsonFactory;
 
 import vn.edu.nlu.fit.auction.dto.request.LoginRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterRequest;
+import vn.edu.nlu.fit.auction.dto.response.AuthResponse;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.entity.Profile;
 import vn.edu.nlu.fit.auction.enums.AuthProvider;
@@ -33,6 +34,9 @@ public class AuthService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtService jwtService;
 
     // REGISTER
     public String register(RegisterRequest request){
@@ -65,7 +69,7 @@ public class AuthService {
     }
 
     // LOGIN
-    public String login(LoginRequest request){
+        public Object login(LoginRequest request){
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElse(null);
@@ -82,11 +86,15 @@ public class AuthService {
             return "Account locked";
         }
 
-        return "Login success";
+        // TẠO TOKEN
+        String token = jwtService.generateToken(user);
+
+        return new AuthResponse(token, user);
     }
     
     // GOOGLE LOGIN
-    public User googleLogin(String idToken) {
+        public Object googleLogin(String idToken) {
+
         try {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
@@ -105,11 +113,9 @@ public class AuthService {
                 String avatar = (String) payload.get("picture");
                 String providerId = payload.getSubject();
 
-                // check user tồn tại
                 User user = userRepository.findByEmail(email).orElse(null);
 
                 if (user == null) {
-
                     user = new User();
                     user.setUsername(name);
                     user.setEmail(email);
@@ -120,7 +126,6 @@ public class AuthService {
 
                     userRepository.save(user);
 
-                    // tạo profile
                     Profile profile = new Profile();
                     profile.setUser(user);
                     profile.setFullName(name);
@@ -130,12 +135,16 @@ public class AuthService {
                     profileRepository.save(profile);
                 }
 
-                return user;
+                // TẠO TOKEN
+                String token = jwtService.generateToken(user);
+
+                return new AuthResponse(token, user);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+
+        return "Google login failed";
     }
 }
