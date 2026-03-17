@@ -1,5 +1,6 @@
 package vn.edu.nlu.fit.auction.service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -31,5 +32,18 @@ public class JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public Integer extractUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        return ((Number) claims.get("userId")).intValue();
     }
 }

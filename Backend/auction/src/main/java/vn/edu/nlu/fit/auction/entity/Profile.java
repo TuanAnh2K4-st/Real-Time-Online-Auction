@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import vn.edu.nlu.fit.auction.enums.Gender;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "profiles")
 public class Profile {
@@ -39,6 +41,7 @@ public class Profile {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true)
+    @JsonIgnore
     private User user;
 
     //Constructor

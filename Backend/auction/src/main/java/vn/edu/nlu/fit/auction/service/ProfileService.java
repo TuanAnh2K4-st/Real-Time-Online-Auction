@@ -18,11 +18,22 @@ public class ProfileService {
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
 
         // update field
+        if (request.getFullName() != null)
         profile.setFullName(request.getFullName());
+
+        if (request.getPhone() != null)
         profile.setPhone(request.getPhone());
+
+        if (request.getAddress() != null)
         profile.setAddress(request.getAddress());
+
+        if (request.getGender() != null)
         profile.setGender(request.getGender());
+
+        if (request.getJob() != null)
         profile.setJob(request.getJob());
+
+        if (request.getBio() != null)
         profile.setBio(request.getBio());
 
         return profileRepository.save(profile);
