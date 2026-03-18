@@ -9,15 +9,17 @@ import vn.edu.nlu.fit.auction.entity.User;
 import java.security.Key;
 import java.util.Date;
 
-// import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class JwtService {
     
-    private String SECRET = "secret_key_22130014_auction_app_2026";
-    // @Value("${app.jwt.secret}")
-    // private String SECRET;
+    @Value("${app.jwt.secret}")
+    private String SECRET;
+
+    @Value("${app.jwt.expiration}")
+    private long EXPIRATION_TIME;
 
     private Key getKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
@@ -29,7 +31,7 @@ public class JwtService {
                 .claim("userId", user.getUserId())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000))
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
