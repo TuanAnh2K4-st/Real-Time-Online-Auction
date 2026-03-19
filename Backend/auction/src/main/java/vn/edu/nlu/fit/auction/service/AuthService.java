@@ -20,6 +20,7 @@ import vn.edu.nlu.fit.auction.entity.Profile;
 import vn.edu.nlu.fit.auction.enums.AuthProvider;
 import vn.edu.nlu.fit.auction.enums.UserRole;
 import vn.edu.nlu.fit.auction.enums.UserStatus;
+import vn.edu.nlu.fit.auction.mapper.UserMapper;
 import vn.edu.nlu.fit.auction.repository.UserRepository;
 import vn.edu.nlu.fit.auction.repository.ProfileRepository;
 
@@ -39,16 +40,15 @@ public class AuthService {
     private JwtService jwtService;
 
     // REGISTER
-    public String register(RegisterRequest request){
+    public void register(RegisterRequest request){
 
         if(userRepository.existsByEmail(request.getEmail())){
-            return "Email already exists";
+            throw new RuntimeException("Email already exists");
         }
 
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         user.setRole(UserRole.USER);
@@ -57,43 +57,35 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // tạo profile
         Profile profile = new Profile();
         profile.setUser(user);
         profile.setFullName(request.getUsername());
         profile.setCreatedAt(LocalDateTime.now());
 
         profileRepository.save(profile);
-
-        return "Register success";
     }
 
     // LOGIN
-        public Object login(LoginRequest request){
+    public AuthResponse login(LoginRequest request){
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElse(null);
-
-        if(user == null){
-            return "User not found";
-        }
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         if(!passwordEncoder.matches(request.getPassword(), user.getPassword())){
-            return "Wrong password";
+            throw new RuntimeException("Wrong password");
         }
 
         if(user.getStatus() != UserStatus.ACTIVE){
-            return "Account locked";
+            throw new RuntimeException("Account locked");
         }
 
-        // TẠO TOKEN
         String token = jwtService.generateToken(user);
 
-        return new AuthResponse(token, user);
+        return new AuthResponse(token, UserMapper.toResponse(user));
     }
-    
+
     // GOOGLE LOGIN
-        public Object googleLogin(String idToken) {
+    public AuthResponse googleLogin(String idToken) {
 
         try {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
@@ -104,47 +96,45 @@ public class AuthService {
 
             GoogleIdToken idTokenObj = verifier.verify(idToken);
 
-            if (idTokenObj != null) {
-
-                GoogleIdToken.Payload payload = idTokenObj.getPayload();
-
-                String email = payload.getEmail();
-                String name = (String) payload.get("name");
-                String avatar = (String) payload.get("picture");
-                String providerId = payload.getSubject();
-
-                User user = userRepository.findByEmail(email).orElse(null);
-
-                if (user == null) {
-                    user = new User();
-                    user.setUsername(name);
-                    user.setEmail(email);
-                    user.setProvider(AuthProvider.GOOGLE);
-                    user.setProviderId(providerId);
-                    user.setRole(UserRole.USER);
-                    user.setStatus(UserStatus.ACTIVE);
-
-                    userRepository.save(user);
-
-                    Profile profile = new Profile();
-                    profile.setUser(user);
-                    profile.setFullName(name);
-                    profile.setAvatarUrl(avatar);
-                    profile.setCreatedAt(LocalDateTime.now());
-
-                    profileRepository.save(profile);
-                }
-
-                // TẠO TOKEN
-                String token = jwtService.generateToken(user);
-
-                return new AuthResponse(token, user);
+            if (idTokenObj == null) {
+                throw new RuntimeException("Invalid Google token");
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            GoogleIdToken.Payload payload = idTokenObj.getPayload();
 
-        return "Google login failed";
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String avatar = (String) payload.get("picture");
+            String providerId = payload.getSubject();
+
+            User user = userRepository.findByEmail(email).orElse(null);
+
+            if (user == null) {
+                user = new User();
+                user.setUsername(name);
+                user.setEmail(email);
+                user.setProvider(AuthProvider.GOOGLE);
+                user.setProviderId(providerId);
+                user.setRole(UserRole.USER);
+                user.setStatus(UserStatus.ACTIVE);
+
+                userRepository.save(user);
+
+                Profile profile = new Profile();
+                profile.setUser(user);
+                profile.setFullName(name);
+                profile.setAvatarUrl(avatar);
+                profile.setCreatedAt(LocalDateTime.now());
+
+                profileRepository.save(profile);
+            }
+
+            String token = jwtService.generateToken(user);
+
+            return new AuthResponse(token, UserMapper.toResponse(user));
+
+        } catch (Exception e) {
+            throw new RuntimeException("Google login failed");
+        }
     }
 }

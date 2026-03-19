@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.nlu.fit.auction.dto.request.LoginRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterRequest;
+import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
+import vn.edu.nlu.fit.auction.dto.response.AuthResponse;
 import vn.edu.nlu.fit.auction.dto.request.GoogleLoginRequest;
 import vn.edu.nlu.fit.auction.service.AuthService;
 
@@ -18,36 +20,35 @@ public class AuthController {
 
     // REGISTER
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request){
-        String result = authService.register(request);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ApiResponse<Void>> register(@RequestBody RegisterRequest request){
+
+        authService.register(request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Register success", null)
+        );
     }
 
     // LOGIN
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request){
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody LoginRequest request){
 
-        Object result = authService.login(request);
+        AuthResponse response = authService.login(request);
 
-        // nếu là lỗi (String)
-        if(result instanceof String){
-            return ResponseEntity.badRequest().body(result);
-        }
-
-        // nếu thành công (AuthResponse)
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(
+                new ApiResponse<>("Login success", response)
+        );
     }
 
     // GOOGLE LOGIN
     @PostMapping("/google")
-    public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest request){
+    public ResponseEntity<ApiResponse<AuthResponse>> googleLogin(
+            @RequestBody GoogleLoginRequest request){
 
-        Object result = authService.googleLogin(request.getIdToken());
+        AuthResponse response = authService.googleLogin(request.getIdToken());
 
-        if(result instanceof String){
-            return ResponseEntity.badRequest().body(result);
-        }
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(
+                new ApiResponse<>("Google login success", response)
+        );
     }
 }

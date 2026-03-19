@@ -1,20 +1,16 @@
 package vn.edu.nlu.fit.auction.controller;
 
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import vn.edu.nlu.fit.auction.dto.request.UpdateProfileRequest;
+import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
+import vn.edu.nlu.fit.auction.dto.response.ProfileResponse;
 import vn.edu.nlu.fit.auction.entity.Profile;
+import vn.edu.nlu.fit.auction.mapper.ProfileMapper;
 import vn.edu.nlu.fit.auction.service.JwtService;
 import vn.edu.nlu.fit.auction.service.ProfileService;
 
@@ -28,7 +24,6 @@ public class ProfileController {
     @Autowired
     private JwtService jwtService;
 
-    // Helper lấy userId
     private Integer getUserIdFromHeader(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new RuntimeException("Invalid Authorization header");
@@ -37,30 +32,44 @@ public class ProfileController {
         return jwtService.extractUserId(token);
     }
 
-    // Update profile
+    // UPDATE PROFILE
     @PutMapping("/update")
-    public ResponseEntity<?> updateProfile(
+    public ResponseEntity<ApiResponse<ProfileResponse>> updateProfile(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody UpdateProfileRequest request
     ) {
         Integer userId = getUserIdFromHeader(authHeader);
+
         Profile profile = profileService.updateProfile(userId, request);
-        return ResponseEntity.ok(profile);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        "Update profile success",
+                        ProfileMapper.toResponse(profile)
+                )
+        );
     }
 
-    // Get profile
+    // GET PROFILE
     @GetMapping("/me")
-    public ResponseEntity<?> getProfile(
+    public ResponseEntity<ApiResponse<ProfileResponse>> getProfile(
             @RequestHeader("Authorization") String authHeader
     ) {
         Integer userId = getUserIdFromHeader(authHeader);
+
         Profile profile = profileService.getProfileByUserId(userId);
-        return ResponseEntity.ok(profile);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        "Get profile success",
+                        ProfileMapper.toResponse(profile)
+                )
+        );
     }
 
-    // Upload avatar
+    // UPLOAD AVATAR
     @PutMapping("/avatar")
-    public ResponseEntity<?> uploadAvatar(
+    public ResponseEntity<ApiResponse<String>> uploadAvatar(
             @RequestHeader("Authorization") String authHeader,
             @RequestParam("file") MultipartFile file) {
 
@@ -68,9 +77,11 @@ public class ProfileController {
 
         String avatarUrl = profileService.updateAvatar(userId, file);
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Upload avatar success",
-                "avatarUrl", avatarUrl
-        ));
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        "Upload avatar success",
+                        avatarUrl
+                )
+        );
     }
 }
