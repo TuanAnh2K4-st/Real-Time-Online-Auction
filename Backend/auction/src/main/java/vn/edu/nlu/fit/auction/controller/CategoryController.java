@@ -20,7 +20,7 @@ import vn.edu.nlu.fit.auction.mapper.CategoryMapper;
 import vn.edu.nlu.fit.auction.service.CategoryService;
 
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/api/category")
 public class CategoryController {
 
     @Autowired
@@ -39,10 +39,9 @@ public class CategoryController {
 
     // CREATE
     @PostMapping("create")
-    public ApiResponse<CategoryResponse> create(
-            @RequestBody CategoryRequest req) {
+    public ApiResponse<CategoryResponse> create(@RequestBody CategoryRequest req) {
 
-        Category c = service.create(req.getName());
+        Category c = service.create(req.getName(), req.getParentId());
 
         return new ApiResponse<>("Created", CategoryMapper.toResponse(c));
     }
@@ -53,7 +52,7 @@ public class CategoryController {
             @PathVariable Integer id,
             @RequestBody CategoryRequest req) {
 
-        Category c = service.update(id, req.getName());
+        Category c = service.update(id, req.getName(), req.getParentId());
 
         return new ApiResponse<>("Updated", CategoryMapper.toResponse(c));
     }

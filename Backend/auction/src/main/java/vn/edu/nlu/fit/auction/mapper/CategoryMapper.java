@@ -7,7 +7,8 @@ public class CategoryMapper {
     public static CategoryResponse toResponse(Category c) {
         return new CategoryResponse(
                 c.getCategoryId(),
-                c.getName()
+                c.getName(),
+                c.getParent() != null ? c.getParent().getCategoryId() : null
         );
     }
 }

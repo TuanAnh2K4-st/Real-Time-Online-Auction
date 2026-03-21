@@ -20,18 +20,34 @@ public class CategoryService {
     }
 
     // create
-    public Category create(String name) {
+    public Category create(String name, Integer parentId) {
         Category c = new Category();
         c.setName(name);
+
+        if (parentId != null) {
+            Category parent = categoryRepository.findById(parentId)
+                    .orElseThrow(() -> new RuntimeException("Parent not found"));
+            c.setParent(parent);
+        }
+
         return categoryRepository.save(c);
     }
 
     // Update
-    public Category update(Integer id, String name) {
+    public Category update(Integer id, String name, Integer parentId) {
         Category c = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
         c.setName(name);
+
+        if (parentId != null) {
+            Category parent = categoryRepository.findById(parentId)
+                    .orElseThrow(() -> new RuntimeException("Parent not found"));
+            c.setParent(parent);
+        } else {
+            c.setParent(null);
+        }
+
         return categoryRepository.save(c);
     }
 
