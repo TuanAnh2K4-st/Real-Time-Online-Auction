@@ -35,7 +35,7 @@ public class User {
     private AuthProvider provider;
 
     @Column(name = "provider_id", length = 255)
-    private String providerId; // id từ 
+    private String providerId; 
     
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Profile profile;

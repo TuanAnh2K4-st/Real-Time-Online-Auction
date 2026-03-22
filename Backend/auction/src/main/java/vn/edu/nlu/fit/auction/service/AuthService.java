@@ -13,16 +13,20 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 
 import vn.edu.nlu.fit.auction.dto.request.LoginRequest;
-import vn.edu.nlu.fit.auction.dto.request.RegisterRequest;
+import vn.edu.nlu.fit.auction.dto.request.RegisterSellerRequest;
+import vn.edu.nlu.fit.auction.dto.request.RegisterUserRequest;
 import vn.edu.nlu.fit.auction.dto.response.AuthResponse;
 import vn.edu.nlu.fit.auction.entity.User;
+import vn.edu.nlu.fit.auction.entity.LiveRoom;
 import vn.edu.nlu.fit.auction.entity.Profile;
 import vn.edu.nlu.fit.auction.enums.AuthProvider;
+import vn.edu.nlu.fit.auction.enums.RoomStatus;
 import vn.edu.nlu.fit.auction.enums.UserRole;
 import vn.edu.nlu.fit.auction.enums.UserStatus;
 import vn.edu.nlu.fit.auction.mapper.UserMapper;
 import vn.edu.nlu.fit.auction.repository.UserRepository;
 import vn.edu.nlu.fit.auction.repository.ProfileRepository;
+import vn.edu.nlu.fit.auction.repository.LiveRoomRepository;
 
 @Service
 public class AuthService {
@@ -39,8 +43,11 @@ public class AuthService {
     @Autowired
     private JwtService jwtService;
 
-    // REGISTER
-    public void register(RegisterRequest request){
+    @Autowired
+    private LiveRoomRepository liveRoomRepository;
+
+    // REGISTER USER
+    public void registerUser(RegisterUserRequest request){
 
         if(userRepository.existsByEmail(request.getEmail())){
             throw new RuntimeException("Email already exists");
@@ -63,6 +70,40 @@ public class AuthService {
         profile.setCreatedAt(LocalDateTime.now());
 
         profileRepository.save(profile);
+    }
+
+    //REGISTER SELLER
+    public void registerSeller(RegisterSellerRequest request){
+
+        if(userRepository.existsByEmail(request.getEmail())){
+            throw new RuntimeException("Email already exists");
+        }
+
+        User user = new User();
+        user.setUsername(request.getCompanyName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        user.setRole(UserRole.SELLER);
+        user.setStatus(UserStatus.ACTIVE);
+        user.setProvider(AuthProvider.LOCAL);
+
+        userRepository.save(user);
+
+        Profile profile = new Profile();
+        profile.setUser(user);
+        profile.setFullName(request.getCompanyName());
+        profile.setCreatedAt(LocalDateTime.now());
+
+        profileRepository.save(profile);
+
+        LiveRoom liveRoom = new LiveRoom();
+        liveRoom.setUser(user);
+        liveRoom.setCreatedAt(LocalDateTime.now());
+        liveRoom.setRoomName(request.getRoomName());
+        liveRoom.setStatus(RoomStatus.OFFLINE);
+
+        liveRoomRepository.save(liveRoom);
     }
 
     // LOGIN

@@ -44,8 +44,23 @@ public class JwtService {
                 .getBody();
     }
 
+    public boolean isTokenValid(String token) {
+        try {
+            extractAllClaims(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public Integer extractUserId(String token) {
         Claims claims = extractAllClaims(token);
         return ((Number) claims.get("userId")).intValue();
+    }
+    public String extractEmail(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
     }
 }

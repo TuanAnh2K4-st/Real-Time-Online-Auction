@@ -3,6 +3,7 @@ package vn.edu.nlu.fit.auction.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,7 +28,7 @@ public class CategoryController {
     private CategoryService service;
 
     // GET ALL
-    @GetMapping("get-all-categories")
+    @GetMapping("get-all")
     public ApiResponse<List<CategoryResponse>> getAll() {
         List<CategoryResponse> data = service.getAll()
                 .stream()
@@ -38,6 +39,7 @@ public class CategoryController {
     }
 
     // CREATE
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("create")
     public ApiResponse<CategoryResponse> create(@RequestBody CategoryRequest req) {
 
@@ -47,6 +49,7 @@ public class CategoryController {
     }
 
     // UPDATE
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("update/{id}")
     public ApiResponse<CategoryResponse> update(
             @PathVariable Integer id,
@@ -58,6 +61,7 @@ public class CategoryController {
     }
 
     // DELETE
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("delete/{id}")
     public ApiResponse<Void> delete(@PathVariable Integer id) {
         service.delete(id);

@@ -5,13 +5,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import vn.edu.nlu.fit.auction.dto.request.UpdateProfileRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.ProfileResponse;
 import vn.edu.nlu.fit.auction.entity.Profile;
 import vn.edu.nlu.fit.auction.mapper.ProfileMapper;
-import vn.edu.nlu.fit.auction.service.JwtService;
 import vn.edu.nlu.fit.auction.service.ProfileService;
 
 @RestController
@@ -21,24 +22,23 @@ public class ProfileController {
     @Autowired
     private ProfileService profileService;
 
-    @Autowired
-    private JwtService jwtService;
+    // Lấy userId từ SecurityContext (đã được JwtFilter set)
+    private Integer getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-    private Integer getUserIdFromHeader(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Invalid Authorization header");
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new RuntimeException("Unauthorized");
         }
-        String token = authHeader.substring(7);
-        return jwtService.extractUserId(token);
+
+        return (Integer) auth.getPrincipal();
     }
 
     // UPDATE PROFILE
     @PutMapping("/update")
     public ResponseEntity<ApiResponse<ProfileResponse>> updateProfile(
-            @RequestHeader("Authorization") String authHeader,
             @RequestBody UpdateProfileRequest request
     ) {
-        Integer userId = getUserIdFromHeader(authHeader);
+        Integer userId = getCurrentUserId();
 
         Profile profile = profileService.updateProfile(userId, request);
 
@@ -52,10 +52,9 @@ public class ProfileController {
 
     // GET PROFILE
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<ProfileResponse>> getProfile(
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        Integer userId = getUserIdFromHeader(authHeader);
+    public ResponseEntity<ApiResponse<ProfileResponse>> getProfile() {
+
+        Integer userId = getCurrentUserId();
 
         Profile profile = profileService.getProfileByUserId(userId);
 
@@ -70,10 +69,9 @@ public class ProfileController {
     // UPLOAD AVATAR
     @PutMapping("/avatar")
     public ResponseEntity<ApiResponse<String>> uploadAvatar(
-            @RequestHeader("Authorization") String authHeader,
             @RequestParam("file") MultipartFile file) {
 
-        Integer userId = getUserIdFromHeader(authHeader);
+        Integer userId = getCurrentUserId();
 
         String avatarUrl = profileService.updateAvatar(userId, file);
 
