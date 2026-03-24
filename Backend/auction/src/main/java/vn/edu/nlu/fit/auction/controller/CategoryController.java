@@ -30,7 +30,7 @@ public class CategoryController {
     // GET ALL
     @GetMapping("get-all")
     public ApiResponse<List<CategoryResponse>> getAll() {
-        List<CategoryResponse> data = service.getAll()
+        List<CategoryResponse> data = service.getAllCategories()
                 .stream()
                 .map(CategoryMapper::toResponse)
                 .toList();

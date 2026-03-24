@@ -122,7 +122,7 @@ public class AuthService {
 
         String token = jwtService.generateToken(user);
 
-        return new AuthResponse(token, UserMapper.toResponse(user));
+        return new AuthResponse(token, UserMapper.toLoginResponse(user));
     }
 
     // GOOGLE LOGIN
@@ -172,7 +172,7 @@ public class AuthService {
 
             String token = jwtService.generateToken(user);
 
-            return new AuthResponse(token, UserMapper.toResponse(user));
+            return new AuthResponse(token, UserMapper.toLoginResponse(user));
 
         } catch (Exception e) {
             throw new RuntimeException("Google login failed");
