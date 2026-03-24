@@ -1,6 +1,6 @@
 package vn.edu.nlu.fit.auction.dto.request;
 
-public class RegisterRequest {
+public class RegisterUserRequest {
     private String username;
     private String email;
     private String password;

@@ -2,26 +2,14 @@ package vn.edu.nlu.fit.auction.dto.response;
 
 public class AuthResponse {
 
-    private String message;
-    private String email;
-    private String username;
+    private String token;
+    private UserLoginResponse user;
 
-    public AuthResponse(String message, String email, String username) {
-        this.message = message;
-        this.email = email;
-        this.username = username;
+    public AuthResponse(String token, UserLoginResponse user) {
+        this.token = token;
+        this.user = user;
     }
 
-    // Getters and setters
-    public String getMessage() {
-        return message;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getUsername() {
-        return username;
-    }
+    public String getToken() { return token; }
+    public UserLoginResponse getUser() { return user; }
 }
