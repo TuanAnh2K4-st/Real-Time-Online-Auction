@@ -2,16 +2,14 @@ package vn.edu.nlu.fit.auction.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import vn.edu.nlu.fit.auction.enums.Gender;
 
 @Entity
-@Table(name = "profiles")
-public class Profile {
-
+@Table(name = "businesses")
+public class Business {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "profile_id")
-    private Integer profileId;
+    @Column(name = "business_id")
+    private Integer businessId;
 
     // 1-1 with User
     @OneToOne
@@ -23,24 +21,17 @@ public class Profile {
     @JoinColumn(name = "address_id")
     private Address address;
 
-    @Column(name = "avatar_url")
-    private String avatarUrl;
+    @Column(name = "business_name", nullable = false)
+    private String businessName;
 
-    @Column(name = "avatar_public_id")
-    private String avatarPublicId;
+    @Column(name = "logo_url")
+    private String logoUrl;
 
-    @Column(name = "full_name", length = 150)
-    private String fullName;
+    @Column(name = "logo_public_id")
+    private String logoPublicId;
 
-    @Column(name = "phone", length = 20)
-    private String phone;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "gender")
-    private Gender gender;
-
-    @Column(name = "job")
-    private String job;
+    @Column(name = "tax_code", length = 50)
+    private String taxCode;
 
     @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
@@ -53,6 +44,4 @@ public class Profile {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
-
 }

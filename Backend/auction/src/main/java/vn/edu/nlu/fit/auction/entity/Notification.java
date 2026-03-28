@@ -3,22 +3,28 @@ package vn.edu.nlu.fit.auction.entity;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
+
 @Entity
-@Table(name = "watchlists")
-public class Watchlist {
+@Table(name = "notifications")
+public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "watch_id")
-    private Integer watchId;
+    @Column(name = "notification_id")
+    private Integer notificationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "auction_id", nullable = false)
-    private Auction auction;
+    @Column(name = "title", columnDefinition = "TEXT", nullable = false)
+    private String title;
+
+    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
+    private String content;
+
+    @Column(name = "is_read", nullable = false)
+    private Boolean isRead = false;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -27,6 +33,12 @@ public class Watchlist {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+
+        if (this.isRead == null) {
+            this.isRead = false;
+        }
     }
 
+    
+    
 }

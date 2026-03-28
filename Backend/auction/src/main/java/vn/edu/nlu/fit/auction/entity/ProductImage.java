@@ -11,39 +11,18 @@ public class ProductImage {
     @Column(name = "image_id")
     private Integer imageId;
 
-    @Column(name = "image_url")
-    private String imageUrl;
-
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
 
-    //Constructor
-    public ProductImage() {
-    }
+    @Column(name = "image_url", nullable = false)
+    private String imageUrl;
 
-    //Getters and Setters
-    public Integer getImageId() {
-        return imageId;
-    }
+    @Column(name = "image_public_id")
+    private String imagePublicId;
 
-    public void setImageId(Integer imageId) {
-        this.imageId = imageId;
-    }
+    @Column(name = "is_primary", nullable = false)
+    private Boolean isPrimary = false;
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
-    }
+    
 }
