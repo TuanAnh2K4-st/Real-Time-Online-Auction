@@ -12,12 +12,12 @@ public class Business {
     private Integer businessId;
 
     // 1-1 with User
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     // 1-1 with Address
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id")
     private Address address;
 
@@ -44,4 +44,94 @@ public class Business {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    // Constructors
+
+    public Business(Integer businessId, User user, Address address, String businessName, String logoUrl,
+            String logoPublicId, String taxCode, String bio, LocalDateTime updatedAt) {
+        this.businessId = businessId;
+        this.user = user;
+        this.address = address;
+        this.businessName = businessName;
+        this.logoUrl = logoUrl;
+        this.logoPublicId = logoPublicId;
+        this.taxCode = taxCode;
+        this.bio = bio;
+        this.updatedAt = updatedAt;
+    }
+ 
+    // Getters and Setters
+
+    public Integer getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(Integer businessId) {
+        this.businessId = businessId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+
+    public String getBusinessName() {
+        return businessName;
+    }
+
+    public void setBusinessName(String businessName) {
+        this.businessName = businessName;
+    }
+
+    public String getLogoUrl() {
+        return logoUrl;
+    }
+
+    public void setLogoUrl(String logoUrl) {
+        this.logoUrl = logoUrl;
+    }
+
+    public String getLogoPublicId() {
+        return logoPublicId;
+    }
+
+    public void setLogoPublicId(String logoPublicId) {
+        this.logoPublicId = logoPublicId;
+    }
+
+    public String getTaxCode() {
+        return taxCode;
+    }
+
+    public void setTaxCode(String taxCode) {
+        this.taxCode = taxCode;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+    
 }

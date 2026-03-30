@@ -1,4 +1,5 @@
 package vn.edu.nlu.fit.auction.repository;
+
 import vn.edu.nlu.fit.auction.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;

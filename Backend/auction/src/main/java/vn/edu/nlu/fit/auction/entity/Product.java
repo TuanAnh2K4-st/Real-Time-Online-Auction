@@ -1,5 +1,6 @@
 package vn.edu.nlu.fit.auction.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -42,8 +43,8 @@ public class Product {
     @Column(name = "attributes_json", columnDefinition = "JSON")
     private String attributesJson;
 
-    @Column(name = "base_price", nullable = false)
-    private Integer basePrice;
+    @Column(name = "base_price", precision = 15, scale = 0, nullable = false)
+    private BigDecimal basePrice;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -57,7 +58,121 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;
 
+    // Constructors
 
-    
+    public Product(Integer productId, User user, Category category, String productName, String brand, String origin,
+            ProductCondition condition, String description, String attributesJson, BigDecimal basePrice,
+            LocalDateTime createdAt, List<ProductImage> images) {
+        this.productId = productId;
+        this.user = user;
+        this.category = category;
+        this.productName = productName;
+        this.brand = brand;
+        this.origin = origin;
+        this.condition = condition;
+        this.description = description;
+        this.attributesJson = attributesJson;
+        this.basePrice = basePrice;
+        this.createdAt = createdAt;
+        this.images = images;
+    }
+
+    // Getters and Setters
+
+    public Integer getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Integer productId) {
+        this.productId = productId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public ProductCondition getCondition() {
+        return condition;
+    }
+
+    public void setCondition(ProductCondition condition) {
+        this.condition = condition;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getAttributesJson() {
+        return attributesJson;
+    }
+
+    public void setAttributesJson(String attributesJson) {
+        this.attributesJson = attributesJson;
+    }
+
+    public BigDecimal getBasePrice() {
+        return basePrice;
+    }
+
+    public void setBasePrice(BigDecimal basePrice) {
+        this.basePrice = basePrice;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public List<ProductImage> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ProductImage> images) {
+        this.images = images;
+    }
 
 }

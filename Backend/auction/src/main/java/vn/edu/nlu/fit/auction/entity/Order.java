@@ -47,6 +47,75 @@ public class Order {
         }
     }
 
+    // Constructor
+    
+    public Order(Integer orderId, User winner, Auction auction, Address address, BigDecimal totalAmount,
+            OrderStatus orderStatus, LocalDateTime createdAt) {
+        this.orderId = orderId;
+        this.winner = winner;
+        this.auction = auction;
+        this.address = address;
+        this.totalAmount = totalAmount;
+        this.orderStatus = orderStatus;
+        this.createdAt = createdAt;
+    }
 
+    // Getters and Setters
+
+    public Integer getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Integer orderId) {
+        this.orderId = orderId;
+    }
+
+    public User getWinner() {
+        return winner;
+    }
+
+    public void setWinner(User winner) {
+        this.winner = winner;
+    }
+
+    public Auction getAuction() {
+        return auction;
+    }
+
+    public void setAuction(Auction auction) {
+        this.auction = auction;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public OrderStatus getOrderStatus() {
+        return orderStatus;
+    }
+
+    public void setOrderStatus(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 
 }

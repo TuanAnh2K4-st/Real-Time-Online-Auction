@@ -32,6 +32,57 @@ public class AuctionMessage {
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
     }
+
+    // Constructors
     
+    public AuctionMessage(Integer messageId, Auction auction, User sender, String content, LocalDateTime createdAt) {
+        this.messageId = messageId;
+        this.auction = auction;
+        this.sender = sender;
+        this.content = content;
+        this.createdAt = createdAt;
+    }
+
+    // Getters and Setters
+
+    public Integer getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(Integer messageId) {
+        this.messageId = messageId;
+    }
+
+    public Auction getAuction() {
+        return auction;
+    }
+
+    public void setAuction(Auction auction) {
+        this.auction = auction;
+    }
+
+    public User getSender() {
+        return sender;
+    }
+
+    public void setSender(User sender) {
+        this.sender = sender;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }  
 
 }
