@@ -43,6 +43,9 @@ public class Payment {
 
     // Constructor
 
+    public Payment() {
+    }
+
     public Payment(Integer paymentId, Order order, BigDecimal amount, PaymentMethod method, PaymentStatus paymentStatus,
             LocalDateTime paidAt) {
         this.paymentId = paymentId;

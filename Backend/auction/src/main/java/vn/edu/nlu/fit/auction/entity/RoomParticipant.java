@@ -42,6 +42,9 @@ public class RoomParticipant {
 
     // Constructor
 
+    public RoomParticipant() {
+    }
+
     public RoomParticipant(Integer roomParticipantId, AuctionRoom room, User user, LocalDateTime joinedAt,
             LocalDateTime leaveAt, RoomRole roomRole) {
         this.roomParticipantId = roomParticipantId;

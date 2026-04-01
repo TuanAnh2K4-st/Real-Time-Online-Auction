@@ -34,6 +34,9 @@ public class AuctionMessage {
     }
 
     // Constructors
+
+    public AuctionMessage() {
+    }
     
     public AuctionMessage(Integer messageId, Auction auction, User sender, String content, LocalDateTime createdAt) {
         this.messageId = messageId;

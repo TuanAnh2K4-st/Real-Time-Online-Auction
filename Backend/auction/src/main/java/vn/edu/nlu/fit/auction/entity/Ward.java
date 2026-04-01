@@ -15,15 +15,18 @@ public class Ward {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "district_id", nullable = false)
-    private District district;
+    @JoinColumn(name = "province_id", nullable = false)
+    private Province province;
 
     // Constructor
 
-    public Ward(Integer wardId, String name, District district) {
+    public Ward() {
+    }
+
+    public Ward(Integer wardId, String name, Province province) {
         this.wardId = wardId;
         this.name = name;
-        this.district = district;
+        this.province = province;
     }
 
     // Getters and Setters
@@ -44,12 +47,12 @@ public class Ward {
         this.name = name;
     }
 
-    public District getDistrict() {
-        return district;
+    public Province getProvince() {
+        return province;
     }
 
-    public void setDistrict(District district) {
-        this.district = district;
+    public void setProvince(Province province) {
+        this.province = province;
     }
     
 }

@@ -50,6 +50,9 @@ public class User {
 
     // Constructor
 
+    public User() {
+    }
+
     public User(Integer userId, String username, String email, String password, UserStatus status, UserRole role,
             AuthProvider provider, String providerId, LocalDateTime createdAt) {
         this.userId = userId;

@@ -34,8 +34,8 @@ public class Product {
     private String origin;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "condition", nullable = false)
-    private ProductCondition condition;
+    @Column(name = "product_condition", nullable = false)
+    private ProductCondition productCondition;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
@@ -58,10 +58,13 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;
 
-    // Constructors
+    // Constructor
+
+    public Product() {
+    }
 
     public Product(Integer productId, User user, Category category, String productName, String brand, String origin,
-            ProductCondition condition, String description, String attributesJson, BigDecimal basePrice,
+            ProductCondition productCondition, String description, String attributesJson, BigDecimal basePrice,
             LocalDateTime createdAt, List<ProductImage> images) {
         this.productId = productId;
         this.user = user;
@@ -69,7 +72,7 @@ public class Product {
         this.productName = productName;
         this.brand = brand;
         this.origin = origin;
-        this.condition = condition;
+        this.productCondition = productCondition;
         this.description = description;
         this.attributesJson = attributesJson;
         this.basePrice = basePrice;
@@ -128,11 +131,11 @@ public class Product {
     }
 
     public ProductCondition getCondition() {
-        return condition;
+        return productCondition;
     }
 
-    public void setCondition(ProductCondition condition) {
-        this.condition = condition;
+    public void setCondition(ProductCondition productCondition) {
+        this.productCondition = productCondition;
     }
 
     public String getDescription() {

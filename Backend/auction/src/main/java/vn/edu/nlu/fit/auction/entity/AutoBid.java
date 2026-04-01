@@ -35,6 +35,9 @@ public class AutoBid {
 
     // Constructors
 
+    public AutoBid() {
+    }
+
     public AutoBid(Integer autoBidId, Auction auction, User bidder, BigDecimal maxPrice, LocalDateTime createdAt) {
         this.autoBidId = autoBidId;
         this.auction = auction;

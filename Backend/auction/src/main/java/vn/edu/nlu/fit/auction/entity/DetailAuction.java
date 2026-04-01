@@ -37,6 +37,9 @@ public class DetailAuction {
     private LocalDateTime endTime;
 
     //Constructor
+
+    public DetailAuction() {
+    }
     
     public DetailAuction(Integer detailAuctionId, AuctionRoom room, Auction auction, Integer orderIndex,
             LocalDateTime startTime, LocalDateTime endTime) {

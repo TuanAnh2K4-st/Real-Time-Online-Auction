@@ -36,6 +36,9 @@ public class Category {
 
     // Constructors
 
+    public Category() {
+    }
+
     public Category(Integer categoryId, String name, LocalDateTime createAt, Category parent, List<Category> children) {
         this.categoryId = categoryId;
         this.name = name;

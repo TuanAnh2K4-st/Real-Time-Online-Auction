@@ -1,35 +1,34 @@
 package vn.edu.nlu.fit.auction.service;
 
-import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-
 import vn.edu.nlu.fit.auction.dto.request.LoginRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterSellerRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterUserRequest;
-import vn.edu.nlu.fit.auction.dto.response.AuthResponse;
-import vn.edu.nlu.fit.auction.entity.User;
-import vn.edu.nlu.fit.auction.entity.LiveRoom;
+import vn.edu.nlu.fit.auction.dto.response.LoginResponse;
+import vn.edu.nlu.fit.auction.entity.AuctionRoom;
+import vn.edu.nlu.fit.auction.entity.Business;
 import vn.edu.nlu.fit.auction.entity.Profile;
+import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.enums.AuthProvider;
 import vn.edu.nlu.fit.auction.enums.RoomStatus;
 import vn.edu.nlu.fit.auction.enums.UserRole;
 import vn.edu.nlu.fit.auction.enums.UserStatus;
 import vn.edu.nlu.fit.auction.mapper.UserMapper;
-import vn.edu.nlu.fit.auction.repository.UserRepository;
+import vn.edu.nlu.fit.auction.repository.AuctionRoomRepository;
+import vn.edu.nlu.fit.auction.repository.BusinessRepository;
 import vn.edu.nlu.fit.auction.repository.ProfileRepository;
-import vn.edu.nlu.fit.auction.repository.LiveRoomRepository;
+import vn.edu.nlu.fit.auction.repository.UserRepository;
 
 @Service
 public class AuthService {
+
+    @Autowired
+    private JwtService jwtService;
 
     @Autowired
     private UserRepository userRepository;
@@ -38,144 +37,104 @@ public class AuthService {
     private ProfileRepository profileRepository;
 
     @Autowired
+    private BusinessRepository businessRepository;
+
+    @Autowired
+    private AuctionRoomRepository auctionRoomRepository;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtService jwtService;
-
-    @Autowired
-    private LiveRoomRepository liveRoomRepository;
-
     // REGISTER USER
-    public void registerUser(RegisterUserRequest request){
+    public void registerUser(RegisterUserRequest request) {
 
-        if(userRepository.existsByEmail(request.getEmail())){
+        // check duplicate
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
 
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
 
+        // map user
+        User user = userMapper.toRegisterUser(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(UserRole.USER);
         user.setStatus(UserStatus.ACTIVE);
         user.setProvider(AuthProvider.LOCAL);
 
         userRepository.save(user);
 
+        // create profile
         Profile profile = new Profile();
         profile.setUser(user);
-        profile.setFullName(request.getUsername());
-        profile.setCreatedAt(LocalDateTime.now());
 
         profileRepository.save(profile);
     }
 
-    //REGISTER SELLER
-    public void registerSeller(RegisterSellerRequest request){
+    // REGISTER SELLER
+    public void registerSeller(RegisterSellerRequest request) {
 
-        if(userRepository.existsByEmail(request.getEmail())){
+        // Kiểm tra trùng lặp email và username
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
 
-        User user = new User();
-        user.setUsername(request.getCompanyName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        if (userRepository.existsByUsername(request.getCompanyName())) {
+            throw new RuntimeException("Username already exists");
+        }
 
+        // create user
+        User user = userMapper.toRegisterSeller(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(UserRole.SELLER);
         user.setStatus(UserStatus.ACTIVE);
         user.setProvider(AuthProvider.LOCAL);
 
         userRepository.save(user);
 
-        Profile profile = new Profile();
-        profile.setUser(user);
-        profile.setFullName(request.getCompanyName());
-        profile.setCreatedAt(LocalDateTime.now());
+        // create business
+        Business business = new Business();
+        business.setUser(user);
+        businessRepository.save(business);
 
-        profileRepository.save(profile);
+        // create auction room
+        AuctionRoom room = new AuctionRoom();
+        room.setHost(user);
+        room.setRoomName(request.getRoomName());
+        room.setRoomCode(generateRoomCode());
+        room.setRoomStatus(RoomStatus.WAITING);
 
-        LiveRoom liveRoom = new LiveRoom();
-        liveRoom.setUser(user);
-        liveRoom.setCreatedAt(LocalDateTime.now());
-        liveRoom.setRoomName(request.getRoomName());
-        liveRoom.setStatus(RoomStatus.OFFLINE);
+        auctionRoomRepository.save(room);
+    }
 
-        liveRoomRepository.save(liveRoom);
+    // tao room code ngau nhien 10 ky tu
+    private String generateRoomCode() {
+        return UUID.randomUUID().toString().substring(0, 10).toUpperCase();
     }
 
     // LOGIN
-    public AuthResponse login(LoginRequest request){
+    public LoginResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
 
-        if(!passwordEncoder.matches(request.getPassword(), user.getPassword())){
-            throw new RuntimeException("Wrong password");
+        // check password
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Sai mật khẩu");
         }
 
-        if(user.getStatus() != UserStatus.ACTIVE){
-            throw new RuntimeException("Account locked");
-        }
-
+        // tạo token
         String token = jwtService.generateToken(user);
 
-        return new AuthResponse(token, UserMapper.toLoginResponse(user));
-    }
-
-    // GOOGLE LOGIN
-    public AuthResponse googleLogin(String idToken) {
-
-        try {
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(),
-                GsonFactory.getDefaultInstance())
-                .setAudience(Collections.singletonList("YOUR_GOOGLE_CLIENT_ID"))
-                .build();
-
-            GoogleIdToken idTokenObj = verifier.verify(idToken);
-
-            if (idTokenObj == null) {
-                throw new RuntimeException("Invalid Google token");
-            }
-
-            GoogleIdToken.Payload payload = idTokenObj.getPayload();
-
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-            String avatar = (String) payload.get("picture");
-            String providerId = payload.getSubject();
-
-            User user = userRepository.findByEmail(email).orElse(null);
-
-            if (user == null) {
-                user = new User();
-                user.setUsername(name);
-                user.setEmail(email);
-                user.setProvider(AuthProvider.GOOGLE);
-                user.setProviderId(providerId);
-                user.setRole(UserRole.USER);
-                user.setStatus(UserStatus.ACTIVE);
-
-                userRepository.save(user);
-
-                Profile profile = new Profile();
-                profile.setUser(user);
-                profile.setFullName(name);
-                profile.setAvatarUrl(avatar);
-                profile.setCreatedAt(LocalDateTime.now());
-
-                profileRepository.save(profile);
-            }
-
-            String token = jwtService.generateToken(user);
-
-            return new AuthResponse(token, UserMapper.toLoginResponse(user));
-
-        } catch (Exception e) {
-            throw new RuntimeException("Google login failed");
-        }
+        return new LoginResponse(
+                token,
+                user.getUserId(),
+                user.getRole().name()
+        );
     }
 }

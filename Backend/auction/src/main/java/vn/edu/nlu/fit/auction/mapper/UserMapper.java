@@ -1,27 +1,26 @@
 package vn.edu.nlu.fit.auction.mapper;
 
-import vn.edu.nlu.fit.auction.dto.response.UserLoginResponse;
-import vn.edu.nlu.fit.auction.dto.response.UserResponse;
+import org.springframework.stereotype.Component;
+import vn.edu.nlu.fit.auction.dto.request.RegisterSellerRequest;
+import vn.edu.nlu.fit.auction.dto.request.RegisterUserRequest;
 import vn.edu.nlu.fit.auction.entity.User;
 
+@Component
 public class UserMapper {
 
-    public static UserLoginResponse toLoginResponse(User user) {
-        return new UserLoginResponse(
-                user.getUserId(),
-                user.getUsername(),
-                user.getEmail()
-        );
+    public User toRegisterUser(RegisterUserRequest req) {
+        User user = new User();
+        user.setUsername(req.getUsername());
+        user.setEmail(req.getEmail());
+        user.setPassword(req.getPassword());
+        return user;
     }
 
-    public static UserResponse toResponse(User user) {
-        return new UserResponse(
-                user.getUserId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getStatus(),
-                user.getRole(),
-                user.getProvider()
-        );
+    public User toRegisterSeller(RegisterSellerRequest req) {
+        User user = new User();
+        user.setUsername(req.getCompanyName());
+        user.setEmail(req.getEmail());
+        user.setPassword(req.getPassword());
+        return user;
     }
 }

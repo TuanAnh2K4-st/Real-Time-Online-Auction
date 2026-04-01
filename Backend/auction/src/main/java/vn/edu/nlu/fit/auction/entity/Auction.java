@@ -55,6 +55,9 @@ public class Auction {
     private LocalDateTime endTime;
 
     // Constructors
+
+    public Auction() {
+    }
     
     public Auction(Integer auctionId, Product product, User seller, Bid winningBid, User winner,
             BigDecimal currentPrice, BigDecimal startPrice, BigDecimal stepPrice, AuctionStatus auctionStatus,

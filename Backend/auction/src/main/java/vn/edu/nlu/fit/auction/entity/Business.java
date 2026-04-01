@@ -21,7 +21,7 @@ public class Business {
     @JoinColumn(name = "address_id")
     private Address address;
 
-    @Column(name = "business_name", nullable = false)
+    @Column(name = "business_name")
     private String businessName;
 
     @Column(name = "logo_url")
@@ -46,6 +46,9 @@ public class Business {
     }
 
     // Constructors
+
+    public Business() {
+    }
 
     public Business(Integer businessId, User user, Address address, String businessName, String logoUrl,
             String logoPublicId, String taxCode, String bio, LocalDateTime updatedAt) {

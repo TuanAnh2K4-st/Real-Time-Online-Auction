@@ -48,6 +48,9 @@ public class Order {
     }
 
     // Constructor
+
+    public Order() {
+    }
     
     public Order(Integer orderId, User winner, Auction auction, Address address, BigDecimal totalAmount,
             OrderStatus orderStatus, LocalDateTime createdAt) {

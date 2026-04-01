@@ -40,6 +40,9 @@ public class Store {
 
     // Constructor
 
+    public Store() {
+    }
+
     public Store(Integer storeId, Address address, String storeName, StoreStatus storeStatus, LocalDateTime createdAt,
             List<StoreItem> storeItems) {
         this.storeId = storeId;

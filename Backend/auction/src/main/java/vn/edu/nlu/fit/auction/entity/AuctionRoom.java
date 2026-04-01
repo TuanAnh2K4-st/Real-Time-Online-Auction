@@ -43,6 +43,9 @@ public class AuctionRoom {
 
     // Constructors
     
+    public AuctionRoom() {
+    }
+
     public AuctionRoom(Integer roomId, Auction currentAuction, User host, String roomCode, String roomName,
             RoomStatus roomStatus, LocalDateTime createdAt) {
         this.roomId = roomId;

@@ -41,6 +41,9 @@ public class Notification {
 
     // Constructor
 
+    public Notification() {
+    }
+
     public Notification(Integer notificationId, User user, String title, String content, Boolean isRead,
             LocalDateTime createdAt) {
         this.notificationId = notificationId;

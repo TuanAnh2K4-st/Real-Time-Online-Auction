@@ -1,14 +1,13 @@
 package vn.edu.nlu.fit.auction.dto.response;
 
-public class CategoryResponse {
+public class ProvinceResponse {
+    
     private Integer id;
     private String name;
-    private Integer parentId;
 
-    public CategoryResponse(Integer id, String name, Integer parentId) {
+    public ProvinceResponse(Integer id, String name) {
         this.id = id;
         this.name = name;
-        this.parentId = parentId;
     }
 
     public Integer getId() {
@@ -19,8 +18,5 @@ public class CategoryResponse {
         return name;
     }
 
-    public Integer getParentId() {
-        return parentId;
-    }
-
+    
 }

@@ -56,6 +56,9 @@ public class Profile {
 
     // Constructors
 
+    public Profile() {
+    }
+    
     public Profile(Integer profileId, User user, Address address, String avatarUrl, String avatarPublicId,
             String fullName, String phone, Gender gender, String job, String bio, LocalDateTime updatedAt) {
         this.profileId = profileId;

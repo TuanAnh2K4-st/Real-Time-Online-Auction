@@ -14,7 +14,10 @@ public class Province {
     @Column(name = "name", length = 150, nullable = false)
     private String name;
 
-    // Constructors
+    // Constructor
+
+    public Province() {
+    }
     
     public Province(Integer provinceId, String name) {
         this.provinceId = provinceId;

@@ -35,6 +35,9 @@ public class Bid {
     }
 
     // Constructors
+
+    public Bid() {
+    }
     
     public Bid(Integer bidId, Auction auction, User bidder, BigDecimal bidAmount, LocalDateTime bidTime) {
         this.bidId = bidId;

@@ -24,7 +24,10 @@ public class ProductImage {
     @Column(name = "is_primary", nullable = false)
     private Boolean isPrimary = false;
 
-    // Constructors
+    // Constructor
+
+    public ProductImage() {
+    }
 
     public ProductImage(Integer imageId, Product product, String imageUrl, String imagePublicId, Boolean isPrimary) {
         this.imageId = imageId;

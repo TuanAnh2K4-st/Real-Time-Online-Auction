@@ -29,6 +29,9 @@ public class StoreItem {
 
     // Constructors
 
+    public StoreItem() {
+    }
+
     public StoreItem(Integer storeItemId, Product product, Store store, StoreItemStatus itemStatus,
             String conditionNote) {
         this.storeItemId = storeItemId;

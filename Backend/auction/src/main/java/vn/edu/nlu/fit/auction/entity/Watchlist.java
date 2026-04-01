@@ -31,6 +31,9 @@ public class Watchlist {
 
     // Constructor
 
+    public Watchlist() {
+    }
+
     public Watchlist(Integer watchId, User user, Auction auction, LocalDateTime createdAt) {
         this.watchId = watchId;
         this.user = user;
