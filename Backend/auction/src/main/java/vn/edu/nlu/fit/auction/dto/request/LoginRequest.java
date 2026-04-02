@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class LoginRequest {
+    
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không hợp lệ")
     private String email;
