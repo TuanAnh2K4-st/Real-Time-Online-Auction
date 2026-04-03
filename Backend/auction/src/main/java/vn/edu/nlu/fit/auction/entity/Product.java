@@ -1,49 +1,109 @@
 package vn.edu.nlu.fit.auction.entity;
 
-import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import vn.edu.nlu.fit.auction.enums.ProductStatus;
+import java.util.List;
+
+import jakarta.persistence.*;
+import vn.edu.nlu.fit.auction.enums.ProductCondition;
 
 @Entity
 @Table(name = "products")
 public class Product {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
     private Integer productId;
 
-    @Column(name = "product_name", length = 255)
-    private String productName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false )
+    private User user;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
-    @Enumerated(EnumType.STRING)
-    private ProductStatus status;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @ManyToOne
-    @JoinColumn(name = "seller_id")
-    private User seller;
-
-    @ManyToOne
-    @JoinColumn(name = "category_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    //Constructor
+    @Column(name = "product_name", nullable = false)
+    private String productName;
+
+    @Column(name = "brand")
+    private String brand;
+
+    @Column(name = "origin")
+    private String origin;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "product_condition", nullable = false)
+    private ProductCondition productCondition;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "attributes_json", columnDefinition = "JSON")
+    private String attributesJson;
+
+    @Column(name = "base_price", precision = 15, scale = 0, nullable = false)
+    private BigDecimal basePrice;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    // ===== Auto set time =====
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImage> images;
+
+    // Constructor
+
     public Product() {
     }
 
-    //Getters and Setters
+    public Product(Integer productId, User user, Category category, String productName, String brand, String origin,
+            ProductCondition productCondition, String description, String attributesJson, BigDecimal basePrice,
+            LocalDateTime createdAt, List<ProductImage> images) {
+        this.productId = productId;
+        this.user = user;
+        this.category = category;
+        this.productName = productName;
+        this.brand = brand;
+        this.origin = origin;
+        this.productCondition = productCondition;
+        this.description = description;
+        this.attributesJson = attributesJson;
+        this.basePrice = basePrice;
+        this.createdAt = createdAt;
+        this.images = images;
+    }
+
+    // Getters and Setters
+
     public Integer getProductId() {
         return productId;
     }
 
     public void setProductId(Integer productId) {
         this.productId = productId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
     public String getProductName() {
@@ -54,6 +114,30 @@ public class Product {
         this.productName = productName;
     }
 
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public ProductCondition getCondition() {
+        return productCondition;
+    }
+
+    public void setCondition(ProductCondition productCondition) {
+        this.productCondition = productCondition;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -62,35 +146,36 @@ public class Product {
         this.description = description;
     }
 
-    public ProductStatus getStatus() {
-        return status;
+    public String getAttributesJson() {
+        return attributesJson;
     }
 
-    public void setStatus(ProductStatus status) {
-        this.status = status;
+    public void setAttributesJson(String attributesJson) {
+        this.attributesJson = attributesJson;
     }
 
-    public java.time.LocalDateTime getCreatedAt() {
+    public BigDecimal getBasePrice() {
+        return basePrice;
+    }
+
+    public void setBasePrice(BigDecimal basePrice) {
+        this.basePrice = basePrice;
+    }
+
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public User getSeller() {
-        return seller;
+    public List<ProductImage> getImages() {
+        return images;
     }
 
-    public void setSeller(User seller) {
-        this.seller = seller;
+    public void setImages(List<ProductImage> images) {
+        this.images = images;
     }
 
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
 }

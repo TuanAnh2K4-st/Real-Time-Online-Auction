@@ -1,10 +1,8 @@
 package vn.edu.nlu.fit.auction.entity;
 
 import jakarta.persistence.*;
-import vn.edu.nlu.fit.auction.enums.Gender;
 import java.time.LocalDateTime;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import vn.edu.nlu.fit.auction.enums.Gender;
 
 @Entity
 @Table(name = "profiles")
@@ -15,6 +13,16 @@ public class Profile {
     @Column(name = "profile_id")
     private Integer profileId;
 
+    // 1-1 with User
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
+
+    // 1-1 with Address
+    @OneToOne
+    @JoinColumn(name = "address_id")
+    private Address address;
+
     @Column(name = "avatar_url")
     private String avatarUrl;
 
@@ -24,34 +32,49 @@ public class Profile {
     @Column(name = "full_name", length = 150)
     private String fullName;
 
-    @Column(length = 20)
+    @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(length = 250)
-    private String address;
-
     @Enumerated(EnumType.STRING)
+    @Column(name = "gender")
     private Gender gender;
 
-    @Column(length = 250)
+    @Column(name = "job")
     private String job;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "update_at")
+    private LocalDateTime updatedAt;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", unique = true)
-    @JsonIgnore
-    private User user;
-
-    //Constructor
-    public Profile() {
+    // ===== AUTO SET TIME =====
+    @PreUpdate 
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
-    //Getters and Setters
+    // Constructors
+
+    public Profile() {
+    }
+    
+    public Profile(Integer profileId, User user, Address address, String avatarUrl, String avatarPublicId,
+            String fullName, String phone, Gender gender, String job, String bio, LocalDateTime updatedAt) {
+        this.profileId = profileId;
+        this.user = user;
+        this.address = address;
+        this.avatarUrl = avatarUrl;
+        this.avatarPublicId = avatarPublicId;
+        this.fullName = fullName;
+        this.phone = phone;
+        this.gender = gender;
+        this.job = job;
+        this.bio = bio;
+        this.updatedAt = updatedAt;
+    }
+
+    // Getters and Setters
 
     public Integer getProfileId() {
         return profileId;
@@ -59,6 +82,22 @@ public class Profile {
 
     public void setProfileId(Integer profileId) {
         this.profileId = profileId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
     public String getAvatarUrl() {
@@ -93,14 +132,6 @@ public class Profile {
         this.phone = phone;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
     public Gender getGender() {
         return gender;
     }
@@ -125,19 +156,12 @@ public class Profile {
         this.bio = bio;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    } 
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
 }

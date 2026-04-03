@@ -1,34 +1,25 @@
 package vn.edu.nlu.fit.auction.dto.request;
 
-public class RegisterSellerRequest {
-    public String companyName;
-    public String email;
-    public String password;
-    public String roomName;
+import jakarta.validation.constraints.*;
+import lombok.Data;
 
-    //getters and setters
-    public String getCompanyName() {
-        return companyName;
-    }
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
-    }
-    public String getEmail() {
-        return email;
-    }
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    public String getPassword() {
-        return password;
-    }
-    public void setPassword(String password) {
-        this.password = password;
-    }
-    public String getRoomName() {
-        return roomName;
-    }
-    public void setRoomName(String roomName) {
-        this.roomName = roomName;
-    }
+@Data
+public class RegisterSellerRequest {
+
+    @NotBlank(message = "Company name không được để trống")
+    private String companyName;
+
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Email không hợp lệ")
+    private String email;
+    @NotBlank(message = "Password không được để trống")
+    @Pattern(
+        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&]).{12,}$",
+        message = "Password phải có ít nhất 12 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt"
+    )
+    private String password;
+
+    @NotBlank(message = "Room name không được để trống")
+    private String roomName;
+
 }

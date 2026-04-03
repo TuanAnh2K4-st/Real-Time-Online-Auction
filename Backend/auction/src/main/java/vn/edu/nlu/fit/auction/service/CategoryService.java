@@ -1,61 +1,82 @@
 package vn.edu.nlu.fit.auction.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import lombok.RequiredArgsConstructor;
+import vn.edu.nlu.fit.auction.dto.request.CategoryRequest;
+import vn.edu.nlu.fit.auction.dto.response.CategoryResponse;
 import vn.edu.nlu.fit.auction.entity.Category;
+import vn.edu.nlu.fit.auction.mapper.CategoryMapper;
 import vn.edu.nlu.fit.auction.repository.CategoryRepository;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
-    // Get all
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    private final CategoryMapper mapper;
+
+    // USER
+
+    // menu: category cha
+    public List<CategoryResponse> getRootCategories() {
+        return categoryRepository.findByParentIsNull()
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
     }
 
-    // create
-    public Category create(String name, Integer parentId) {
-        Category c = new Category();
-        c.setName(name);
+    // menu: category con
+    public List<CategoryResponse> getByParent(Integer parentId) {
+        return categoryRepository.findByParent_CategoryId(parentId)
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
+    }
 
-        if (parentId != null) {
-            Category parent = categoryRepository.findById(parentId)
+    // ADMIN 
+
+    public CategoryResponse create(CategoryRequest request) {
+        Category category = mapper.toEntity(request);
+        category.setCreateAt(LocalDateTime.now());
+
+        if (request.getParentId() != null) {
+            Category parent = categoryRepository.findById(request.getParentId())
                     .orElseThrow(() -> new RuntimeException("Parent not found"));
-            c.setParent(parent);
+            category.setParent(parent);
         }
 
-        return categoryRepository.save(c);
+        return mapper.toDTO(categoryRepository.save(category));
     }
 
-    // Update
-    public Category update(Integer id, String name, Integer parentId) {
-        Category c = categoryRepository.findById(id)
+    public CategoryResponse update(Integer id, CategoryRequest request) {
+        Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        c.setName(name);
+        category.setName(request.getName());
 
-        if (parentId != null) {
-            Category parent = categoryRepository.findById(parentId)
+        if (request.getParentId() != null) {
+            Category parent = categoryRepository.findById(request.getParentId())
                     .orElseThrow(() -> new RuntimeException("Parent not found"));
-            c.setParent(parent);
+            category.setParent(parent);
         } else {
-            c.setParent(null);
+            category.setParent(null);
         }
 
-        return categoryRepository.save(c);
+        return mapper.toDTO(categoryRepository.save(category));
     }
 
-    // Delete
     public void delete(Integer id) {
-        if (!categoryRepository.existsById(id)) {
-            throw new RuntimeException("Category not found");
-        }
         categoryRepository.deleteById(id);
+    }
+
+    public List<CategoryResponse> getAllRootForAdmin() {
+        return getRootCategories();
+    }
+
+    public List<CategoryResponse> getByParentForAdmin(Integer parentId) {
+        return getByParent(parentId);
     }
 }

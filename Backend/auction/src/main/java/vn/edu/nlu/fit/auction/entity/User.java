@@ -1,4 +1,6 @@
 package vn.edu.nlu.fit.auction.entity;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 import vn.edu.nlu.fit.auction.enums.UserRole;
 import vn.edu.nlu.fit.auction.enums.UserStatus;
@@ -13,38 +15,59 @@ public class User {
     @Column(name = "user_id")
     private Integer userId;
 
-    @Column(length = 250, nullable = false)
+    @Column(name = "username", length = 150, unique = true,nullable = false)
     private String username;
 
-    @Column(length = 250, unique = true, nullable = false)
+    @Column(name = "email", length = 150, unique = true, nullable = false)
     private String email;
 
-    @Column(length = 250)
+    @Column(name = "password", length = 150)
     private String password; 
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false)
     private UserStatus status;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false)
     private UserRole role;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "provider", nullable = false)
     private AuthProvider provider;
 
-    @Column(name = "provider_id", length = 255)
-    private String providerId; 
-    
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Profile profile;
+    @Column(name = "provider_id")
+    private String providerId;
 
-    //Constructor
+    @Column(name = "created_at", updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+
+    // ===== AUTO SET TIME =====
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Constructor
+
     public User() {
     }
 
+    public User(Integer userId, String username, String email, String password, UserStatus status, UserRole role,
+            AuthProvider provider, String providerId, LocalDateTime createdAt) {
+        this.userId = userId;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.status = status;
+        this.role = role;
+        this.provider = provider;
+        this.providerId = providerId;
+        this.createdAt = createdAt;
+    }
+
     // Getters and Setters
+
     public Integer getUserId() {
         return userId;
     }
@@ -108,4 +131,13 @@ public class User {
     public void setProviderId(String providerId) {
         this.providerId = providerId;
     }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+    
 }

@@ -1,27 +1,28 @@
 package vn.edu.nlu.fit.auction.mapper;
 
-import vn.edu.nlu.fit.auction.dto.response.UserLoginResponse;
-import vn.edu.nlu.fit.auction.dto.response.UserResponse;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
+import vn.edu.nlu.fit.auction.dto.request.RegisterSellerRequest;
+import vn.edu.nlu.fit.auction.dto.request.RegisterUserRequest;
+import vn.edu.nlu.fit.auction.dto.request.UpdateUserRequest;
 import vn.edu.nlu.fit.auction.entity.User;
 
-public class UserMapper {
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface UserMapper {
 
-    public static UserLoginResponse toLoginResponse(User user) {
-        return new UserLoginResponse(
-                user.getUserId(),
-                user.getUsername(),
-                user.getEmail()
-        );
-    }
+    // USER REGISTER
+    User toRegisterUser(RegisterUserRequest req);
 
-    public static UserResponse toResponse(User user) {
-        return new UserResponse(
-                user.getUserId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getStatus(),
-                user.getRole(),
-                user.getProvider()
-        );
-    }
+    // SELLER REGISTER
+    @Mapping(source = "companyName", target = "username")
+    User toRegisterSeller(RegisterSellerRequest req);
+
+    // update user từ request
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateUser(@MappingTarget User user, UpdateUserRequest request);
+    
 }

@@ -1,5 +1,7 @@
 package vn.edu.nlu.fit.auction.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 @Entity
 @Table(name = "watchlists")
@@ -10,19 +12,37 @@ public class Watchlist {
     @Column(name = "watch_id")
     private Integer watchId;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "auction_id", nullable = false)
+    private Auction auction;
 
-    //Constructor
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    // ================== AUTO TIME ==================
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Constructor
+
     public Watchlist() {
     }
 
-    //Getters and Setters
+    public Watchlist(Integer watchId, User user, Auction auction, LocalDateTime createdAt) {
+        this.watchId = watchId;
+        this.user = user;
+        this.auction = auction;
+        this.createdAt = createdAt;
+    }
+
+    // Getters and Setters
+
     public Integer getWatchId() {
         return watchId;
     }
@@ -39,11 +59,20 @@ public class Watchlist {
         this.user = user;
     }
 
-    public Product getProduct() {
-        return product;
+    public Auction getAuction() {
+        return auction;
     }
 
-    public void setProduct(Product product) {
-        this.product = product;
+    public void setAuction(Auction auction) {
+        this.auction = auction;
     }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    } 
+
 }
