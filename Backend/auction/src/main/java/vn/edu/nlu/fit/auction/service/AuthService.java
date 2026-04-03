@@ -123,6 +123,10 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
 
+        // check status cua user
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new RuntimeException("Tài khoản đã bị khóa");
+        }
         // check password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Sai mật khẩu");

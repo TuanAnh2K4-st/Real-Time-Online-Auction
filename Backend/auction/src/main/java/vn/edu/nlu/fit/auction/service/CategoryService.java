@@ -2,7 +2,6 @@ package vn.edu.nlu.fit.auction.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.CategoryRequest;
@@ -15,11 +14,9 @@ import vn.edu.nlu.fit.auction.repository.CategoryRepository;
 @RequiredArgsConstructor
 public class CategoryService {
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private CategoryMapper mapper;
+    private final CategoryMapper mapper;
 
     // USER
 
