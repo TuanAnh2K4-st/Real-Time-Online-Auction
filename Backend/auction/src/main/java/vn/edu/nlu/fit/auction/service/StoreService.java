@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.CreateStoreRequest;
+import vn.edu.nlu.fit.auction.dto.request.UpdateStoreRequest;
 import vn.edu.nlu.fit.auction.dto.response.StoreResponse;
 import vn.edu.nlu.fit.auction.entity.Address;
 import vn.edu.nlu.fit.auction.entity.Province;
@@ -61,6 +62,23 @@ public class StoreService {
 
         // Map sang response
         return storeMapper.toResponse(store);
+    }
+
+    // Chinh sửa store (chỉ update tên và trạng thái, không update address)
+    public Store updateStoreStatus(Integer storeId, UpdateStoreRequest request) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("Store not found with id: " + storeId));
+
+        store.setStoreStatus(request.getStoreStatus()); // set enum trực tiếp
+        return storeRepository.save(store);
+    }
+
+    // Lấy danh sách store theo trạng thái
+    public List<StoreResponse> getListStoresByStatus(StoreStatus status) {
+        return storeRepository.findByStoreStatus(status)  // dùng repository query
+                          .stream()
+                          .map(storeMapper::toResponse)
+                          .collect(Collectors.toList());
     }
     
 }
