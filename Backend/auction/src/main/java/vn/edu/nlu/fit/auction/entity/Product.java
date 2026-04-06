@@ -3,7 +3,6 @@ package vn.edu.nlu.fit.auction.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import jakarta.persistence.*;
 import vn.edu.nlu.fit.auction.enums.ProductCondition;
 
@@ -80,8 +79,6 @@ public class Product {
         this.images = images;
     }
 
-    // Getters and Setters
-
     public Integer getProductId() {
         return productId;
     }
@@ -130,11 +127,11 @@ public class Product {
         this.origin = origin;
     }
 
-    public ProductCondition getCondition() {
+    public ProductCondition getProductCondition() {
         return productCondition;
     }
 
-    public void setCondition(ProductCondition productCondition) {
+    public void setProductCondition(ProductCondition productCondition) {
         this.productCondition = productCondition;
     }
 
@@ -177,5 +174,9 @@ public class Product {
     public void setImages(List<ProductImage> images) {
         this.images = images;
     }
+
+    // Getters and Setters
+
+    
 
 }
