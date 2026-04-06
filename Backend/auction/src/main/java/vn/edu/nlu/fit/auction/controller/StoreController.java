@@ -18,7 +18,8 @@ public class StoreController {
     
     @GetMapping("/list-stores/active")
     public ApiResponse<List<StoreResponse>> getActiveStores() {
-        return new ApiResponse<>("Lấy danh sách stores thành công", storeService.getActiveStores());
+        List<StoreResponse> activeStores = storeService.getActiveStores();
+        return new ApiResponse<>("Lấy danh sách stores thành công", activeStores);
     }
     
 }

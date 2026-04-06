@@ -5,10 +5,9 @@ import lombok.Data;
 @Data
 public class CreateStoreRequest {
 
-    private String storeName;      
-    private Integer storeStatus;
+    private String storeName;
 
     // address info
-    private AddressRequest address; 
+    private CreateAddressRequest address; 
 
 }
