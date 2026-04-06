@@ -28,27 +28,28 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ❌ disable CSRF (API stateless)
+            // disable CSRF (API stateless)
             .csrf(csrf -> csrf.disable())
 
-            // ❌ không dùng session
+            // không dùng session
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ✅ phân quyền
+            // phân quyền
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll() // login, register
+                .requestMatchers("/api/stores/**").permitAll() // public API
                 .anyRequest().authenticated()
             )
 
-            // ❌ disable login form mặc định
+            // disable login form mặc định
             .formLogin(form -> form.disable())
 
-            // ❌ disable basic auth
+            // disable basic auth
             .httpBasic(basic -> basic.disable())
 
-            // 🔥 ADD JWT FILTER (QUAN TRỌNG NHẤT)
+            // ADD JWT FILTER (QUAN TRỌNG NHẤT)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
