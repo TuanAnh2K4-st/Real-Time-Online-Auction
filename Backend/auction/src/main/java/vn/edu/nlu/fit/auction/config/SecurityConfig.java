@@ -28,7 +28,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // disable CSRF (API stateless)
+            .cors(cors -> {})
+
             .csrf(csrf -> csrf.disable())
 
             // không dùng session
