@@ -24,4 +24,7 @@ public class CreateProductRequest {
     @Positive(message = "Giá phải lớn hơn 0") 
     private BigDecimal basePrice;
 
+    @NotNull(message = "Store không được null")
+    private Integer storeId ;
+
 }

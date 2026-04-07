@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.UpdateProfileRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.ProfileResponse;
-import vn.edu.nlu.fit.auction.service.JwtService;
+import vn.edu.nlu.fit.auction.security.JwtService;
 import vn.edu.nlu.fit.auction.service.ProfileService;
 
 @RestController

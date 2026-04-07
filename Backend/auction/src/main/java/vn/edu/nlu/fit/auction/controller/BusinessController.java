@@ -15,7 +15,7 @@ import vn.edu.nlu.fit.auction.dto.request.UpdateBusinessRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.BusinessResponse;
 import vn.edu.nlu.fit.auction.service.BusinessService;
-import vn.edu.nlu.fit.auction.service.JwtService;
+import vn.edu.nlu.fit.auction.security.JwtService;
 
 @RestController
 @RequestMapping("/api/business")

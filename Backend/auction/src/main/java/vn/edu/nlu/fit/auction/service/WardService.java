@@ -1,8 +1,8 @@
 package vn.edu.nlu.fit.auction.service;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.WardRequest;
 import vn.edu.nlu.fit.auction.dto.response.WardResponse;
 import vn.edu.nlu.fit.auction.entity.Province;
@@ -12,16 +12,12 @@ import vn.edu.nlu.fit.auction.repository.ProvinceRepository;
 import vn.edu.nlu.fit.auction.repository.WardRepository;
 
 @Service
+@RequiredArgsConstructor
 public class WardService {
     
-    @Autowired
-    private WardRepository wardRepository;
-
-    @Autowired
-    private ProvinceRepository provinceRepository;
-
-    @Autowired
-    private WardMapper wardMapper;
+    private final WardRepository wardRepository;
+    private final ProvinceRepository provinceRepository;
+    private final WardMapper wardMapper;
 
     // CREATE
     public WardResponse create(WardRequest request) {

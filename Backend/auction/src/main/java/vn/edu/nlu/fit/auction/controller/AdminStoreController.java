@@ -51,6 +51,4 @@ public class AdminStoreController {
         return ResponseEntity.ok(new ApiResponse<>("Cập nhật trạng thái store thành công", storeMapper.toResponse(store)));
     }
 
-
-
 }
