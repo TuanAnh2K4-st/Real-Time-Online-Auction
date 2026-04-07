@@ -5,4 +5,5 @@ import vn.edu.nlu.fit.auction.entity.Product;
 
 public interface ProductRepository extends JpaRepository<Product, Integer> {
     
+    
 }

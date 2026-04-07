@@ -1,11 +1,9 @@
 package vn.edu.nlu.fit.auction.service;
 
 import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.LoginRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterSellerRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterUserRequest;
@@ -23,30 +21,19 @@ import vn.edu.nlu.fit.auction.repository.AuctionRoomRepository;
 import vn.edu.nlu.fit.auction.repository.BusinessRepository;
 import vn.edu.nlu.fit.auction.repository.ProfileRepository;
 import vn.edu.nlu.fit.auction.repository.UserRepository;
+import vn.edu.nlu.fit.auction.security.JwtService;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired
-    private JwtService jwtService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private ProfileRepository profileRepository;
-
-    @Autowired
-    private BusinessRepository businessRepository;
-
-    @Autowired
-    private AuctionRoomRepository auctionRoomRepository;
-
-    @Autowired
-    private UserMapper userMapper;
-
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
+    private final BusinessRepository businessRepository;
+    private final AuctionRoomRepository auctionRoomRepository;
+    private final UserMapper userMapper;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     // REGISTER USER
     public void registerUser(RegisterUserRequest request) {
@@ -137,6 +124,7 @@ public class AuthService {
 
         return new LoginResponse(
                 token,
+                user.getUsername(),
                 user.getUserId(),
                 user.getRole().name()
         );

@@ -15,7 +15,6 @@ import vn.edu.nlu.fit.auction.repository.CategoryRepository;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
-
     private final CategoryMapper mapper;
 
     // USER

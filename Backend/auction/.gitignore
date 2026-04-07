@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+# ENV (không commit file môi trường)
+.env
+.env.*

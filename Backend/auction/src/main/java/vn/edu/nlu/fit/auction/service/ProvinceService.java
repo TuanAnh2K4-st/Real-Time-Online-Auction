@@ -1,8 +1,8 @@
 package vn.edu.nlu.fit.auction.service;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.ProvinceRequest;
 import vn.edu.nlu.fit.auction.dto.response.ProvinceResponse;
 import vn.edu.nlu.fit.auction.entity.Province;
@@ -10,13 +10,11 @@ import vn.edu.nlu.fit.auction.mapper.ProvinceMapper;
 import vn.edu.nlu.fit.auction.repository.ProvinceRepository;
 
 @Service
+@RequiredArgsConstructor
 public class ProvinceService {
     
-    @Autowired
-    private ProvinceRepository provinceRepository;
-
-    @Autowired
-    private ProvinceMapper provinceMapper;
+    private final ProvinceRepository provinceRepository;
+    private final ProvinceMapper provinceMapper;
 
     // CREATE
     public ProvinceResponse create(ProvinceRequest request) {
