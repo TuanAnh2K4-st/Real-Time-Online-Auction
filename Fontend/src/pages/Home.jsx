@@ -1,37 +1,13 @@
-import { useEffect, useState } from "react";
-import { getUser, logout } from "../utils/auth";
-import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
 
-function Home() {
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const u = getUser();
-    setUser(u);
-  }, []);
-
+export default function Home() {
   return (
     <div>
-      <h1>🏠 Home</h1>
+      <Header />
 
-      {user?.username ? (
-        <>
-          <h2>Welcome {user.username} 👋</h2>
-          <button onClick={() => {
-            logout();
-            setUser(null);
-          }}>
-            Logout
-          </button>
-        </>
-      ) : (
-        <button onClick={() => navigate("/login")}>
-          Đăng nhập
-        </button>
-      )}
+      <h2>Trang chủ</h2>
+
+      <p>Đây là trang đấu giá</p>
     </div>
   );
 }
-
-export default Home;
