@@ -9,9 +9,6 @@ import vn.edu.nlu.fit.auction.dto.request.RegisterUserRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.LoginResponse;
 import vn.edu.nlu.fit.auction.dto.response.UserResponse;
-import vn.edu.nlu.fit.auction.entity.User;
-import vn.edu.nlu.fit.auction.repository.UserRepository;
-import vn.edu.nlu.fit.auction.security.JwtService;
 import vn.edu.nlu.fit.auction.service.AuthService;
 
 @RequiredArgsConstructor
@@ -20,8 +17,6 @@ import vn.edu.nlu.fit.auction.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
-    private final UserRepository userRepository;
-    private final JwtService jwtService;
 
     // REGISTER SELLER
     @PostMapping("/register-seller")
@@ -64,5 +59,5 @@ public class AuthController {
 
         return ResponseEntity.ok(userResponse);
     }
-    
+
 }
