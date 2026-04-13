@@ -3,6 +3,7 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Home from "../pages/Home";
 import OAuth2Success from "../pages/OAuth2Success";
+import Profile from "../pages/Profile";
 
 export default function AppRoutes() {
   return (
@@ -12,6 +13,7 @@ export default function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/oauth2/success" element={<OAuth2Success />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );
