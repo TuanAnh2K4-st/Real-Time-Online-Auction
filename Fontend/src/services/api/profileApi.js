@@ -1,12 +1,29 @@
-import axios from "axios";
+import axiosClient from "../axiosClient";
 
-const API_URL = "http://localhost:8080/api/profile";
+// PROFILE
+export const getMyProfile = () => {
+  return axiosClient.get("/profile/me");
+};
 
-// Lấy profile của user hiện tại
-export const getMyProfile = async (token) => {
-  return axios.get(`${API_URL}/me`, {
+export const updateProfile = (data) => {
+  return axiosClient.put("/profile/update", data);
+};
+
+export const updateAvatar = (file) => {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  return axiosClient.put("/profile/avatar", formData, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data",
     },
   });
+};
+
+// ADDRESS
+export const getProvinces = () => {
+  return axiosClient.get("/provinces/all");
+};
+export const getWardsByProvince = (provinceId) => {
+  return axiosClient.get(`/wards/all-to-province/${provinceId}`);
 };

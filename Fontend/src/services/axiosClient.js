@@ -7,7 +7,7 @@ const axiosClient = axios.create({
   },
 });
 
-// Request interceptor (gửi đi)
+// Gắn token tự động
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -16,10 +16,10 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor (nhận về)
+// Chuẩn hóa response
 axiosClient.interceptors.response.use(
   (response) => {
-    return response.data; // { message, data }
+    return response.data; // ⚠️ QUAN TRỌNG
   },
   (error) => {
     return Promise.reject(error.response?.data);

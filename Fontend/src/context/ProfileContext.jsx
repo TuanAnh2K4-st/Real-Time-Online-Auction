@@ -7,30 +7,17 @@ export const ProfileProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
 
   const loadProfile = async () => {
-    const token = localStorage.getItem("token");
-
-    // ❗ Không có token → không gọi API
-    if (!token) {
-      console.warn("Không có token → bỏ qua load profile");
-      return;
-    }
-
     try {
-      const res = await getMyProfile(token);
-      setProfile(res.data.data);
+      const res = await getMyProfile();
+      setProfile(res.data);
     } catch (err) {
       console.error("Lỗi load profile", err);
-
-      // ❗ Nếu token hết hạn → logout luôn
-      if (err.response?.status === 401) {
-        localStorage.removeItem("token");
-        setProfile(null);
-      }
+      setProfile(null);
     }
   };
 
   return (
-    <ProfileContext.Provider value={{ profile, loadProfile }}>
+    <ProfileContext.Provider value={{ profile, setProfile, loadProfile }}>
       {children}
     </ProfileContext.Provider>
   );
