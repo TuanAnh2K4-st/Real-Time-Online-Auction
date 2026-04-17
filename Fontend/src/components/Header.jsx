@@ -18,6 +18,17 @@ export default function Header() {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const handleNavigateProfile = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    const isSeller = user.role?.includes("SELLER");
+
+    navigate(isSeller ? "/business" : "/profile");
+  };
+
   return (
     <div className="bg-gray-50 font-sans">
       
@@ -134,18 +145,17 @@ export default function Header() {
               {/* Icon Profile */}
                <button 
                 type="button"
-                onClick={() => {
-                  if (user) {
-                    navigate("/profile");
-                  } else {
-                    navigate("/login");
-                  }
-                }}
+                onClick={handleNavigateProfile}
                 className="flex items-center gap-2 p-1.5 ml-1 rounded-full hover:bg-gray-100 transition-colors focus:outline-none border border-transparent"
               >
                 <UserCircle size={30} className="text-gray-600" />
+                
                 <span className="hidden md:block text-sm font-semibold text-gray-700 pr-1">
-                  {user ? (user.username || user.email) : "Tài khoản"}
+                  {!user
+                    ? "Tài khoản"
+                    : user.role?.includes("SELLER")
+                      ? "Cửa hàng"
+                      : (user.username || user.email)}
                 </span>
               </button>
             </div>

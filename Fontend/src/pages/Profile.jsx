@@ -254,7 +254,6 @@ export default function Profile() {
       </div>
 
       {/* ===== MODAL EDIT ===== */}
-      {/* ===== MODAL EDIT ===== */}
       {isEdit && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">

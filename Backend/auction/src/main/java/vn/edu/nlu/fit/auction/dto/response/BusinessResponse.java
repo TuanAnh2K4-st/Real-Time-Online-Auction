@@ -10,7 +10,7 @@ public class BusinessResponse {
     private String taxCode;
     private String bio;
 
-    private String avatarUrl;
+    private String logoUrl;
 
     private String street;
     private String provinceName;
