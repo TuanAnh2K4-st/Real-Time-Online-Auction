@@ -32,3 +32,27 @@ export const getWardsByProvince = (provinceId) => {
 export const changePassword = (data) => {
   return axiosClient.put("/auth/change-password", data);
 };
+
+// CreateProduct
+export const createProduct = (data) => {
+  return axiosClient.post("/products/create", data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+// lấy category cha
+export const getRootCategories = () => {
+  return axiosClient.get("/categories/root");
+};
+
+// lấy category con theo parent
+export const getChildCategories = (parentId) => {
+  return axiosClient.get(`/categories/parent/${parentId}`);
+};
+
+// lấy store theo provide
+export const getStoresByProvince = (provinceId) => {
+  return axiosClient.get(`/stores/by-province/${provinceId}`);
+};

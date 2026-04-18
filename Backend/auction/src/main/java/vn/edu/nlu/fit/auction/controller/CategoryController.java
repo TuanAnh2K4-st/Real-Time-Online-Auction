@@ -13,19 +13,20 @@ import vn.edu.nlu.fit.auction.service.CategoryService;
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
-public class HomeCategoryController {
+public class CategoryController {
 
     private final CategoryService categoryService;
-
-    // menu chính
+    
+    // danh sách category cha
     @GetMapping("/root")
     public List<CategoryResponse> getRoot() {
-        return categoryService.getRootCategories();
+        return categoryService.getAllRootForAdmin();
     }
 
-    // hover -> load category con
-    @GetMapping("/{parentId}/children")
-    public List<CategoryResponse> getChildren(@PathVariable Integer parentId) {
-        return categoryService.getByParent(parentId);
+    // danh sách theo parent
+    @GetMapping("/parent/{parentId}")
+    public List<CategoryResponse> getByParent(@PathVariable Integer parentId) {
+        return categoryService.getByParentForAdmin(parentId);
     }
+
 }

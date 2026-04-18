@@ -29,6 +29,7 @@ export default function ProfileLayout() {
   const menu = [
     { label: "Thông tin cá nhân", path: "/profile/me", icon: User },
     { label: "Đổi mật khẩu", path: "/profile/change-password", icon: Lock },
+    { label: "Sản phẩm của tôi", path: "/profile/my-products", icon: Lock },
     { label: "Đơn hàng", path: "/profile/orders", icon: Package },
     { label: "Đấu giá", path: "/profile/auctions", icon: Gavel },
   ];

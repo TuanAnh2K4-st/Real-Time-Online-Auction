@@ -1,11 +1,18 @@
 package vn.edu.nlu.fit.auction.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.CreateProductRequest;
-import vn.edu.nlu.fit.auction.dto.response.ProductResponse;
 import vn.edu.nlu.fit.auction.entity.Category;
 import vn.edu.nlu.fit.auction.entity.Product;
+import vn.edu.nlu.fit.auction.entity.ProductImage;
 import vn.edu.nlu.fit.auction.entity.Store;
 import vn.edu.nlu.fit.auction.entity.StoreItem;
 import vn.edu.nlu.fit.auction.entity.User;
@@ -20,45 +27,86 @@ import vn.edu.nlu.fit.auction.security.SecurityUtil;
 @Service
 @RequiredArgsConstructor
 public class ProductService {
-    
+
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
-    private final ProductMapper productMapper;
     private final StoreRepository storeRepository;
     private final StoreItemRepository storeItemRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductMapper productMapper;
+    private final CloudinaryService cloudinaryService;
     private final SecurityUtil securityUtil;
 
-    public ProductResponse create(CreateProductRequest req) {
+    @Transactional
+    public void createProduct(CreateProductRequest req) {
 
-        // Map request -> Product
-        Product product = productMapper.toEntity(req);
+        // ===== 1. Validate =====
+        if (req.getPrimaryImage() == null || req.getPrimaryImage().isEmpty()) {
+            throw new RuntimeException("Phải có ảnh chính");
+        }
 
-        // Set user
+        // ===== 2. Lấy user từ JWT =====
         User currentUser = securityUtil.getCurrentUser();
-        product.setUser(currentUser);
+        if (currentUser == null) {
+            throw new RuntimeException("Unauthorized");
+        }
 
-        // Set category
+        // ===== 3. Lấy category + store =====
         Category category = categoryRepository.findById(req.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category không tồn tại"));
-        product.setCategory(category);
-
-        // Save product
-        Product savedProduct = productRepository.save(product);
-
-        // TẠO STORE ITEM
-     
+                .orElseThrow(() -> new RuntimeException("Category not found"));
 
         Store store = storeRepository.findById(req.getStoreId())
-                .orElseThrow(() -> new RuntimeException("Store không tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Store not found"));
 
+        // ===== 4. Tạo product từ mapper =====
+        Product product = productMapper.toEntity(req);
+
+        product.setUser(currentUser);
+        product.setCategory(category);
+
+        // save để có ID
+        productRepository.save(product);
+
+        // ===== 5. Upload ảnh =====
+        List<ProductImage> images = new ArrayList<>();
+
+        // ảnh chính
+        Map<String, String> mainImg = cloudinaryService.uploadFile(req.getPrimaryImage());
+
+        ProductImage primary = new ProductImage();
+        primary.setProduct(product);
+        primary.setImageUrl(mainImg.get("url"));
+        primary.setImagePublicId(mainImg.get("publicId"));
+        primary.setIsPrimary(true);
+
+        images.add(primary);
+
+        // ảnh phụ
+        if (req.getSubImages() != null) {
+            for (MultipartFile file : req.getSubImages()) {
+
+                if (file == null || file.isEmpty()) continue;
+
+                Map<String, String> subImg = cloudinaryService.uploadFile(file);
+
+                ProductImage img = new ProductImage();
+                img.setProduct(product);
+                img.setImageUrl(subImg.get("url"));
+                img.setImagePublicId(subImg.get("publicId"));
+                img.setIsPrimary(false);
+
+                images.add(img);
+            }
+        }
+
+        // gán vào product để cascade save
+        product.setImages(images);
+
+        // ===== 6. Tạo StoreItem =====
         StoreItem storeItem = new StoreItem();
-        storeItem.setProduct(savedProduct);
+        storeItem.setProduct(product);
         storeItem.setStore(store);
         storeItem.setItemStatus(StoreItemStatus.PENDING);
-        storeItem.setConditionNote(null);
 
         storeItemRepository.save(storeItem);
-
-        return productMapper.toResponse(savedProduct);
     }
 }

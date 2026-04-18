@@ -40,15 +40,4 @@ public class AdminCategoryController {
         categoryService.delete(id);
     }
 
-    // danh sách category cha
-    @GetMapping("/root")
-    public List<CategoryResponse> getRoot() {
-        return categoryService.getAllRootForAdmin();
-    }
-
-    // danh sách theo parent
-    @GetMapping("/parent/{parentId}")
-    public List<CategoryResponse> getByParent(@PathVariable Integer parentId) {
-        return categoryService.getByParentForAdmin(parentId);
-    }
 }

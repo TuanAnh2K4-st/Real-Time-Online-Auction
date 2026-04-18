@@ -44,7 +44,9 @@ public class SecurityConfig {
             // phân quyền
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll() // login, register
-                .requestMatchers("/api/stores/**").permitAll() // public API
+                // public API
+                .requestMatchers("/api/stores/**").permitAll()
+                .requestMatchers("/api/categories/**").permitAll() 
                 .anyRequest().authenticated()
             )
 

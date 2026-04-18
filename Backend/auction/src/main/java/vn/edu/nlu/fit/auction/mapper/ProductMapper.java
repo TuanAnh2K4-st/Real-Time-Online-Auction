@@ -10,10 +10,10 @@ import vn.edu.nlu.fit.auction.entity.Product;
 public interface ProductMapper {
     
     @Mapping(target = "productId", ignore = true)
-    @Mapping(target = "user", ignore = true) // User sẽ được set trong service
-    @Mapping(target = "category", ignore = true) // Category sẽ được set trong service
-    @Mapping(target = "createdAt", ignore = true) // createdAt sẽ được set tự động  
-    @Mapping(target = "images", ignore = true) // Hình ảnh sẽ được xử lý riêng
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)  
+    @Mapping(target = "images", ignore = true)
     Product toEntity(CreateProductRequest request);
 
     @Mapping(source = "productId", target = "id")
