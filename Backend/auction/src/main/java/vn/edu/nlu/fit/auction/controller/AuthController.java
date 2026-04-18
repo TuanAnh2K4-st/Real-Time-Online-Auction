@@ -3,6 +3,7 @@ package vn.edu.nlu.fit.auction.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
+import vn.edu.nlu.fit.auction.dto.request.ChangePasswordRequest;
 import vn.edu.nlu.fit.auction.dto.request.LoginRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterSellerRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterUserRequest;
@@ -60,4 +61,18 @@ public class AuthController {
         return ResponseEntity.ok(userResponse);
     }
 
+    @PutMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody ChangePasswordRequest request
+    ) {
+        String token = authHeader.replace("Bearer ", "");
+
+        authService.changePassword(token, request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Đổi mật khẩu thành công", null)
+        );
+    }
+    
 }

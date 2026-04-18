@@ -3,15 +3,7 @@ import Header from "../../components/Header";
 import { useContext, useEffect, useRef, useState } from "react";
 import { BusinessContext } from "../../context/BusinessContext";
 import { updateLogo } from "../../services/api/businessApi";
-import {
-  Camera,
-  Building2,
-  Wallet,
-  Gavel,
-  Trophy,
-  Package,
-  Loader2
-} from "lucide-react";
+import { Camera, Building2, Wallet, Gavel, Trophy, Package, Loader2, Lock } from "lucide-react";
 
 export default function BusinessLayout() {
   const navigate = useNavigate();
@@ -28,6 +20,7 @@ export default function BusinessLayout() {
 
   const menu = [
     { label: "Thông tin doanh nghiệp", path: "/business/me", icon: Building2 },
+    { label: "Đổi mật khẩu", path: "/business/change-password", icon: Lock },
     { label: "Số dư", path: "/business/wallet", icon: Wallet },
     { label: "Đấu giá", path: "/business/auctions", icon: Gavel },
     { label: "Thành tích", path: "/business/achievements", icon: Trophy },

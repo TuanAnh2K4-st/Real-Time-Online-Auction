@@ -27,3 +27,8 @@ export const getProvinces = () => {
 export const getWardsByProvince = (provinceId) => {
   return axiosClient.get(`/wards/all-to-province/${provinceId}`);
 };
+
+// ChangePassWord
+export const changePassword = (data) => {
+  return axiosClient.put("/auth/change-password", data);
+};

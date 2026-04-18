@@ -4,7 +4,6 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Home from "../pages/Home";
 import OAuth2Success from "../pages/OAuth2Success";
-import Business from "../pages/Business";
 
 // PROFILE (nested)
 import ProfileLayout from "../pages/profile/ProfileLayout";

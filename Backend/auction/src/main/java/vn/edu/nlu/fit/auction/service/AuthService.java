@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import vn.edu.nlu.fit.auction.dto.request.ChangePasswordRequest;
 import vn.edu.nlu.fit.auction.dto.request.LoginRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterSellerRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterUserRequest;
@@ -148,6 +149,32 @@ public class AuthService {
                 user.getRole().name(),
                 user.getStatus().name()
         );
+    }
+
+    public void changePassword(String token, ChangePasswordRequest request) {
+
+        // 1. Lấy email từ token
+        String email = jwtService.extractEmail(token);
+
+        // 2. Lấy user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        // 3. Check mật khẩu cũ
+        if (!passwordEncoder.matches(request.getOldPass(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không đúng");
+        }
+
+        // 4. Check mật khẩu mới khác mật khẩu cũ
+        if (passwordEncoder.matches(request.getNewPass(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu mới không được trùng mật khẩu cũ");
+        }
+
+        // 5. Encode mật khẩu mới
+        user.setPassword(passwordEncoder.encode(request.getNewPass()));
+
+        // 6. Save lại
+        userRepository.save(user);
     }
     
 }
