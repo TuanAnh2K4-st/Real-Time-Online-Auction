@@ -26,7 +26,7 @@ export default function Header() {
 
     const isSeller = user.role?.includes("SELLER");
 
-    navigate(isSeller ? "/business" : "/profile");
+    navigate(isSeller ? "/business/me" : "/profile/me");
   };
 
   return (

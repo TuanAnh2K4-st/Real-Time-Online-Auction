@@ -1,5 +1,5 @@
 import { useEffect, useContext, useState } from "react";
-import { ProfileContext } from "../context/ProfileContext";
+import { ProfileContext } from "../../context/ProfileContext";
 import {
   Camera,
   Edit3,
@@ -13,14 +13,13 @@ import {
 } from "lucide-react";
 import {
   updateProfile,
-  updateAvatar,
   getProvinces,
   getWardsByProvince,
-} from "../services/api/profileApi";
-import Header from "../components/Header";
+} from "../../services/api/profileApi";
 
 export default function Profile() {
   const { profile, loadProfile, setProfile } = useContext(ProfileContext);
+  const [activeTab, setActiveTab] = useState("info");
 
   const [isEdit, setIsEdit] = useState(false);
   const [form, setForm] = useState({});
@@ -74,22 +73,6 @@ export default function Profile() {
     }
   };
 
-  // ===== AVATAR =====
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      const res = await updateAvatar(file);
-      setProfile({
-        ...profile,
-        avatarUrl: res.data,
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // ===== OPEN EDIT =====
   const openEdit = async () => {
     setForm(profile);
@@ -99,115 +82,38 @@ export default function Profile() {
       await loadWards(profile.provinceId);
     }
   };
-
   return (
-    <div className="min-h-screen bg-gray-50 pb-10">
-      <Header />
-
-      {/* HEADER */}
-      <div className="bg-white shadow-sm">
-        <div className="h-40 bg-gradient-to-r from-blue-700 to-blue-400"></div>
-
-        <div className="max-w-6xl mx-auto px-6 -mt-16 flex items-end gap-6 pb-6">
-
-          {/* AVATAR */}
-          <div className="relative">
-            <img
-              src={data.avatarUrl || "/default-avatar.png"}
-              className="w-32 h-32 rounded-full border-4 border-white object-cover shadow"
-            />
-
-            <button
-              onClick={() => document.getElementById("avatar").click()}
-              className="absolute bottom-1 right-1 bg-white p-2 rounded-full shadow hover:bg-gray-100"
-            >
-              <Camera size={16} />
-            </button>
-
-            <input type="file" hidden id="avatar" onChange={handleAvatarChange} />
-          </div>
-
-          {/* INFO */}
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {data.fullName}
-            </h1>
-
-            <p className="text-gray-500 mt-1">
-              {data.job || "Chưa cập nhật nghề nghiệp"}
-            </p>
-          </div>
-
-          <button
-            onClick={openEdit}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <Edit3 size={16} /> Chỉnh sửa
-          </button>
-        </div>
-      </div>
-
+    <div className="space-y-6">
       {/* CONTENT */}
-      <div className="max-w-6xl mx-auto px-6 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2">
 
-        {/* LEFT COLUMN */}
-        <div className="space-y-6">
-          
-          {/* BIO CARD */}
+          {/* BIO */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
               <User size={20} className="text-blue-600"/>
-              Giới thiệu
+                Giới thiệu
             </h2>
             <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
               {data.bio || "Thêm một vài điều về bản thân để hồ sơ của bạn trở nên thú vị hơn."}
             </p>
           </div>
-
-          {/* STATS CARD */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-bold text-gray-900 mb-5">Thống kê hoạt động</h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                    <Wallet size={20} />
-                  </div>
-                  <span className="text-emerald-900 font-medium">Số dư</span>
-                </div>
-                <b className="text-emerald-700 text-lg">
-                  {data.balance ? data.balance.toLocaleString('vi-VN') : 0} <span className="text-sm font-normal">VNĐ</span>
-                </b>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                    <Gavel size={20} />
-                  </div>
-                  <span className="text-blue-900 font-medium">Đang tham gia</span>
-                </div>
-                <b className="text-blue-700 text-lg">{data.activeBids || 0}</b>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-amber-50 rounded-xl border border-amber-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
-                    <Trophy size={20} />
-                  </div>
-                  <span className="text-amber-900 font-medium">Đã thắng</span>
-                </div>
-                <b className="text-amber-700 text-lg">{data.wonAuctions || 0}</b>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* RIGHT */}
+        {/* Info */}
         <div className="lg:col-span-2">
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 border-b pb-4">Thông tin chi tiết</h2>
+          <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)] border border-gray-100 relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full blur-2xl opacity-70"></div>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-gray-50 pb-6 relative z-10">
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight">Thông tin chi tiết</h2>
+              <button
+                onClick={openEdit}
+                className="group flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md active:scale-95"
+              >
+                <Edit3 size={16} className="group-hover:-rotate-12 transition-transform" /> Chỉnh sửa hồ sơ
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
@@ -247,7 +153,6 @@ export default function Profile() {
                   {data.wardName ? `${data.wardName}, ` : ""}
                   {data.provinceName ? data.provinceName : "Chưa cập nhật"}
                 </p>
-              </div>
             </div>
           </div>
         </div>
