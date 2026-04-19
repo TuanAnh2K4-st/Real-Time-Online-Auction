@@ -56,3 +56,8 @@ export const getChildCategories = (parentId) => {
 export const getStoresByProvince = (provinceId) => {
   return axiosClient.get(`/stores/by-province/${provinceId}`);
 };
+
+// Danh sách sản phẩm theo Filter
+export const filterProducts = (data) => {
+  return axiosClient.post("/products/filter", data);
+};

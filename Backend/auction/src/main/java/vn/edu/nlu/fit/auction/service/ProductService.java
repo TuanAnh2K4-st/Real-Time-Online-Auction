@@ -10,6 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.CreateProductRequest;
+import vn.edu.nlu.fit.auction.dto.request.FilterProduct;
+import vn.edu.nlu.fit.auction.dto.response.ProductResponse;
 import vn.edu.nlu.fit.auction.entity.Category;
 import vn.edu.nlu.fit.auction.entity.Product;
 import vn.edu.nlu.fit.auction.entity.ProductImage;
@@ -109,4 +111,29 @@ public class ProductService {
 
         storeItemRepository.save(storeItem);
     }
+
+    // Lọc sản phẩm theo Filter Search và StoreItemStatus
+    public List<ProductResponse> filterProducts(FilterProduct filter) {
+
+        // ===== 1. Lấy user từ JWT =====
+        User currentUser = securityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        Integer userId = currentUser.getUserId();
+
+        // ===== 2. Lấy filter =====
+        String name = filter.getProductName();
+        StoreItemStatus status = filter.getItemStatus();
+
+        // ===== 3. Xử lý ALL =====
+        if (status != null && status.name().equals("ALL")) {
+            status = null;
+        }
+
+        // ===== 4. Gọi repository =====
+        return productRepository.filterProducts(userId, name, status);
+    }
+    
 }

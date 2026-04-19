@@ -4,7 +4,8 @@ import {
   getChildCategories,
   createProduct,
   getProvinces,
-  getStoresByProvince
+  getStoresByProvince,
+  filterProducts
 } from "../../services/api/profileApi";
 
 import { Plus } from "lucide-react";
@@ -12,19 +13,25 @@ import { Plus } from "lucide-react";
 export default function MyProduct() {
 
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // ================= CATEGORY =================
+  // ===== FILTER =====
+  const [products, setProducts] = useState([]);
+  const [keyword, setKeyword] = useState("");
+  const [status, setStatus] = useState("ALL");
+
+  // CATEGORY
   const [rootCategories, setRootCategories] = useState([]);
   const [childCategories, setChildCategories] = useState([]);
   const [selectedRoot, setSelectedRoot] = useState("");
   const [selectedChild, setSelectedChild] = useState("");
 
-  // ================= PROVINCE + STORE =================
+  // PROVINCE + STORE
   const [provinces, setProvinces] = useState([]);
   const [stores, setStores] = useState([]);
   const [selectedProvince, setSelectedProvince] = useState("");
 
-  // ================= FORM =================
+  // FORM
   const [form, setForm] = useState({
     productName: "",
     brand: "",
@@ -35,53 +42,66 @@ export default function MyProduct() {
     storeId: "",
   });
 
-  // ================= ATTRIBUTES =================
   const [attributes, setAttributes] = useState({});
 
-  // ================= IMAGE =================
+  // IMAGES
   const [primaryImage, setPrimaryImage] = useState(null);
   const [subImages, setSubImages] = useState([]);
 
-  // demo attributes
   const attributeMap = {
     Laptop: ["cpu", "ram", "storage"],
     Phone: ["screen", "battery"],
   };
 
-  // ================= LOAD ROOT CATEGORY =================
+  // ================= LOAD =================
   useEffect(() => {
-    const fetch = async () => {
-      const res = await getRootCategories();
-      const data = Array.isArray(res) ? res : res.data || [];
-      setRootCategories(data);
-    };
-    fetch();
+    getRootCategories().then(res => {
+      setRootCategories(Array.isArray(res) ? res : res.data || []);
+    });
+
+    getProvinces().then(res =>
+      setProvinces(res.data || [])
+    );
+
+    handleFilter();
   }, []);
 
-  // ================= LOAD PROVINCES =================
+  // ================= FILTER =================
+  const handleFilter = async () => {
+    try {
+      const res = await filterProducts({
+        productName: keyword || null,
+        itemStatus: status === "ALL" ? null : status
+      });
+
+      setProducts(res.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    const fetch = async () => {
-      const res = await getProvinces();
-      const data = Array.isArray(res) ? res : res.data || [];
-      setProvinces(data);
-    };
-    fetch();
-  }, []);
+    const delay = setTimeout(() => {
+      handleFilter();
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [keyword, status]);
 
   // ================= CATEGORY =================
   const handleRootChange = async (e) => {
-    const parentId = e.target.value;
+    const id = e.target.value;
 
-    setSelectedRoot(parentId);
+    setSelectedRoot(id);
     setSelectedChild("");
-    setAttributes({});
     setChildCategories([]);
+    setAttributes({});
 
-    if (!parentId) return;
+    if (!id) return;
 
-    const res = await getChildCategories(parentId);
-    const data = Array.isArray(res) ? res : res.data || [];
-    setChildCategories(data);
+    const res = await getChildCategories(id);
+
+    setChildCategories(Array.isArray(res) ? res : res.data || []);
   };
 
   const handleChildChange = (e) => {
@@ -89,20 +109,18 @@ export default function MyProduct() {
     setAttributes({});
   };
 
-  // ================= PROVINCE -> STORE =================
+  // ================= PROVINCE =================
   const handleProvinceChange = async (e) => {
-    const provinceId = e.target.value;
+    const id = e.target.value;
 
-    setSelectedProvince(provinceId);
+    setSelectedProvince(id);
     setStores([]);
-    setForm((prev) => ({ ...prev, storeId: "" }));
+    setForm(prev => ({ ...prev, storeId: "" }));
 
-    if (!provinceId) return;
+    if (!id) return;
 
-    const res = await getStoresByProvince(provinceId);
-    const data = Array.isArray(res) ? res : res.data || [];
-
-    setStores(data);
+    const res = await getStoresByProvince(id);
+    setStores(res.data || []);
   };
 
   // ================= FORM =================
@@ -111,55 +129,48 @@ export default function MyProduct() {
   };
 
   const handleAttributeChange = (key, value) => {
-    setAttributes((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setAttributes(prev => ({ ...prev, [key]: value }));
   };
 
-  const selectedCategory = childCategories.find(
-    (c) => c.id == selectedChild
-  );
-
+  const selectedCategory = childCategories.find(c => c.id == selectedChild);
   const fields = attributeMap[selectedCategory?.name] || [];
 
   // ================= IMAGE =================
   const handlePrimaryImage = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setPrimaryImage(file);
+    setPrimaryImage(e.target.files[0]);
   };
 
   const handleSubImages = (e) => {
     const files = Array.from(e.target.files);
-    setSubImages((prev) => [...prev, ...files]);
+
+    if (subImages.length + files.length > 5) {
+      alert("Tối đa 5 ảnh phụ");
+      return;
+    }
+
+    setSubImages(prev => [...prev, ...files]);
+  };
+
+  const removePrimaryImage = () => {
+    setPrimaryImage(null);
   };
 
   const removeSubImage = (index) => {
-    setSubImages((prev) => prev.filter((_, i) => i !== index));
+    setSubImages(prev => prev.filter((_, i) => i !== index));
   };
 
   // ================= SUBMIT =================
   const handleSubmit = async () => {
     try {
-      if (!primaryImage) {
-        alert("Phải chọn 1 ảnh chính");
-        return;
-      }
+      if (!primaryImage) return alert("Phải chọn ảnh chính");
+      if (!selectedChild) return alert("Phải chọn category");
+      if (!form.storeId) return alert("Phải chọn store");
 
-      if (!selectedChild) {
-        alert("Phải chọn category");
-        return;
-      }
-
-      if (!form.storeId) {
-        alert("Phải chọn store");
-        return;
-      }
+      setLoading(true);
 
       const formData = new FormData();
 
-      Object.keys(form).forEach((key) => {
+      Object.keys(form).forEach(key => {
         formData.append(key, form[key]);
       });
 
@@ -167,145 +178,191 @@ export default function MyProduct() {
       formData.append("attributesJson", JSON.stringify(attributes));
       formData.append("primaryImage", primaryImage);
 
-      subImages.forEach((img) => {
+      subImages.forEach(img => {
         formData.append("subImages", img);
       });
 
       await createProduct(formData);
 
-      alert("Tạo sản phẩm thành công!");
+      alert("Tạo thành công!");
 
-      // reset
+      handleFilter();
       setShowForm(false);
-      setForm({
-        productName: "",
-        brand: "",
-        origin: "",
-        productCondition: "NEW",
-        description: "",
-        basePrice: "",
-        storeId: "",
-      });
-      setAttributes({});
-      setPrimaryImage(null);
-      setSubImages([]);
 
     } catch (err) {
       console.error(err);
-      alert("Lỗi tạo sản phẩm");
+      alert("Lỗi tạo");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ================= UI =================
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+
+      {/* HEADER */}
+      <div className="flex justify-between mb-6">
         <h2 className="text-xl font-bold">Sản phẩm của tôi</h2>
 
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl"
+          className="bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2"
         >
           <Plus size={18} />
           Đăng sản phẩm
         </button>
       </div>
 
-      {showForm && (
-        <div className="bg-gray-50 p-6 rounded-xl space-y-4 border">
+      {/* FILTER */}
+      <div className="flex gap-3 mb-6">
+        <input
+          placeholder="Tìm sản phẩm..."
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          className="input w-1/3"
+        />
 
-          {/* BASIC */}
-          <input name="productName" placeholder="Tên sản phẩm" onChange={handleChange} className="input" />
-          <input name="brand" placeholder="Brand" onChange={handleChange} className="input" />
-          <input name="origin" placeholder="Origin" onChange={handleChange} className="input" />
-          <input name="basePrice" placeholder="Giá" onChange={handleChange} className="input" />
-
-          {/* CATEGORY */}
-          <select value={selectedRoot} onChange={handleRootChange} className="input">
-            <option value="">Chọn danh mục</option>
-            {rootCategories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-
-          <select value={selectedChild} onChange={handleChildChange} className="input">
-            <option value="">Chọn loại</option>
-            {childCategories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-
-          {/* PROVINCE */}
-          <select value={selectedProvince} onChange={handleProvinceChange} className="input">
-            <option value="">Chọn tỉnh</option>
-            {provinces.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-
-          {/* STORE */}
-          <select
-            value={form.storeId}
-            onChange={(e) => setForm({ ...form, storeId: e.target.value })}
-            className="input"
+        {["ALL", "APPROVED", "REJECTED"].map(s => (
+          <button
+            key={s}
+            onClick={() => setStatus(s)}
+            className={`px-3 py-2 rounded 
+              ${status === s ? "bg-blue-600 text-white" : "bg-gray-200"}`}
           >
-            <option value="">Chọn cửa hàng</option>
-            {stores.map((s) => (
-              <option key={s.storeId} value={s.storeId}>{s.storeName}</option>
-            ))}
-          </select>
+            {s}
+          </button>
+        ))}
+      </div>
 
-          {/* ATTRIBUTES */}
-          {fields.length > 0 && (
-            <div>
-              <p className="font-semibold mb-2">Thông số:</p>
-              {fields.map((field) => (
-                <input
-                  key={field}
-                  placeholder={field}
-                  onChange={(e) => handleAttributeChange(field, e.target.value)}
-                  className="input"
-                />
-              ))}
-            </div>
-          )}
+      {/* LIST */}
+      <div className="grid grid-cols-4 gap-4 mb-10">
+        {products.map(p => (
+          <div key={p.id} className="border rounded-xl p-3 shadow">
+            <img
+              src={p.imageUrl || "https://via.placeholder.com/150"}
+              className="w-full h-40 object-cover rounded"
+            />
 
-          {/* IMAGE */}
-          <div>
-            <label>Ảnh chính (1 ảnh):</label>
-            <input type="file" onChange={handlePrimaryImage} />
+            <h3 className="font-semibold mt-2">{p.productName}</h3>
+
+            <p className="text-red-500 font-bold">
+              {p.basePrice?.toLocaleString()} VND
+            </p>
+
+            <p className="text-sm text-gray-500">
+              {p.street}, {p.wardName}, {p.provinceName}
+            </p>
+
+            <p className="text-sm font-medium mt-1">
+              {p.itemStatus}
+            </p>
           </div>
+        ))}
+      </div>
 
-          <div>
-            <label>Ảnh phụ:</label>
-            <input type="file" multiple onChange={handleSubImages} />
+      {/* MODAL */}
+      {showForm && (
+        <div
+          className="fixed inset-0 bg-black/40 flex justify-center items-center z-50"
+          onClick={() => setShowForm(false)}
+        >
+          <div
+            className="bg-white w-[600px] max-h-[90vh] overflow-y-auto p-6 rounded-xl space-y-4 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
 
-            <div className="flex gap-2 mt-2 flex-wrap">
-              {subImages.map((img, index) => (
-                <div key={index} className="relative">
-                  <img
-                    src={URL.createObjectURL(img)}
-                    className="w-20 h-20 object-cover"
-                  />
-                  <button
-                    onClick={() => removeSubImage(index)}
-                    className="absolute top-0 right-0 bg-red-500 text-white text-xs"
-                  >
-                    x
-                  </button>
+            <button
+              onClick={() => setShowForm(false)}
+              className="absolute top-2 right-3 text-lg font-bold"
+            >
+              ✕
+            </button>
+
+            <h3 className="text-lg font-semibold">Đăng sản phẩm</h3>
+
+            <input name="productName" placeholder="Tên sản phẩm" onChange={handleChange} className="input" />
+            <input name="brand" placeholder="Brand" onChange={handleChange} className="input" />
+            <input name="origin" placeholder="Origin" onChange={handleChange} className="input" />
+
+            <select name="productCondition" value={form.productCondition} onChange={handleChange} className="input">
+              <option value="NEW">Mới</option>
+              <option value="USED">Đã sử dụng</option>
+            </select>
+
+            <textarea name="description" placeholder="Mô tả" onChange={handleChange} className="input" />
+
+            <input name="basePrice" placeholder="Giá" onChange={handleChange} className="input" />
+
+            <select value={selectedRoot} onChange={handleRootChange} className="input">
+              <option value="">Danh mục</option>
+              {rootCategories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+
+            <select value={selectedChild} onChange={handleChildChange} className="input">
+              <option value="">Loại</option>
+              {childCategories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+
+            <select value={selectedProvince} onChange={handleProvinceChange} className="input">
+              <option value="">Tỉnh</option>
+              {provinces.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+
+            <select
+              value={form.storeId}
+              onChange={(e) => setForm({ ...form, storeId: e.target.value })}
+              className="input"
+            >
+              <option value="">Cửa hàng</option>
+              {stores.map(s => (
+                <option key={s.storeId} value={s.storeId}>
+                  {s.storeName} - {s.street}, {s.wardName}, {s.provinceName}
+                </option>
+              ))}
+            </select>
+
+            {/* IMAGE */}
+            <div>
+              <p>Ảnh chính:</p>
+              <input type="file" onChange={handlePrimaryImage} />
+              {primaryImage && (
+                <div>
+                  <img src={URL.createObjectURL(primaryImage)} className="w-24" />
+                  <button onClick={removePrimaryImage}>X</button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <p>Ảnh phụ:</p>
+              <input type="file" multiple onChange={handleSubImages} />
+              {subImages.map((img, i) => (
+                <div key={i}>
+                  <img src={URL.createObjectURL(img)} className="w-20" />
+                  <button onClick={() => removeSubImage(i)}>X</button>
                 </div>
               ))}
             </div>
-          </div>
 
-          <button
-            onClick={handleSubmit}
-            className="bg-green-600 text-white px-4 py-2 rounded-xl"
-          >
-            Tạo sản phẩm
-          </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`p-2 rounded text-white 
+                ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600"}`}
+            >
+              {loading ? "Đang tạo..." : "Tạo sản phẩm"}
+            </button>
+
+          </div>
         </div>
       )}
+
     </div>
   );
 }
