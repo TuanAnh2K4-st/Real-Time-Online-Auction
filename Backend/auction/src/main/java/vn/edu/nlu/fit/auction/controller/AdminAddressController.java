@@ -17,26 +17,6 @@ import vn.edu.nlu.fit.auction.service.AddressService;
 @RequiredArgsConstructor
 public class AdminAddressController {
     
-    private final AddressService addressService;
-
-    // CREATE
     
-    @PostMapping
-    public Address create(@RequestBody AddressRequest request) {
-        return addressService.create(request);
-    }
-
-    // UPDATE
-    @PutMapping("/{id}")
-    public Address update(@PathVariable Integer id,
-                          @RequestBody AddressRequest request) {
-        return addressService.update(id, request);
-    }
-
-    // DELETE
-    @DeleteMapping("/{id}")
-    public String delete(@PathVariable Integer id) {
-        addressService.delete(id);
-        return "Deleted successfully";
-    }
+    
 }

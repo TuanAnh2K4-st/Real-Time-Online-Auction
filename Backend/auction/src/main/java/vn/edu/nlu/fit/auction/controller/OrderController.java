@@ -18,28 +18,6 @@ import vn.edu.nlu.fit.auction.service.OrderService;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderService orderService;
-
-    // GIỎ HÀNG
-    @GetMapping("/cart")
-    public ApiResponse<List<OrderResponse>> getCart(
-            @RequestParam Integer userId
-    ) {
-        return new ApiResponse<>(
-                "Lấy giỏ hàng thành công",
-                orderService.getCartOrders(userId)
-        );
-    }
-
-    // THEO DÕI ĐƠN
-    @GetMapping("/tracking")
-    public ApiResponse<List<OrderResponse>> getOrders(
-            @RequestParam Integer userId,
-            @RequestParam(required = false) List<OrderStatus> status
-    ) {
-        return new ApiResponse<>(
-                "Lấy danh sách đơn hàng thành công",
-                orderService.getOrders(userId, status)
-        );
-    }
+    
+        
 }

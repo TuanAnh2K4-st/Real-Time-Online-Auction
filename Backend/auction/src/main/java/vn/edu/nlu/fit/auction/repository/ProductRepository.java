@@ -6,12 +6,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import vn.edu.nlu.fit.auction.dto.response.ProductAuctionResponse;
 import vn.edu.nlu.fit.auction.dto.response.ProductResponse;
 import vn.edu.nlu.fit.auction.entity.Product;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
 
 public interface ProductRepository extends JpaRepository<Product, Integer> {
     
+    // Filter Search cua Profile User
      @Query("""
         SELECT new vn.edu.nlu.fit.auction.dto.response.ProductResponse(
             p.productId,
@@ -46,6 +48,28 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             @Param("userId") Integer userId,
             @Param("name") String name,
             @Param("status") StoreItemStatus status
+    );
+
+    @Query("""
+        SELECT new vn.edu.nlu.fit.auction.dto.response.ProductAuctionResponse(
+            p.productId,
+            p.productName,
+            p.createdAt,
+            si.itemStatus,
+            pi.imageUrl
+        )
+        FROM Product p
+        JOIN StoreItem si ON si.product = p
+        LEFT JOIN ProductImage pi 
+            ON pi.product = p AND pi.isPrimary = true
+
+        WHERE p.user.userId = :userId
+        AND si.itemStatus = vn.edu.nlu.fit.auction.enums.StoreItemStatus.APPROVED
+
+        ORDER BY p.createdAt DESC
+    """)
+    List<ProductAuctionResponse> getProductsForCreateAuction(
+            @Param("userId") Integer userId
     );
     
 }

@@ -11,7 +11,8 @@ import ProfileInfo from "../pages/profile/ProfileInfo";
 import ChangePassword from "../pages/profile/ChangePassword";
 import Orders from "../pages/profile/Orders";
 import Auctions from "../pages/profile/Auctions";
-import MyProduct from "../pages/profile/MyProduct"
+import MyProduct from "../pages/profile/MyProduct";
+import CreateAuctionNormal from "../pages/profile/CreateAuctionNormal";
 
 // BUSINESS (nested)
 import BusinessLayout from "../pages/business/BusinessLayout";
@@ -38,6 +39,7 @@ export default function AppRoutes() {
           <Route path="my-products" element={<MyProduct />} />
           <Route path="orders" element={<Orders />} />
           <Route path="auctions" element={<Auctions />} />
+          <Route path="create-auction-normal" element={<CreateAuctionNormal />} />
         </Route>
 
         {/* BUSINESS (NESTED) */}

@@ -32,6 +32,7 @@ export default function ProfileLayout() {
     { label: "Sản phẩm của tôi", path: "/profile/my-products", icon: Lock },
     { label: "Đơn hàng", path: "/profile/orders", icon: Package },
     { label: "Đấu giá", path: "/profile/auctions", icon: Gavel },
+    { label: "Tạo phiên đấu giá", path: "/profile/create-auction-normal", icon: Gavel },
   ];
 
   if (!profile)

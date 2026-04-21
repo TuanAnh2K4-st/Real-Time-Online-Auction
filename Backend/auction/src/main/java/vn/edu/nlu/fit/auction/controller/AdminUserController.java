@@ -23,39 +23,6 @@ import vn.edu.nlu.fit.auction.service.AdminUserService;
 @RequiredArgsConstructor
 public class AdminUserController {
 
-    private final AdminUserService adminUserService;
+    
 
-    // UPDATE USER
-    @PutMapping("update/{id}")
-    public User updateUser(
-            @PathVariable Integer id,
-            @RequestBody UpdateUserRequest request
-    ) {
-        return adminUserService.updateUser(id, request);
-    }
-
-    // ===== DELETE =====
-    @DeleteMapping("delete/{id}")
-    public String deleteUser(@PathVariable Integer id) {
-        adminUserService.deleteUser(id);
-        return "Deleted successfully";
-    }
-
-    // ===== SEARCH EMAIL =====
-    @GetMapping("search")
-    public List<User> searchByEmail(@RequestParam String email) {
-        return adminUserService.searchByEmail(email);
-    }
-
-    // ===== GET BY ROLE =====
-    @GetMapping("role")
-    public List<User> getByRole(@RequestParam UserRole role) {
-        return adminUserService.getByRole(role);
-    }
-
-    // ===== TOGGLE STATUS =====
-    @PatchMapping("toggle-status/{id}")
-    public User toggleStatus(@PathVariable Integer id) {
-        return adminUserService.toggleStatus(id);
-    }
 }
