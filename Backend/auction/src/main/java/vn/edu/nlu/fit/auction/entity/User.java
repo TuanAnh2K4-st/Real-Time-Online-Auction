@@ -24,6 +24,9 @@ public class User {
     @Column(name = "password", length = 150)
     private String password; 
 
+    @Column(name = "reputation_score", nullable = false)
+    private int reputationScore = 80; // Mặc định điểm uy tín là 80
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private UserStatus status;
@@ -46,6 +49,7 @@ public class User {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+
     }
 
     // Constructor
@@ -53,19 +57,20 @@ public class User {
     public User() {
     }
 
-    public User(Integer userId, String username, String email, String password, UserStatus status, UserRole role,
-            AuthProvider provider, String providerId, LocalDateTime createdAt) {
+    public User(Integer userId, String username, String email, String password, int reputationScore, UserStatus status,
+            UserRole role, AuthProvider provider, String providerId, LocalDateTime createdAt) {
         this.userId = userId;
         this.username = username;
         this.email = email;
         this.password = password;
+        this.reputationScore = reputationScore;
         this.status = status;
         this.role = role;
         this.provider = provider;
         this.providerId = providerId;
         this.createdAt = createdAt;
     }
-
+     
     // Getters and Setters
 
     public Integer getUserId() {
@@ -138,6 +143,14 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public int getReputationScore() {
+        return reputationScore;
+    }
+
+    public void setReputationScore(int reputationScore) {
+        this.reputationScore = reputationScore;
     }
     
 }

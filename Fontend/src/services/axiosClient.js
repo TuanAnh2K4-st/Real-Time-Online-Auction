@@ -19,7 +19,7 @@ axiosClient.interceptors.request.use((config) => {
 // Chuẩn hóa response
 axiosClient.interceptors.response.use(
   (response) => {
-    return response.data; // ⚠️ QUAN TRỌNG
+    return response.data;
   },
   (error) => {
     return Promise.reject(error.response?.data);

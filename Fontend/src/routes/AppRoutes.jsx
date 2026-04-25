@@ -18,10 +18,25 @@ import CreateAuctionNormal from "../pages/profile/CreateAuctionNormal";
 import BusinessLayout from "../pages/business/BusinessLayout";
 import BusinessInfo from "../pages/business/BusinessInfo";
 
+//Test
+import HomeTest from "../pages/Test/HomeTest2";
+import LoginTest from "../pages/Test/LoginTest";
+import RegisterTest from "../pages/Test/RegisterTest";
+import Legal from "../pages/Test/Legal";
+import Profile from "../pages/Test/Profile";
+
+
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* TEST */}
+        <Route path="/homeTest2" element={<HomeTest />} />
+        <Route path="/loginTest" element={<LoginTest />} />
+        <Route path="/registerTest" element={<RegisterTest />} />
+        <Route path="/legal" element={<Legal />} />
+        <Route path="/profileTest" element={<Profile />} />
+
         {/* PUBLIC */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
