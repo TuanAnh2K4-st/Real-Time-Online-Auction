@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,5 +53,14 @@ public class AuctionController {
     public ResponseEntity<ApiResponse<List<vn.edu.nlu.fit.auction.dto.response.AuctionResponse>>> getMyNormalAuctions() {
         List<vn.edu.nlu.fit.auction.dto.response.AuctionResponse> data = auctionService.getMyNormalAuctions();
         return ResponseEntity.ok(new ApiResponse<>("Lấy danh sách auction NORMAL của bạn thành công", data));
+    }
+
+    // ===== END AUCTION EARLY =====
+    @PatchMapping("/{auctionId}/end-early")
+    public ResponseEntity<ApiResponse<Void>> endAuctionEarly(
+            @PathVariable Integer auctionId
+    ) {
+        auctionService.endAuctionEarly(auctionId);
+        return ResponseEntity.ok(new ApiResponse<>("Kết thúc phiên đấu giá thành công", null));
     }
 }

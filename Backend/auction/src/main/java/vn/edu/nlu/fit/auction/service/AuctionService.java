@@ -94,6 +94,43 @@ public class AuctionService {
 
     }
 
+    // ===== END AUCTION EARLY =====
+    public void endAuctionEarly(Integer auctionId) {
+
+        // 1. Lấy user hiện tại
+        User currentUser = securityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        // 2. Tìm auction
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
+
+        // 3. Kiểm tra quyền sở hữu
+        if (!auction.getSeller().getUserId().equals(currentUser.getUserId())) {
+            throw new RuntimeException("Bạn không có quyền kết thúc phiên đấu giá này");
+        }
+
+        // 4. Kiểm tra trạng thái
+        if (auction.getAuctionStatus() != AuctionStatus.ACTIVE) {
+            throw new RuntimeException("Phiên đấu giá không đang hoạt động");
+        }
+
+        // 5. Cập nhật auction -> ENDED
+        auction.setAuctionStatus(AuctionStatus.ENDED);
+        auction.setEndTime(LocalDateTime.now());
+        auctionRepository.save(auction);
+
+        // 6. Cập nhật StoreItem -> APPROVED (có thể tạo lại auction sau)
+        StoreItem storeItem = storeItemRepository.findByProduct(auction.getProduct())
+                .orElse(null);
+        if (storeItem != null) {
+            storeItem.setItemStatus(StoreItemStatus.APPROVED);
+            storeItemRepository.save(storeItem);
+        }
+    }
+
     public List<AuctionResponse> getMyNormalAuctions() {
         User currentUser = securityUtil.getCurrentUser();
         if (currentUser == null) throw new RuntimeException("Unauthorized");
