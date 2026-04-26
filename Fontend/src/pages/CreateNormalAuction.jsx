@@ -27,6 +27,7 @@ import {
   getMyNormalAuctions,
   endAuctionEarlyApi,
 } from '../services/api/createNormalAuctionApi';
+import { connectWebSocket, disconnectWebSocket } from "../services/websocket";
 
 // ─────────────────────────────────────────
 // Utilities
@@ -631,6 +632,36 @@ const CreateNormalAuction = () => {
     fetchProducts();
     fetchMyAuctions();
   }, [fetchProducts, fetchMyAuctions]);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchMyAuctions();
+  }, [fetchProducts, fetchMyAuctions]);
+
+  useEffect(() => {
+    connectWebSocket((event) => {
+      console.log("WS Event:", event);
+
+      // xử lý khi auction kết thúc
+      if (event.type === "AUCTION_END") {
+        showToast("Một phiên đấu giá đã kết thúc!", "info");
+
+        // Cách 1: gọi lại API (đơn giản nhất)
+        fetchMyAuctions();
+
+        // Cách 2 (xịn hơn): update state trực tiếp
+        /*
+        setActiveAuctions((prev) =>
+          prev.filter((a) => a.auctionId !== event.auctionId)
+        );
+        */
+      }
+    });
+
+    return () => {
+      disconnectWebSocket();
+    };
+  }, [fetchMyAuctions, showToast]);
 
   const acceptedProducts = useMemo(
     () => productList.filter((p) => p.itemStatus === 'APPROVED'),

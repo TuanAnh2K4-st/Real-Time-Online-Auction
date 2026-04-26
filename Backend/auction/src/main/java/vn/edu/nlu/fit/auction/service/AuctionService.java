@@ -3,25 +3,33 @@ package vn.edu.nlu.fit.auction.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import vn.edu.nlu.fit.auction.dto.request.BidRequest;
 import vn.edu.nlu.fit.auction.dto.request.CreateNormalAuctionRequest;
 import vn.edu.nlu.fit.auction.entity.Auction;
+import vn.edu.nlu.fit.auction.entity.Bid;
 import vn.edu.nlu.fit.auction.entity.Product;
 import vn.edu.nlu.fit.auction.entity.StoreItem;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.enums.AuctionStatus;
 import vn.edu.nlu.fit.auction.enums.AuctionType;
+import vn.edu.nlu.fit.auction.enums.EventType;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
 import vn.edu.nlu.fit.auction.repository.AuctionRepository;
+import vn.edu.nlu.fit.auction.repository.BidRepository;
 import vn.edu.nlu.fit.auction.repository.ProductRepository;
 import vn.edu.nlu.fit.auction.repository.StoreItemRepository;
 import vn.edu.nlu.fit.auction.security.SecurityUtil;
 import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
+import vn.edu.nlu.fit.auction.dto.response.BidResponse;
 import vn.edu.nlu.fit.auction.entity.ProductImage;
 import java.util.stream.Collectors;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +39,8 @@ public class AuctionService {
     private final ProductRepository productRepository;
     private final StoreItemRepository storeItemRepository;
     private final SecurityUtil securityUtil;
+    private final BidRepository bidRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public void createNormalAuction(CreateNormalAuctionRequest request) {
 
@@ -160,5 +170,69 @@ public class AuctionService {
         }).collect(Collectors.toList());
 
         return result;
+    }
+
+    // ===== HELPER =====
+    private void sendError(Integer auctionId, String message) {
+
+        messagingTemplate.convertAndSend(
+            "/topic/auction/" + auctionId,
+            Map.of(
+                "type", "ERROR",
+                "message", message
+            )
+        );
+    }
+
+    // Đặt giá
+    @Transactional
+    public void placeBid(BidRequest request) {
+
+        User user = securityUtil.getCurrentUser();
+
+        Auction auction = auctionRepository.findByIdForUpdate(request.getAuctionId());
+
+        // ===== VALIDATE =====
+        if (auction.getAuctionStatus() != AuctionStatus.ACTIVE) {
+            sendError(auction.getAuctionId(), "Auction đã kết thúc");
+            return;
+        }
+
+        if (auction.getEndTime().isBefore(LocalDateTime.now())) {
+            sendError(auction.getAuctionId(), "Auction đã hết hạn");
+            return;
+        }
+
+        BigDecimal minBid = auction.getCurrentPrice().add(auction.getStepPrice());
+
+        if (request.getBidAmount().compareTo(minBid) < 0) {
+            sendError(auction.getAuctionId(), "Giá phải >= " + minBid);
+            return;
+        }
+
+        // ===== SAVE BID =====
+        Bid bid = new Bid();
+        bid.setAuction(auction);
+        bid.setBidder(user);
+        bid.setBidAmount(request.getBidAmount());
+        bidRepository.save(bid);
+
+        // ===== UPDATE AUCTION =====
+        auction.setCurrentPrice(request.getBidAmount());
+        auction.setWinningBid(bid);
+        auction.setWinner(user);
+        auctionRepository.save(auction);
+
+        // ===== RESPONSE =====
+        BidResponse res = new BidResponse();
+        res.setAuctionId(auction.getAuctionId());
+        res.setBidder(user.getUsername());
+        res.setPrice(request.getBidAmount());
+        res.setType(EventType.NEW_BID);
+
+        messagingTemplate.convertAndSend(
+            "/topic/auction/" + auction.getAuctionId(),
+            res
+        );
     }
 }
