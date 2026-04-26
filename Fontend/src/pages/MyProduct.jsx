@@ -1,64 +1,50 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { filterProducts, createProduct, getRootCategories, getChildCategories, getProvinces, getStoresByProvince } from '../services/api/profileApi';
 import { Camera, FileText, Gavel, ChevronRight, ChevronLeft, Info, CheckCircle2, Plus, X, 
   ShieldCheck, Package, MapPin, Store, UploadCloud, Clock, XCircle, Search, LayoutDashboard,
   AlertCircle, Zap, Settings, Sparkles, Filter
 } from 'lucide-react';
+import Header from '../components/Header';
 
-// --- CẤU HÌNH DỮ LIỆU ---
-const CATEGORIES = {
-  electronics: {
-    label: 'Điện tử',
-    subcategories: {
-      laptop: {
-        label: 'Laptop',
-        fields: [
-          { name: 'cpu', label: 'CPU', placeholder: 'ví dụ: Apple M3, i9-14900H', required: true },
-          { name: 'ram', label: 'RAM', placeholder: 'ví dụ: 16GB, 64GB', required: true },
-          { name: 'storage', label: 'Ổ cứng', placeholder: 'ví dụ: 1TB SSD', required: true }
-        ]
-      },
-      phone: {
-        label: 'Điện thoại',
-        fields: [
-          { name: 'screen', label: 'Màn hình', placeholder: 'ví dụ: 6.8 inch ProMotion', required: true },
-          { name: 'battery', label: 'Pin', placeholder: 'ví dụ: 4500mAh', required: true }
-        ]
-      }
-    }
+// Templates for subcategory technical fields (local templates)
+const SUBCATEGORY_TEMPLATES = {
+  laptop: {
+    label: 'Laptop',
+    fields: [
+      { name: 'cpu', label: 'CPU', placeholder: 'ví dụ: Apple M3, i9-14900H', required: true },
+      { name: 'ram', label: 'RAM', placeholder: 'ví dụ: 16GB, 64GB', required: true },
+      { name: 'storage', label: 'Ổ cứng', placeholder: 'ví dụ: 1TB SSD', required: true }
+    ]
   },
-  watch: {
-    label: 'Đồng hồ',
-    subcategories: {
-      mechanical: {
-        label: 'Đồng hồ cơ',
-        fields: [
-          { name: 'movement', label: 'Bộ máy', placeholder: 'ví dụ: Calibre 3235', required: true },
-          { name: 'caseSize', label: 'Kích thước', placeholder: 'ví dụ: 40mm', required: true }
-        ]
-      }
-    }
+  phone: {
+    label: 'Điện thoại',
+    fields: [
+      { name: 'screen', label: 'Màn hình', placeholder: 'ví dụ: 6.8 inch ProMotion', required: true },
+      { name: 'battery', label: 'Pin', placeholder: 'ví dụ: 4500mAh', required: true }
+    ]
+  },
+  mechanical: {
+    label: 'Đồng hồ cơ',
+    fields: [
+      { name: 'movement', label: 'Bộ máy', placeholder: 'ví dụ: Calibre 3235', required: true },
+      { name: 'caseSize', label: 'Kích thước', placeholder: 'ví dụ: 40mm', required: true }
+    ]
   }
 };
 
-const LOCATIONS = {
-  hanoi: { label: 'Hà Nội', stores: ['Chi nhánh Hoàn Kiếm', 'Chi nhánh Cầu Giấy', 'Trung tâm Đống Đa'] },
-  hcm: { label: 'TP. Hồ Chí Minh', stores: ['Chi nhánh Quận 1', 'Chi nhánh Quận 7', 'Showroom Tân Bình'] }
-};
-
-const INITIAL_TRACKING_DATA = [
-  { id: 'REG-9921', title: 'MacBook Pro M3 2024', status: 'processing', date: '20/10/2023', store: 'Chi nhánh Quận 1' },
-  { id: 'REG-8842', title: 'iPhone 15 Pro Max', status: 'accepted', date: '18/10/2023', store: 'Chi nhánh Cầu Giấy' },
-  { id: 'REG-7710', title: 'Rolex Submariner', status: 'rejected', date: '15/10/2023', store: 'Chi nhánh Hoàn Kiếm', reason: 'Thiếu giấy tờ bảo hành gốc' },
-  { id: 'REG-6655', title: 'iPad Pro M2', status: 'processing', date: '22/10/2023', store: 'Chi nhánh Quận 7' },
-  { id: 'REG-5544', title: 'Sony Alpha A7 IV', status: 'accepted', date: '25/10/2023', store: 'Showroom Tân Bình' }
-];
+// Use real API data — no local sample data
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('register');
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState('next'); 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [trackingList, setTrackingList] = useState(INITIAL_TRACKING_DATA);
+  const [trackingList, setTrackingList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [rootCategories, setRootCategories] = useState([]);
+  const [childCategories, setChildCategories] = useState([]);
+  const [provinces, setProvinces] = useState([]);
+  const [stores, setStores] = useState([]);
   const [errors, setErrors] = useState({});
   const [shake, setShake] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -68,25 +54,156 @@ const App = () => {
     title: '',
     category: '',
     subcategory: '',
+    price: '',
+    brand: '',
+    origin: '',
     specs: {},
     description: '',
+    productCondition: 'NEW',
     mainImage: null,
     subImages: [],
     city: '',
     selectedStore: ''
   });
 
-  const activeCategory = CATEGORIES[formData.category];
-  const activeSubcategory = activeCategory?.subcategories[formData.subcategory];
+  const rootCategory = rootCategories.find(c => String(c.id) === String(formData.category));
+  const activeChild = childCategories.find(c => String(c.id) === String(formData.subcategory));
+  // Find matching local template by subcategory name (lowercased)
+  const activeSubcategory = activeChild ? SUBCATEGORY_TEMPLATES[activeChild.name?.toLowerCase()] : null;
 
   // Lọc danh sách sản phẩm
   const filteredList = useMemo(() => {
+    const q = (searchTerm || '').toLowerCase();
     return trackingList.filter(item => {
-      const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-      const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || item.id.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = filterStatus === 'all' || item?.status === filterStatus;
+      const title = (item?.title || '').toString().toLowerCase();
+      const id = (item?.id !== undefined && item?.id !== null) ? String(item.id).toLowerCase() : '';
+      const matchesSearch = title.includes(q) || id.includes(q);
       return matchesStatus && matchesSearch;
     });
   }, [trackingList, filterStatus, searchTerm]);
+
+  // Load root categories and provinces on mount
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const [catsRes, provRes] = await Promise.all([getRootCategories(), getProvinces()]);
+        const cats = Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? catsRes) || [];
+        const provs = Array.isArray(provRes) ? provRes : (provRes?.data ?? provRes) || [];
+        if (mounted) {
+          setRootCategories(Array.isArray(cats) ? cats : []);
+          setProvinces(Array.isArray(provs) ? provs : []);
+        }
+      } catch (err) {
+        console.error('load root categories / provinces error', err);
+      }
+    };
+    load();
+    // also fetch products for the current user on mount
+    (async () => {
+      try { await fetchProducts(); } catch (_) {}
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Fetch child categories when category changes
+  useEffect(() => {
+    let mounted = true;
+    const loadChildren = async () => {
+      if (!formData.category) {
+        setChildCategories([]);
+        return;
+      }
+      try {
+        const res = await getChildCategories(formData.category);
+        const children = Array.isArray(res) ? res : (res?.data ?? res) || [];
+        if (mounted) setChildCategories(Array.isArray(children) ? children : []);
+      } catch (err) {
+        console.error('load child categories error', err);
+      }
+    };
+    loadChildren();
+    return () => { mounted = false; };
+  }, [formData.category]);
+
+  // Fetch stores when province (city) changes
+  useEffect(() => {
+    let mounted = true;
+    const loadStores = async () => {
+      if (!formData.city) {
+        setStores([]);
+        return;
+      }
+      try {
+        const res = await getStoresByProvince(formData.city);
+        const s = Array.isArray(res) ? res : (res?.data ?? res) || [];
+        if (mounted) setStores(Array.isArray(s) ? s : []);
+      } catch (err) {
+        console.error('load stores error', err);
+      }
+    };
+    loadStores();
+    return () => { mounted = false; };
+  }, [formData.city]);
+
+  // Fetch products from API when user is on tracking tab or filters/search change (debounced)
+  useEffect(() => {
+    let mounted = true;
+    let timer;
+    const mapStatus = (s) => {
+      if (!s || s === 'all') return null;
+      if (s === 'processing') return 'PENDING';
+      if (s === 'accepted') return 'APPROVED';
+      if (s === 'rejected') return 'REJECTED';
+      return null;
+    };
+
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const payload = {
+          productName: searchTerm || null,
+          itemStatus: mapStatus(filterStatus)
+        };
+        const res = await filterProducts(payload);
+        const raw = Array.isArray(res) ? res : (res?.data ?? res) || [];
+        const items = (Array.isArray(raw) ? raw : []).map(p => {
+          const statusRaw = p?.itemStatus;
+          let status = null;
+          if (!statusRaw) status = 'processing';
+          else if (String(statusRaw).toUpperCase() === 'APPROVED') status = 'accepted';
+          else if (String(statusRaw).toUpperCase() === 'REJECTED') status = 'rejected';
+          else if (String(statusRaw).toUpperCase() === 'PENDING') status = 'processing';
+          else status = String(statusRaw).toLowerCase();
+
+          const date = p?.createdAt ? (new Date(p.createdAt).toLocaleString()) : '';
+          const title = p?.productName || p?.product_name || '';
+          const store = p?.provinceName || p?.street || p?.wardName || '';
+          return {
+            id: p?.id ? String(p.id) : '',
+            title,
+            date,
+            store,
+            status,
+            reason: p?.reason || null,
+            raw: p
+          };
+        });
+        if (mounted) setTrackingList(items);
+      } catch (err) {
+        console.error('fetch products error', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    if (activeTab === 'tracking') {
+      timer = setTimeout(fetchProducts, 400);
+    }
+
+    return () => { mounted = false; if (timer) clearTimeout(timer); };
+  }, [activeTab, searchTerm, filterStatus]);
 
   const handleSpecChange = (fieldName, value) => {
     setFormData(prev => ({
@@ -106,6 +223,9 @@ const App = () => {
     let newErrors = {};
     if (currentStep === 1) {
       if (!formData.title.trim()) newErrors.title = 'Vui lòng nhập tên sản phẩm';
+      if (!formData.price || Number(formData.price.toString().replace(/[^0-9]/g, '')) <= 0) newErrors.price = 'Vui lòng nhập giá hợp lệ';
+      if (!formData.brand || !formData.brand.trim()) newErrors.brand = 'Vui lòng nhập hãng/tác giả';
+      if (!formData.origin || !formData.origin.trim()) newErrors.origin = 'Vui lòng nhập xuất xứ';
       if (!formData.category) newErrors.category = 'Vui lòng chọn danh mục';
       if (!formData.subcategory) newErrors.subcategory = 'Vui lòng chọn danh mục con';
       if (activeSubcategory) {
@@ -160,33 +280,114 @@ const App = () => {
     });
   };
 
+  const formatVND = (numStr) => {
+    const onlyDigits = (numStr || '').toString().replace(/[^0-9]/g, '');
+    if (!onlyDigits) return '';
+    return onlyDigits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const parseVND = (display) => {
+    if (!display && display !== 0) return '';
+    return (display || '').toString().replace(/[.,\s]/g, '');
+  };
+
+  const handlePriceChange = (e) => {
+    const raw = e.target.value || '';
+    const digits = raw.replace(/[^0-9]/g, '');
+    const formatted = formatVND(digits);
+    setFormData(prev => ({ ...prev, price: formatted }));
+    if (errors.price) setErrors(prev => { const n = { ...prev }; delete n.price; return n; });
+  };
+
   const handleSubmit = () => {
     if (!validateStep(3)) {
       triggerShake();
       return;
     }
-    setIsSubmitting(true);
-    setTimeout(() => {
-      const newItem = {
-        id: `REG-${Math.floor(Math.random() * 9000 + 1000)}`,
-        title: formData.title,
-        status: 'processing',
-        date: new Date().toLocaleDateString('vi-VN'),
-        store: formData.selectedStore
-      };
-      setTrackingList([newItem, ...trackingList]);
-      setIsSubmitting(false);
-      setActiveTab('tracking');
-      setStep(1);
-      setFormData({
-        title: '', category: '', subcategory: '', specs: {}, description: '',
-        mainImage: null, subImages: [], city: '', selectedStore: ''
-      });
-    }, 2000);
+
+    const submit = async () => {
+      setIsSubmitting(true);
+      try {
+        const fd = new FormData();
+
+        // Map to backend CreateProductRequest fields
+        fd.append('productName', formData.title || '');
+        fd.append('brand', formData.brand || '');
+        fd.append('origin', formData.origin || '');
+        fd.append('productCondition', formData.productCondition || 'NEW');
+        fd.append('description', formData.description || '');
+        fd.append('basePrice', parseVND(formData.price) || '0');
+        fd.append('attributesJson', JSON.stringify(formData.specs || {}));
+        fd.append('categoryId', formData.subcategory || formData.category || '');
+        fd.append('storeId', formData.selectedStore || '');
+
+        const dataURLtoFile = (dataurl, filename) => {
+          const arr = dataurl.split(',');
+          const mime = arr[0].match(/:(.*?);/)[1];
+          const bstr = atob(arr[1]);
+          let n = bstr.length;
+          const u8arr = new Uint8Array(n);
+          while (n--) u8arr[n] = bstr.charCodeAt(n);
+          return new File([u8arr], filename, { type: mime });
+        };
+
+        if (formData.mainImage) {
+          if (typeof formData.mainImage === 'string' && formData.mainImage.startsWith('data:')) {
+            fd.append('primaryImage', dataURLtoFile(formData.mainImage, 'primary.jpg'));
+          } else {
+            fd.append('primaryImage', formData.mainImage);
+          }
+        }
+
+        if (Array.isArray(formData.subImages)) {
+          formData.subImages.forEach((img, idx) => {
+            if (typeof img === 'string' && img.startsWith('data:')) {
+              fd.append('subImages', dataURLtoFile(img, `sub_${idx}.jpg`));
+            } else {
+              fd.append('subImages', img);
+            }
+          });
+        }
+
+        await createProduct(fd);
+
+        // refresh list
+        try {
+          const payload = { productName: '', itemStatus: null };
+          const listRes = await filterProducts(payload);
+          const items = Array.isArray(listRes) ? listRes : (listRes?.data ?? listRes) || [];
+          setTrackingList(Array.isArray(items) ? items : []);
+        } catch (e) {
+          console.error('refresh after create error', e);
+        }
+
+        setIsSubmitting(false);
+        setActiveTab('tracking');
+        setStep(1);
+        setFormData({
+          title: '', category: '', subcategory: '', price: '', brand: '', origin: '', specs: {}, description: '', productCondition: 'NEW',
+          mainImage: null, subImages: [], city: '', selectedStore: ''
+        });
+      } catch (err) {
+        console.error('create product error', err);
+        setIsSubmitting(false);
+        setErrors(prev => ({ ...prev, submit: err?.message || 'Lỗi khi gửi dữ liệu. Vui lòng thử lại.' }));
+      }
+    };
+
+    submit();
   };
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 p-4 md:p-10 font-sans selection:bg-blue-500/30">
+      <Header />
+      <Header />
+        {/* Background Orbs */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute top-[-10%] right-[-5%] w-[60%] h-[60%] bg-blue-600/10 blur-[120px] rounded-full opacity-50"></div>
+              <div className="absolute bottom-[-10%] left-[-5%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full opacity-30"></div>
+            </div>
+        <div className="max-w-6xl mx-auto px-6 pt-20 relative z-50"></div>
       {/* Background Decor */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-blue-600/10 blur-[140px] rounded-full animate-pulse"></div>
@@ -278,6 +479,44 @@ const App = () => {
                         </div>
                       </FieldWrapper>
 
+                      <FieldWrapper label="Giá khởi điểm (VND)" error={errors.price}>
+                        <div className="relative group">
+                          <input
+                            name="price"
+                            value={formData.price}
+                            onChange={handlePriceChange}
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="Ví dụ: 10.000.000"
+                            className={`w-full bg-slate-950/60 border-2 ${errors.price ? 'border-red-500/50 bg-red-500/5' : 'border-white/5'} rounded-2xl px-7 py-5 text-white focus:border-blue-500/50 focus:bg-slate-950/90 outline-none font-bold transition-all placeholder:text-slate-700 shadow-inner group-hover:border-white/10`} 
+                          />
+                        </div>
+                      </FieldWrapper>
+
+                      <div className="grid grid-cols-2 gap-5">
+                        <FieldWrapper label="Hãng / Tác giả" error={errors.brand}>
+                          <input
+                            name="brand"
+                            value={formData.brand}
+                            onChange={handleInputChange}
+                            type="text"
+                            placeholder="Ví dụ: Apple, Nguyễn Văn A"
+                            className={`w-full bg-slate-950/70 border-2 ${errors.brand ? 'border-red-500/50' : 'border-white/5'} rounded-2xl px-5 py-3 text-white focus:border-blue-500 outline-none font-medium transition-all`} 
+                          />
+                        </FieldWrapper>
+
+                        <FieldWrapper label="Xuất xứ" error={errors.origin}>
+                          <input
+                            name="origin"
+                            value={formData.origin}
+                            onChange={handleInputChange}
+                            type="text"
+                            placeholder="Ví dụ: Việt Nam"
+                            className={`w-full bg-slate-950/70 border-2 ${errors.origin ? 'border-red-500/50' : 'border-white/5'} rounded-2xl px-5 py-3 text-white focus:border-blue-500 outline-none font-medium transition-all`} 
+                          />
+                        </FieldWrapper>
+                      </div>
+
                       <div className="grid grid-cols-2 gap-5">
                         <FieldWrapper label="Phân khúc" error={errors.category}>
                           <select 
@@ -287,10 +526,10 @@ const App = () => {
                             className={`w-full bg-slate-950/60 border-2 ${errors.category ? 'border-red-500/50' : 'border-white/5'} rounded-2xl px-5 py-5 text-white focus:border-blue-500 outline-none font-bold appearance-none cursor-pointer transition-all hover:bg-slate-950/90`}
                           >
                             <option value="">Chọn loại</option>
-                            {Object.keys(CATEGORIES).map(k => <option key={k} value={k}>{CATEGORIES[k].label}</option>)}
+                            {rootCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                           </select>
                         </FieldWrapper>
-                        <FieldWrapper label="Dòng máy" error={errors.subcategory}>
+                          <FieldWrapper label="Dòng máy" error={errors.subcategory}>
                           <select 
                             name="subcategory" 
                             value={formData.subcategory} 
@@ -299,11 +538,17 @@ const App = () => {
                             className={`w-full bg-slate-950/60 border-2 ${errors.subcategory ? 'border-red-500/50' : 'border-white/5'} rounded-2xl px-5 py-5 text-white focus:border-blue-500 outline-none font-bold appearance-none disabled:opacity-20 transition-all hover:bg-slate-950/90`}
                           >
                             <option value="">Chọn dòng</option>
-                            {activeCategory && Object.keys(activeCategory.subcategories).map(k => (
-                              <option key={k} value={k}>{activeCategory.subcategories[k].label}</option>
+                            {childCategories.map(ch => (
+                              <option key={ch.id} value={ch.id}>{ch.name}</option>
                             ))}
                           </select>
                         </FieldWrapper>
+                      <FieldWrapper label="Tình trạng" error={errors.productCondition}>
+                        <div className="inline-flex gap-3">
+                          <button type="button" onClick={() => setFormData(p => ({...p, productCondition: 'NEW'}))} className={`px-4 py-2 rounded-2xl font-black ${formData.productCondition === 'NEW' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'}`}>New</button>
+                          <button type="button" onClick={() => setFormData(p => ({...p, productCondition: 'USED'}))} className={`px-4 py-2 rounded-2xl font-black ${formData.productCondition === 'USED' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'}`}>Used</button>
+                        </div>
+                      </FieldWrapper>
                       </div>
                     </div>
 
@@ -412,13 +657,19 @@ const App = () => {
                       <FieldWrapper label="Khu vực dịch vụ" error={errors.city}>
                         <select name="city" value={formData.city} onChange={handleInputChange} className={`w-full bg-slate-950/80 border-2 ${errors.city ? 'border-red-500/50' : 'border-white/5'} rounded-[1.8rem] px-7 py-6 text-white focus:border-blue-500 outline-none font-black appearance-none cursor-pointer hover:bg-slate-950`}>
                           <option value="">Chọn thành phố</option>
-                          {Object.keys(LOCATIONS).map(k => <option key={k} value={k}>{LOCATIONS[k].label}</option>)}
+                          {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                       </FieldWrapper>
                       <FieldWrapper label="Showroom tiếp nhận" error={errors.selectedStore}>
                         <select name="selectedStore" value={formData.selectedStore} onChange={handleInputChange} disabled={!formData.city} className={`w-full bg-slate-950/80 border-2 ${errors.selectedStore ? 'border-red-500/50' : 'border-white/5'} rounded-[1.8rem] px-7 py-6 text-white focus:border-blue-500 outline-none font-black appearance-none disabled:opacity-20 cursor-pointer hover:bg-slate-950`}>
                           <option value="">Chọn địa điểm chi tiết</option>
-                          {formData.city && LOCATIONS[formData.city].stores.map(s => <option key={s} value={s}>{s}</option>)}
+                                          {stores.map(s => {
+                                            const id = s?.id ?? s?.storeId ?? s;
+                                            const label = (s && typeof s === 'object')
+                                              ? (s.storeName || s.name || s.label || `${s.street ?? ''}`)
+                                              : String(s);
+                                            return <option key={id} value={id}>{label}</option>;
+                                          })}
                         </select>
                       </FieldWrapper>
                     </div>
@@ -635,13 +886,21 @@ const FieldWrapper = ({ label, error, children }) => (
 
 // Component hiển thị Icon trạng thái
 const StatusIcon = ({ status }) => {
-  const configs = {
+  const map = {
     accepted: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
     rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20' },
     processing: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' }
   };
-  const config = configs[status];
-  const Icon = config.icon;
+
+  // Accept various backend status formats
+  const key = (status || '').toString().toLowerCase();
+  const normalized = key === 'approved' || key === 'approve' ? 'accepted'
+    : key === 'rejected' ? 'rejected'
+    : key === 'pending' || key === 'p' ? 'processing'
+    : key;
+
+  const config = map[normalized] || map.processing;
+  const Icon = config.icon || Clock;
   return (
     <div className={`w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] flex items-center justify-center shrink-0 border-2 ${config.bg} ${config.border} ${config.color} shadow-2xl relative overflow-hidden group-hover:scale-110 transition-transform duration-500`}>
       <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>

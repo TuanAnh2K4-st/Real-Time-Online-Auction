@@ -6,7 +6,7 @@ import {
 import {
   getProductsForAuction,
   createNormalAuction
-} from "../../services/api/profileApi";
+} from "../../services/api/createNormalAuctionApi";
 
 export default function CreateAuctionNormal() {
 

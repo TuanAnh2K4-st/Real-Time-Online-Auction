@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Mail, Lock, ArrowRight, Gavel, ShieldCheck, Zap, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { loginApi } from '../../services/api/authApi';
+import { AuthContext } from '../../context/AuthContext';
 
-const App = () => {
+export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -14,14 +17,36 @@ const App = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleLogin = (e) => {
+  // Xử lý đăng nhập thực tế:
+  // - Gọi `loginApi` với email/password
+  // - Nếu thành công, dùng `AuthContext.login` để lưu token + user vào localStorage và context
+  // - Điều hướng sang trang chủ hoặc trang mong muốn
+  const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Giả lập API call
-    setTimeout(() => {
+
+    try {
+      // Gọi API đăng nhập (axiosClient đã chuẩn hoá trả về `response.data`)
+      const data = await loginApi({ email, password });
+
+      // Gọi hàm login trong context để lưu token + user
+      // Context sẽ map các trường cần thiết (token, username, userId, role)
+      login(data);
+
+      showNotification('Đăng nhập thành công!', 'info');
+
+      // Điều hướng về trang chính sau khi đăng nhập
+      navigate('/');
+    } catch (err) {
+      // `axiosClient` trả về lỗi ở dạng object; cố gắng lấy message
+      const message = err?.message || err?.error || JSON.stringify(err) || 'Đăng nhập thất bại';
+      showNotification(message, 'warning');
+    } finally {
       setIsLoading(false);
-      showNotification("Hệ thống đang bảo trì tính năng đăng nhập trực tiếp!", "warning");
-    }, 1500);
+    }
   };
 
   return (
@@ -97,7 +122,10 @@ const App = () => {
 
             {/* Social Logins */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              <button className="flex items-center justify-center gap-3 py-3.5 px-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-2xl text-slate-200 font-medium transition-all duration-300 active:scale-95">
+              <button
+                onClick={() => { window.location.href = 'http://localhost:8080/oauth2/authorization/google'; }}
+                className="flex items-center justify-center gap-3 py-3.5 px-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-2xl text-slate-200 font-medium transition-all duration-300 active:scale-95"
+              >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -211,6 +239,4 @@ const App = () => {
       `}} />
     </div>
   );
-};
-
-export default App;
+}

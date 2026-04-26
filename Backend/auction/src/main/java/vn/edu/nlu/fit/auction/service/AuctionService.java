@@ -18,6 +18,10 @@ import vn.edu.nlu.fit.auction.repository.AuctionRepository;
 import vn.edu.nlu.fit.auction.repository.ProductRepository;
 import vn.edu.nlu.fit.auction.repository.StoreItemRepository;
 import vn.edu.nlu.fit.auction.security.SecurityUtil;
+import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
+import vn.edu.nlu.fit.auction.entity.ProductImage;
+import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -88,5 +92,36 @@ public class AuctionService {
         storeItem.setItemStatus(StoreItemStatus.IN_AUCTION); // bạn cần enum này
         storeItemRepository.save(storeItem);
 
+    }
+
+    public List<AuctionResponse> getMyNormalAuctions() {
+        User currentUser = securityUtil.getCurrentUser();
+        if (currentUser == null) throw new RuntimeException("Unauthorized");
+
+        List<Auction> auctions = auctionRepository.findBySellerAndAuctionType(currentUser, AuctionType.NORMAL);
+
+        List<AuctionResponse> result = auctions.stream().map(a -> {
+            Product p = a.getProduct();
+            // find primary image
+            String img = null;
+            if (p.getImages() != null && !p.getImages().isEmpty()) {
+                ProductImage primary = p.getImages().stream().filter(ProductImage::getIsPrimary).findFirst().orElse(p.getImages().get(0));
+                img = primary != null ? primary.getImageUrl() : null;
+            }
+
+            return new AuctionResponse(
+                a.getAuctionId(),
+                p.getProductId(),
+                p.getProductName(),
+                img,
+                a.getStartPrice(),
+                a.getCurrentPrice(),
+                a.getAuctionStatus(),
+                a.getStartTime(),
+                a.getEndTime()
+            );
+        }).collect(Collectors.toList());
+
+        return result;
     }
 }

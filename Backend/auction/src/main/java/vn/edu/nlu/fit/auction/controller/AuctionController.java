@@ -45,4 +45,11 @@ public class AuctionController {
         return ResponseEntity.status(201)
                 .body(new ApiResponse<>("Tạo auction NORMAL thành công", null));
     }
+
+    // GET my normal auctions
+    @GetMapping("/mine/normal")
+    public ResponseEntity<ApiResponse<List<vn.edu.nlu.fit.auction.dto.response.AuctionResponse>>> getMyNormalAuctions() {
+        List<vn.edu.nlu.fit.auction.dto.response.AuctionResponse> data = auctionService.getMyNormalAuctions();
+        return ResponseEntity.ok(new ApiResponse<>("Lấy danh sách auction NORMAL của bạn thành công", data));
+    }
 }
