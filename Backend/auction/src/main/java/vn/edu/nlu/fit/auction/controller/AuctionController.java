@@ -15,6 +15,7 @@ import vn.edu.nlu.fit.auction.dto.request.CreateNormalAuctionRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.AuctionHomeCardResponse;
 import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
+import vn.edu.nlu.fit.auction.dto.response.NormalAuctionDetailResponse;
 import vn.edu.nlu.fit.auction.dto.response.ProductAuctionResponse;
 import vn.edu.nlu.fit.auction.service.AuctionService;
 import vn.edu.nlu.fit.auction.service.ProductService;
@@ -80,4 +81,14 @@ public class AuctionController {
         auctionService.endAuctionEarly(auctionId);
         return ResponseEntity.ok(new ApiResponse<>("Kết thúc phiên đấu giá thành công", null));
     }
+
+    // ===== LẤY CHI TIẾT AUCTION =====
+    @GetMapping("/{auctionId}/detail")
+    public ResponseEntity<ApiResponse<NormalAuctionDetailResponse>> getAuctionDetail(
+            @PathVariable Integer auctionId
+    ) {
+        NormalAuctionDetailResponse data = auctionService.getNormalAuctionDetail(auctionId);
+        return ResponseEntity.ok(new ApiResponse<>("Lấy chi tiết auction thành công", data));
+    }
 }
+

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search, Bell, User, Gavel, Radio, Clock,
   ChevronRight, Heart, ShieldCheck, Zap,
@@ -171,15 +172,18 @@ const LiveAuctionCard = ({ session }) => (
   </div>
 );
 
-const ProductCard = ({ item }) => (
-  <div className="group bg-slate-900/40 rounded-[2rem] border border-white/5 p-3 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all duration-500 flex flex-col h-full">
-    <div className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-slate-800 mb-4"><img src={item.primaryImage} alt={item.productName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100" />
-      <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all"><button className="p-2.5 bg-slate-950/80 backdrop-blur-md rounded-xl text-white hover:text-red-500 border border-white/10"><Heart className="w-4 h-4" /></button><button className="p-2.5 bg-slate-950/80 backdrop-blur-md rounded-xl text-white hover:text-blue-500 border border-white/10"><Share2 className="w-4 h-4" /></button></div>
-      <div className="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur-xl py-3 px-4 rounded-2xl flex items-center justify-between border border-white/10"><div className="flex items-center gap-2 text-blue-400 font-black text-xs uppercase tracking-tighter italic"><Clock className="w-4 h-4" /> {new Date(item.endTime).toLocaleString("vi-VN")}</div></div>
+const ProductCard = ({ item }) => {
+  const navigate = useNavigate();
+  return (
+    <div onClick={() => navigate(`/auction/${item.auctionId}`)} className="cursor-pointer group bg-slate-900/40 rounded-[2rem] border border-white/5 p-3 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all duration-500 flex flex-col h-full">
+      <div className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-slate-800 mb-4"><img src={item.primaryImage} alt={item.productName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100" />
+        <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all"><button onClick={e => e.stopPropagation()} className="p-2.5 bg-slate-950/80 backdrop-blur-md rounded-xl text-white hover:text-red-500 border border-white/10"><Heart className="w-4 h-4" /></button><button onClick={e => e.stopPropagation()} className="p-2.5 bg-slate-950/80 backdrop-blur-md rounded-xl text-white hover:text-blue-500 border border-white/10"><Share2 className="w-4 h-4" /></button></div>
+        <div className="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur-xl py-3 px-4 rounded-2xl flex items-center justify-between border border-white/10"><div className="flex items-center gap-2 text-blue-400 font-black text-xs uppercase tracking-tighter italic"><Clock className="w-4 h-4" /> {new Date(item.endTime).toLocaleString("vi-VN")}</div></div>
+      </div>
+      <div className="px-2 space-y-4 flex-grow"><div><span className="text-[9px] font-black text-blue-500 uppercase tracking-widest block mb-1">{item.categoryName}</span><h3 className="font-bold text-white line-clamp-2 leading-tight text-base">{item.productName}</h3></div><div className="flex items-center justify-between pt-4 border-t border-white/5"><div><p className="text-[9px] font-bold text-slate-500 uppercase">Giá cao nhất</p><p className="text-lg font-black text-blue-400">{formatCurrency(item.currentPrice)}</p></div><button onClick={e => e.stopPropagation()} className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/50"><Gavel className="w-5 h-5" /></button></div></div>
     </div>
-    <div className="px-2 space-y-4 flex-grow"><div><span className="text-[9px] font-black text-blue-500 uppercase tracking-widest block mb-1">{item.categoryName}</span><h3 className="font-bold text-white line-clamp-2 leading-tight text-base">{item.productName}</h3></div><div className="flex items-center justify-between pt-4 border-t border-white/5"><div><p className="text-[9px] font-bold text-slate-500 uppercase">Giá cao nhất</p><p className="text-lg font-black text-blue-400">{formatCurrency(item.currentPrice)}</p></div><button className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/50"><Gavel className="w-5 h-5" /></button></div></div>
-  </div>
-);
+  );
+};
 
 export default function Home() {
   const [normalAuctions, setNormalAuctions] = useState([]);

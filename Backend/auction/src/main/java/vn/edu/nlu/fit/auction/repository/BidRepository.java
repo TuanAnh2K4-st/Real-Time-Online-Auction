@@ -19,5 +19,11 @@ public interface BidRepository extends JpaRepository<Bid, Integer> {
 
     // lấy bid cao nhất
     Optional<Bid> findTopByAuctionOrderByBidAmountDesc(Auction auction);
+
+    // lấy 20 bid mới nhất theo thời gian
+    List<Bid> findTop20ByAuctionOrderByBidTimeDesc(Auction auction);
+
+    // đếm tổng số bid của auction
+    long countByAuction(Auction auction);
     
 }

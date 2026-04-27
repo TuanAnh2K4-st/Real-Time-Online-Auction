@@ -1,24 +1,30 @@
 package vn.edu.nlu.fit.auction.service;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.time.LocalDateTime;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.BidRequest;
+import vn.edu.nlu.fit.auction.dto.request.ChatMessageRequest;
 import vn.edu.nlu.fit.auction.dto.request.CreateNormalAuctionRequest;
 import vn.edu.nlu.fit.auction.entity.Auction;
+import vn.edu.nlu.fit.auction.entity.AuctionMessage;
 import vn.edu.nlu.fit.auction.entity.Bid;
 import vn.edu.nlu.fit.auction.entity.Product;
+import vn.edu.nlu.fit.auction.entity.ProductImage;
 import vn.edu.nlu.fit.auction.entity.StoreItem;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.enums.AuctionStatus;
 import vn.edu.nlu.fit.auction.enums.AuctionType;
 import vn.edu.nlu.fit.auction.enums.EventType;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
+import vn.edu.nlu.fit.auction.repository.AuctionMessageRepository;
 import vn.edu.nlu.fit.auction.repository.AuctionRepository;
 import vn.edu.nlu.fit.auction.repository.BidRepository;
 import vn.edu.nlu.fit.auction.repository.ProductRepository;
@@ -27,7 +33,8 @@ import vn.edu.nlu.fit.auction.security.SecurityUtil;
 import vn.edu.nlu.fit.auction.dto.response.AuctionHomeCardResponse;
 import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
 import vn.edu.nlu.fit.auction.dto.response.BidResponse;
-import vn.edu.nlu.fit.auction.entity.ProductImage;
+import vn.edu.nlu.fit.auction.dto.response.ChatMessageResponse;
+import vn.edu.nlu.fit.auction.dto.response.NormalAuctionDetailResponse;
 import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +48,7 @@ public class AuctionService {
     private final StoreItemRepository storeItemRepository;
     private final SecurityUtil securityUtil;
     private final BidRepository bidRepository;
+    private final AuctionMessageRepository auctionMessageRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     public void createNormalAuction(CreateNormalAuctionRequest request) {
@@ -100,7 +108,7 @@ public class AuctionService {
         auctionRepository.save(auction);
 
         // ===== 8. Update trạng thái sản phẩm =====
-        storeItem.setItemStatus(StoreItemStatus.IN_AUCTION); // bạn cần enum này
+        storeItem.setItemStatus(StoreItemStatus.IN_AUCTION);
         storeItemRepository.save(storeItem);
 
     }
@@ -210,6 +218,73 @@ public class AuctionService {
         return result;
     }
 
+    // ===== LẤY CHI TIẾT AUCTION NORMAL =====
+    public NormalAuctionDetailResponse getNormalAuctionDetail(Integer auctionId) {
+
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
+
+        Product product = auction.getProduct();
+
+        NormalAuctionDetailResponse res = new NormalAuctionDetailResponse();
+        res.setAuctionId(auction.getAuctionId());
+        res.setProductName(product.getProductName());
+        res.setCategory(product.getCategory().getName());
+        res.setDescription(product.getDescription());
+        res.setBrand(product.getBrand());
+        res.setOrigin(product.getOrigin());
+        res.setProductCondition(product.getProductCondition() != null ? product.getProductCondition().name() : null);
+        res.setAttributesJson(product.getAttributesJson());
+
+        // Images
+        List<String> imageUrls = product.getImages() != null
+                ? product.getImages().stream().map(ProductImage::getImageUrl).collect(Collectors.toList())
+                : List.of();
+        res.setImages(imageUrls);
+
+        // Prices
+        res.setStartPrice(auction.getStartPrice());
+        res.setCurrentPrice(auction.getCurrentPrice() != null ? auction.getCurrentPrice() : auction.getStartPrice());
+        res.setStepPrice(auction.getStepPrice());
+
+        // Status & times
+        res.setAuctionStatus(auction.getAuctionStatus().name());
+        res.setStartTime(auction.getStartTime());
+        res.setEndTime(auction.getEndTime());
+
+        // Total bids
+        long totalBids = bidRepository.countByAuction(auction);
+        res.setTotalBids((int) totalBids);
+
+        // Seller info
+        res.setSellerUsername(auction.getSeller().getUsername());
+        res.setSellerId(auction.getSeller().getUserId());
+
+        // Bid history (top 20 mới nhất)
+        List<Bid> recentBids = bidRepository.findTop20ByAuctionOrderByBidTimeDesc(auction);
+        List<NormalAuctionDetailResponse.BidHistoryItem> bidHistory = recentBids.stream()
+                .map(b -> new NormalAuctionDetailResponse.BidHistoryItem(
+                        b.getBidder().getUsername(),
+                        b.getBidAmount(),
+                        b.getBidTime()
+                ))
+                .collect(Collectors.toList());
+        res.setBidHistory(bidHistory);
+
+        // Chat history
+        List<AuctionMessage> messages = auctionMessageRepository.findByAuctionOrderByCreatedAtAsc(auction);
+        List<NormalAuctionDetailResponse.ChatHistoryItem> chatHistory = messages.stream()
+                .map(m -> new NormalAuctionDetailResponse.ChatHistoryItem(
+                        m.getSender().getUsername(),
+                        m.getContent(),
+                        m.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
+        res.setChatHistory(chatHistory);
+
+        return res;
+    }
+
     // ===== HELPER =====
     private void sendError(Integer auctionId, String message) {
 
@@ -222,11 +297,25 @@ public class AuctionService {
         );
     }
 
-    // Đặt giá
-    @Transactional
-    public void placeBid(BidRequest request) {
+    // Helper: extract User from WebSocket Principal
+    private User getUserFromPrincipal(Principal principal) {
+        if (principal == null) {
+            throw new RuntimeException("Unauthorized: no principal");
+        }
+        if (principal instanceof UsernamePasswordAuthenticationToken auth) {
+            Object p = auth.getPrincipal();
+            if (p instanceof User) {
+                return (User) p;
+            }
+        }
+        throw new RuntimeException("Unauthorized: invalid principal");
+    }
 
-        User user = securityUtil.getCurrentUser();
+    // Đặt giá (WebSocket)
+    @Transactional
+    public void placeBid(BidRequest request, Principal principal) {
+
+        User user = getUserFromPrincipal(principal);
 
         Auction auction = auctionRepository.findByIdForUpdate(request.getAuctionId());
 
@@ -266,7 +355,37 @@ public class AuctionService {
         res.setAuctionId(auction.getAuctionId());
         res.setBidder(user.getUsername());
         res.setPrice(request.getBidAmount());
+        res.setBidTime(bid.getBidTime());
         res.setType(EventType.NEW_BID);
+
+        messagingTemplate.convertAndSend(
+            "/topic/auction/" + auction.getAuctionId(),
+            res
+        );
+    }
+
+    // ===== GỬI CHAT (WebSocket) =====
+    public void sendChat(ChatMessageRequest request, Principal principal) {
+
+        User user = getUserFromPrincipal(principal);
+
+        Auction auction = auctionRepository.findById(request.getAuctionId())
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
+
+        // Lưu vào DB
+        AuctionMessage msg = new AuctionMessage();
+        msg.setAuction(auction);
+        msg.setSender(user);
+        msg.setContent(request.getContent());
+        auctionMessageRepository.save(msg);
+
+        // Broadcast
+        ChatMessageResponse res = new ChatMessageResponse();
+        res.setAuctionId(auction.getAuctionId());
+        res.setSender(user.getUsername());
+        res.setContent(request.getContent());
+        res.setCreatedAt(msg.getCreatedAt());
+        res.setType("CHAT");
 
         messagingTemplate.convertAndSend(
             "/topic/auction/" + auction.getAuctionId(),

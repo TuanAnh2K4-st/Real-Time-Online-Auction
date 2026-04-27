@@ -46,7 +46,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll() // login, register
                 // public API
                 .requestMatchers("/api/stores/**").permitAll()
-                .requestMatchers("/api/categories/**").permitAll() 
+                .requestMatchers("/api/categories/**").permitAll()
+                .requestMatchers("/ws/**").permitAll() // WebSocket
+                .requestMatchers("/api/auctions/*/detail").permitAll() // xem chi tiết auction
+                .requestMatchers("/api/auctions/home/**").permitAll() // trang chủ
                 .anyRequest().authenticated()
             )
 

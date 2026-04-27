@@ -7,6 +7,7 @@ import OAuth2Success from "../pages/OAuth2Success";
 import Profile from "../pages/Profile";
 import MyProduct from "../pages/MyProduct";
 import CreateNormalAuction from "../pages/CreateNormalAuction";
+import NormalAuctionDetail from "../pages/NormalAuctionDetail";
 
 // PROFILE (nested)
 // import ProfileLayout from "../pages/profile/ProfileLayout";
@@ -48,6 +49,7 @@ export default function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/my-products" element={<MyProduct />} />
         <Route path="/create-normal-auction" element={<CreateNormalAuction />} />
+        <Route path="/auction/:auctionId" element={<NormalAuctionDetail />} />
 
       </Routes>
     </BrowserRouter>
