@@ -8,6 +8,7 @@ import {
   Users, Verified, Command, ShoppingCart, LogOut, Settings, Package, Wallet, PlusCircle, PlayCircle, Lock
 } from 'lucide-react';
 import Header from '../components/Header';
+import { getTop4ActiveNormalAuctionsApi } from "../services/api/homeApi";
 
 // Helper
 const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -29,13 +30,6 @@ const TOP_SELLERS = [
 const LIVE_SESSIONS = [
   { id: 1, title: "Siêu phẩm Đồng hồ Thụy Sĩ - Patek Philippe Nautilus", isLive: true, productCount: 12, viewers: 3840, image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800", host: "Luxury Watch VN", description: "Phiên đấu giá đặc biệt dành cho các nhà sưu tầm đồng hồ hạng sang." },
   { id: 2, title: "Đại tiệc Kim cương & Đá quý thiên nhiên", isLive: false, time: "20:00 Tối nay", productCount: 8, viewers: 1200, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=800", host: "Ancarat Jewels", description: "Bộ sưu tập trang sức độc bản được kiểm định bởi GIA." }
-];
-
-const NORMAL_AUCTIONS = [
-  { id: 1, title: "iPhone 15 Pro Max 1TB - Phiên bản mạ vàng 24K", currentBid: 85000000, bidsCount: 42, timeLeft: "01:14:05", image: "https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=800", category: "Công nghệ", hot: true },
-  { id: 2, title: "Tượng Phật Di Lặc Gỗ Sưa Đỏ Ngàn Năm", currentBid: 245000000, bidsCount: 15, timeLeft: "2 ngày 05 giờ", image: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&q=80&w=800", category: "Đồ phong thủy" },
-  { id: 3, title: "Túi Hermes Birkin 35 - Da cá sấu Niloticus", currentBid: 1200000000, bidsCount: 7, timeLeft: "5 ngày 12 giờ", image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&q=80&w=800", category: "Thời trang xa xỉ" },
-  { id: 4, title: "Xe Moto Ducati Panigale V4 S - Mới 100%", currentBid: 950000000, bidsCount: 28, timeLeft: "04:22:10", image: "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&q=80&w=800", category: "Xe phân khối lớn", hot: true }
 ];
 
 const MOCK_USER = {
@@ -179,15 +173,35 @@ const LiveAuctionCard = ({ session }) => (
 
 const ProductCard = ({ item }) => (
   <div className="group bg-slate-900/40 rounded-[2rem] border border-white/5 p-3 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all duration-500 flex flex-col h-full">
-    <div className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-slate-800 mb-4"><img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100" />
+    <div className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-slate-800 mb-4"><img src={item.primaryImage} alt={item.productName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100" />
       <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all"><button className="p-2.5 bg-slate-950/80 backdrop-blur-md rounded-xl text-white hover:text-red-500 border border-white/10"><Heart className="w-4 h-4" /></button><button className="p-2.5 bg-slate-950/80 backdrop-blur-md rounded-xl text-white hover:text-blue-500 border border-white/10"><Share2 className="w-4 h-4" /></button></div>
-      <div className="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur-xl py-3 px-4 rounded-2xl flex items-center justify-between border border-white/10"><div className="flex items-center gap-2 text-blue-400 font-black text-xs uppercase tracking-tighter italic"><Clock className="w-4 h-4" /> {item.timeLeft}</div></div>
+      <div className="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur-xl py-3 px-4 rounded-2xl flex items-center justify-between border border-white/10"><div className="flex items-center gap-2 text-blue-400 font-black text-xs uppercase tracking-tighter italic"><Clock className="w-4 h-4" /> {new Date(item.endTime).toLocaleString("vi-VN")}</div></div>
     </div>
-    <div className="px-2 space-y-4 flex-grow"><div><span className="text-[9px] font-black text-blue-500 uppercase tracking-widest block mb-1">{item.category}</span><h3 className="font-bold text-white line-clamp-2 leading-tight text-base">{item.title}</h3></div><div className="flex items-center justify-between pt-4 border-t border-white/5"><div><p className="text-[9px] font-bold text-slate-500 uppercase">Giá cao nhất</p><p className="text-lg font-black text-blue-400">{formatCurrency(item.currentBid)}</p></div><button className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/50"><Gavel className="w-5 h-5" /></button></div></div>
+    <div className="px-2 space-y-4 flex-grow"><div><span className="text-[9px] font-black text-blue-500 uppercase tracking-widest block mb-1">{item.categoryName}</span><h3 className="font-bold text-white line-clamp-2 leading-tight text-base">{item.productName}</h3></div><div className="flex items-center justify-between pt-4 border-t border-white/5"><div><p className="text-[9px] font-bold text-slate-500 uppercase">Giá cao nhất</p><p className="text-lg font-black text-blue-400">{formatCurrency(item.currentPrice)}</p></div><button className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/50"><Gavel className="w-5 h-5" /></button></div></div>
   </div>
 );
 
 export default function Home() {
+  const [normalAuctions, setNormalAuctions] = useState([]);
+
+  useEffect(() => {
+    const fetchAuctions = async () => {
+    try {
+      const res = await getTop4ActiveNormalAuctionsApi();
+
+      console.log("API res:", res);
+
+      const data = res?.data?.data || res?.data || [];
+
+      setNormalAuctions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Load auctions error:", err);
+      setNormalAuctions([]);
+    }
+  };
+
+    fetchAuctions();
+  }, []);
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-blue-500/30">
       <Header />
@@ -200,7 +214,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">{LIVE_SESSIONS.map(session => <LiveAuctionCard key={session.id} session={session} />)}</div>
         </section>
         <section className="relative py-24 bg-slate-900/30"><div className="max-w-7xl mx-auto px-6"><div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8"><div className="text-center md:text-left space-y-2"><h2 className="text-3xl font-black text-white tracking-tighter uppercase">Sàn đấu phổ thông</h2><p className="text-slate-500 font-medium">Hàng ngàn vật phẩm đang chờ đợi bạn gõ búa.</p></div><div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/5">{['Mới nhất', 'Giá cao', 'Sắp kết thúc'].map((sort, i) => <button key={sort} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${i === 0 ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>{sort}</button>)}</div></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">{NORMAL_AUCTIONS.map(item => <ProductCard key={item.id} item={item} />)}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">{normalAuctions.map(item => (<ProductCard key={item.auctionId || item.id} item={item} />))}</div>
           <div className="mt-16 text-center"><button className="px-12 py-5 bg-transparent border-2 border-white/10 rounded-2xl font-black text-sm uppercase tracking-widest text-white hover:bg-white hover:text-slate-950 transition-all duration-500">Tải thêm sản phẩm</button></div>
         </div>
         </section>

@@ -26,6 +26,12 @@ public interface AuctionRepository extends JpaRepository<Auction, Integer> {
             LocalDateTime time
     );
 
+    // Lấy ra top 4 auction normal đang active mới nhất
+    List<Auction> findTop4ByAuctionStatusAndAuctionTypeOrderByStartTimeDesc(
+            AuctionStatus status,
+            AuctionType type
+    );
+
     // LOCK chống race condition
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM Auction a WHERE a.auctionId = :id")

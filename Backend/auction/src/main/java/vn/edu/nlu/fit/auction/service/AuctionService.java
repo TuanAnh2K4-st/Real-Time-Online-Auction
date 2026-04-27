@@ -24,6 +24,7 @@ import vn.edu.nlu.fit.auction.repository.BidRepository;
 import vn.edu.nlu.fit.auction.repository.ProductRepository;
 import vn.edu.nlu.fit.auction.repository.StoreItemRepository;
 import vn.edu.nlu.fit.auction.security.SecurityUtil;
+import vn.edu.nlu.fit.auction.dto.response.AuctionHomeCardResponse;
 import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
 import vn.edu.nlu.fit.auction.dto.response.BidResponse;
 import vn.edu.nlu.fit.auction.entity.ProductImage;
@@ -102,6 +103,43 @@ public class AuctionService {
         storeItem.setItemStatus(StoreItemStatus.IN_AUCTION); // bạn cần enum này
         storeItemRepository.save(storeItem);
 
+    }
+
+    // Lấy top 4 auction normal đang active mới nhất
+    public List<AuctionHomeCardResponse> getTop4ActiveNormalAuctions() {
+
+        List<Auction> auctions =
+                auctionRepository.findTop4ByAuctionStatusAndAuctionTypeOrderByStartTimeDesc(
+                        AuctionStatus.ACTIVE,
+                        AuctionType.NORMAL
+                );
+
+        return auctions.stream().map(a -> {
+
+            Product product = a.getProduct();
+
+            // lấy ảnh chính
+            String image = product.getImages()
+                    .stream()
+                    .filter(ProductImage::getIsPrimary)
+                    .map(ProductImage::getImageUrl)
+                    .findFirst()
+                    .orElse(null);
+
+            // nếu không có ảnh primary thì lấy ảnh đầu tiên
+            if (image == null && !product.getImages().isEmpty()) {
+                image = product.getImages().get(0).getImageUrl();
+            }
+
+            return new AuctionHomeCardResponse(
+                    a.getAuctionId(),
+                    product.getProductName(),
+                    image,
+                    product.getCategory().getName(),
+                    a.getCurrentPrice() != null ? a.getCurrentPrice() : a.getStartPrice(),
+                    a.getEndTime()
+            );
+        }).toList();
     }
 
     // ===== END AUCTION EARLY =====
