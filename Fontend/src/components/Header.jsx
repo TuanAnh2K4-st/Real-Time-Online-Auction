@@ -6,7 +6,7 @@ import {
   Command, ShoppingCart, LogOut, Settings, Package, Wallet, PlusCircle, PlayCircle, Lock, Menu
 } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
@@ -36,6 +36,7 @@ const SearchBar = () => {
 
   const openSearch = () => { setIsExpanded(true); setTimeout(() => inputRef.current?.focus(), 100); };
   const closeSearch = () => { setIsExpanded(false); setSearchValue(''); };
+  const location = useLocation();
 
   return (
     <div className="relative flex items-center">
@@ -148,9 +149,28 @@ export default function Header() {
         </div>
 
         <div className="hidden lg:flex items-center bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-md">
-          {['Trang chủ', 'Đấu Live', 'Lịch sử', 'Hướng dẫn'].map((item, i) => (
-            <a key={item} href="#" className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${i === 0 ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>{item}</a>
-          ))}
+          {[
+            { label: 'Trang chủ', path: '/' },
+            { label: 'Đấu Live', path: '/list-live-auctions' },
+            { label: 'Phổ thông', path: '/list-normal-auctions' },
+            { label: 'Hướng dẫn', path: '/user-guide' }
+          ].map((item) => {
+            const isActive = location.pathname === item.path;
+
+            return (
+              <Link
+                key={item.label}
+                to={item.path}
+                className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">

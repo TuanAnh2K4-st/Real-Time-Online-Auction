@@ -8,6 +8,9 @@ import Profile from "../pages/Profile";
 import MyProduct from "../pages/MyProduct";
 import CreateNormalAuction from "../pages/CreateNormalAuction";
 import NormalAuctionDetail from "../pages/NormalAuctionDetail";
+import ListNormalAuction from "../pages/ListNormalAuction";
+import ListLiveAuction from "../pages/ListLiveAuction";
+import UserGuide from "../pages/UserGuide";
 
 // PROFILE (nested)
 // import ProfileLayout from "../pages/profile/ProfileLayout";
@@ -50,7 +53,10 @@ export default function AppRoutes() {
         <Route path="/my-products" element={<MyProduct />} />
         <Route path="/create-normal-auction" element={<CreateNormalAuction />} />
         <Route path="/auction/:auctionId" element={<NormalAuctionDetail />} />
-
+        <Route path="/list-normal-auctions" element={<ListNormalAuction />} />
+        <Route path="/list-live-auctions" element={<ListLiveAuction />} />
+        <Route path="/user-guide" element={<UserGuide />} />
+        
       </Routes>
     </BrowserRouter>
   );

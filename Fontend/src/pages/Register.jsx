@@ -4,7 +4,7 @@ import {
   Store, Eye, EyeOff, LogIn, CheckCircle2, XCircle, 
   Building2, Laptop
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { registerUserApi, registerSellerApi } from '../services/api/authApi';
 
 export default function Register() {
@@ -17,8 +17,6 @@ export default function Register() {
     </div>
   );
 
-  // Main form component: quản lý state form, hiển thị form và xử lý đăng ký
-  const App = () => {
     // `type`: phân biệt dạng đăng ký - cá nhân (`user`) hoặc doanh nghiệp (`seller`)
     const [type, setType] = useState('user'); // 'user' or 'seller'
 
@@ -428,7 +426,7 @@ export default function Register() {
 
               <div className="mt-8 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
                 <p className="text-xs text-slate-500">Đã có tài khoản thành viên?</p>
-                <button className="flex items-center gap-2 text-blue-400 text-xs font-black hover:text-blue-300 transition-all uppercase tracking-wider group">
+                <button onClick={() => navigate('/login')} className="flex items-center gap-2 text-blue-400 text-xs font-black hover:text-blue-300 transition-all uppercase tracking-wider group">
                   <LogIn size={16} className="group-hover:-translate-x-0.5 transition-transform" />
                   <span>Đăng nhập</span>
                 </button>
@@ -465,4 +463,3 @@ export default function Register() {
       </div>
     );
   };
-}
