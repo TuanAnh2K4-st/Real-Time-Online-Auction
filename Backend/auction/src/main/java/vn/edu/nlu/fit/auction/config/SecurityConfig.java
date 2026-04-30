@@ -47,10 +47,21 @@ public class SecurityConfig {
                 // public API
                 .requestMatchers("/api/stores/**").permitAll()
                 .requestMatchers("/api/categories/**").permitAll()
+                .requestMatchers("/api/provinces/**").permitAll()
                 .requestMatchers("/ws/**").permitAll() // WebSocket
                 .requestMatchers("/api/auctions/*/detail").permitAll() // xem chi tiết auction
                 .requestMatchers("/api/auctions/home/**").permitAll() // trang chủ
                 .anyRequest().authenticated()
+            )
+
+            // Khi chưa xác thực → trả 401 JSON thay vì redirect sang Google OAuth
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.setStatus(401);
+                    response.getWriter().write("{\"message\":\"Unauthorized - Vui lòng đăng nhập\"}");
+                })
             )
 
             // disable login form mặc định

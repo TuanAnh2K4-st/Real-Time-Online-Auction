@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.response.BidResponse;
 import vn.edu.nlu.fit.auction.entity.Auction;
 import vn.edu.nlu.fit.auction.entity.Order;
+import vn.edu.nlu.fit.auction.entity.Profile;
 import vn.edu.nlu.fit.auction.entity.StoreItem;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.enums.AuctionStatus;
@@ -20,6 +21,7 @@ import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
 import vn.edu.nlu.fit.auction.repository.AuctionRepository;
 import vn.edu.nlu.fit.auction.repository.BidRepository;
 import vn.edu.nlu.fit.auction.repository.OrderRepository;
+import vn.edu.nlu.fit.auction.repository.ProfileRepository;
 import vn.edu.nlu.fit.auction.repository.StoreItemRepository;
 
 @Component
@@ -31,6 +33,7 @@ public class AuctionScheduler {
     private final NotificationService notificationService;
     private final StoreItemRepository storeItemRepository;
     private final OrderRepository orderRepository;
+    private final ProfileRepository profileRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Scheduled(fixedDelay = 60000) // Chạy mỗi 60 giây
@@ -71,9 +74,17 @@ public class AuctionScheduler {
                 boolean existed = orderRepository.existsByAuction(auction);
 
                 if (!existed) {
+                    // Lấy address từ profile của winner
+                    Profile winnerProfile = profileRepository.findByUser_UserId(winner.getUserId())
+                            .orElse(null);
+
                     Order order = new Order();
                     order.setWinner(winner);
                     order.setAuction(auction);
+
+                    if (winnerProfile != null && winnerProfile.getAddress() != null) {
+                        order.setAddress(winnerProfile.getAddress());
+                    }
 
                     order.setTotalAmount(
                         auction.getCurrentPrice() != null
@@ -81,7 +92,7 @@ public class AuctionScheduler {
                             : auction.getStartPrice()
                     );
 
-                    order.setOrderStatus(OrderStatus.PENDING);
+                    order.setOrderStatus(OrderStatus.CART);
 
                     orderRepository.save(order);
                 }

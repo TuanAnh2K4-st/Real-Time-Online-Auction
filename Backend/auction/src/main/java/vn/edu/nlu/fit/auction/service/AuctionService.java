@@ -16,17 +16,23 @@ import vn.edu.nlu.fit.auction.dto.request.CreateNormalAuctionRequest;
 import vn.edu.nlu.fit.auction.entity.Auction;
 import vn.edu.nlu.fit.auction.entity.AuctionMessage;
 import vn.edu.nlu.fit.auction.entity.Bid;
+import vn.edu.nlu.fit.auction.entity.Order;
 import vn.edu.nlu.fit.auction.entity.Product;
+import vn.edu.nlu.fit.auction.entity.Profile;
 import vn.edu.nlu.fit.auction.entity.ProductImage;
 import vn.edu.nlu.fit.auction.entity.StoreItem;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.enums.AuctionStatus;
 import vn.edu.nlu.fit.auction.enums.AuctionType;
 import vn.edu.nlu.fit.auction.enums.EventType;
+import vn.edu.nlu.fit.auction.enums.NotificationType;
+import vn.edu.nlu.fit.auction.enums.OrderStatus;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
 import vn.edu.nlu.fit.auction.repository.AuctionMessageRepository;
 import vn.edu.nlu.fit.auction.repository.AuctionRepository;
 import vn.edu.nlu.fit.auction.repository.BidRepository;
+import vn.edu.nlu.fit.auction.repository.OrderRepository;
+import vn.edu.nlu.fit.auction.repository.ProfileRepository;
 import vn.edu.nlu.fit.auction.repository.ProductRepository;
 import vn.edu.nlu.fit.auction.repository.StoreItemRepository;
 import vn.edu.nlu.fit.auction.security.SecurityUtil;
@@ -50,6 +56,9 @@ public class AuctionService {
     private final BidRepository bidRepository;
     private final AuctionMessageRepository auctionMessageRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final OrderRepository orderRepository;
+    private final NotificationService notificationService;
+    private final ProfileRepository profileRepository;
 
     public void createNormalAuction(CreateNormalAuctionRequest request) {
 
@@ -151,6 +160,7 @@ public class AuctionService {
     }
 
     // ===== END AUCTION EARLY =====
+    @Transactional
     public void endAuctionEarly(Integer auctionId) {
 
         // 1. Lấy user hiện tại
@@ -173,18 +183,94 @@ public class AuctionService {
             throw new RuntimeException("Phiên đấu giá không đang hoạt động");
         }
 
-        // 5. Cập nhật auction -> ENDED
+        // ===== 5. END AUCTION =====
         auction.setAuctionStatus(AuctionStatus.ENDED);
         auction.setEndTime(LocalDateTime.now());
-        auctionRepository.save(auction);
+        User winner = auction.getWinner();
 
-        // 6. Cập nhật StoreItem -> APPROVED (có thể tạo lại auction sau)
+        // ===== 6. UPDATE STORE ITEM =====
         StoreItem storeItem = storeItemRepository.findByProduct(auction.getProduct())
                 .orElse(null);
         if (storeItem != null) {
-            storeItem.setItemStatus(StoreItemStatus.APPROVED);
+            storeItem.setItemStatus(
+                    winner != null
+                            ? StoreItemStatus.SOLD
+                            : StoreItemStatus.REJECTED
+            );
             storeItemRepository.save(storeItem);
         }
+
+        // ===== 7. CREATE ORDER (IF WINNER) =====
+        if (winner != null) {
+            boolean existed = orderRepository.existsByAuction(auction);
+            if (!existed) {
+                // Lấy address từ profile của winner
+                Profile winnerProfile = profileRepository.findByUser_UserId(winner.getUserId())
+                        .orElse(null);
+
+                Order order = new Order();
+                order.setWinner(winner);
+                order.setAuction(auction);
+
+                if (winnerProfile != null && winnerProfile.getAddress() != null) {
+                    order.setAddress(winnerProfile.getAddress());
+                }
+
+                order.setTotalAmount(
+                        auction.getCurrentPrice() != null
+                                ? auction.getCurrentPrice()
+                                : auction.getStartPrice()
+                );
+                order.setOrderStatus(OrderStatus.CART);
+                orderRepository.save(order);
+            }
+        }
+
+        // ===== 8. NOTIFICATION =====
+        if (winner != null) {
+            // Notify losers
+            List<User> bidders =
+                    bidRepository.findDistinctBiddersByAuction(auction.getAuctionId());
+            for (User u : bidders) {
+                if (u.getUserId().equals(winner.getUserId())) continue;
+                notificationService.send(
+                        u,
+                        "Kết thúc đấu giá",
+                        "Auction sản phẩm " + auction.getProduct().getProductName() + " đã kết thúc sớm",
+                        NotificationType.INFO
+                );
+            }
+            // Notify winner
+            notificationService.send(
+                    winner,
+                    "Chúc mừng",
+                    "Bạn đã thắng sản phẩm: " + auction.getProduct().getProductName(),
+                    NotificationType.CONGRATULATION
+            );
+        } else {
+            // Không có winner → notify seller
+            notificationService.send(
+                    auction.getSeller(),
+                    "Đấu giá kết thúc sớm",
+                    "Không có người tham gia đấu giá sản phẩm: "
+                            + auction.getProduct().getProductName(),
+                    NotificationType.INFO
+            );
+        }
+
+        // ===== 9. WEBSOCKET BROADCAST =====
+        BidResponse res = new BidResponse();
+        res.setAuctionId(auction.getAuctionId());
+        res.setType(EventType.AUCTION_ENDED);
+        messagingTemplate.convertAndSend(
+                "/topic/auction/" + auction.getAuctionId(),
+                res
+        );
+
+        // ===== 10. SAVE =====
+        auctionRepository.save(auction);
+
+        System.out.println("✅ Early ended auction: " + auction.getAuctionId());
     }
 
     public List<AuctionResponse> getMyNormalAuctions() {

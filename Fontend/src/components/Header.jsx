@@ -183,7 +183,7 @@ export default function Header() {
             </button>
           ) : (
             <div className="flex items-center gap-2 sm:gap-3">
-              <button className="relative p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+              <button onClick={() => navigate('/cart')} className="relative p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
                 <ShoppingCart className="w-5 h-5 text-slate-300" />
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-950">3</span>
               </button>

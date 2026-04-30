@@ -11,6 +11,8 @@ import NormalAuctionDetail from "../pages/NormalAuctionDetail";
 import ListNormalAuction from "../pages/ListNormalAuction";
 import ListLiveAuction from "../pages/ListLiveAuction";
 import UserGuide from "../pages/UserGuide";
+import LiveAuctionDetail from "../pages/LiveAuctionDetail";
+import Cart from "../pages/Cart"
 
 // PROFILE (nested)
 // import ProfileLayout from "../pages/profile/ProfileLayout";
@@ -56,6 +58,8 @@ export default function AppRoutes() {
         <Route path="/list-normal-auctions" element={<ListNormalAuction />} />
         <Route path="/list-live-auctions" element={<ListLiveAuction />} />
         <Route path="/user-guide" element={<UserGuide />} />
+        <Route path="/live-auction" element={<LiveAuctionDetail />} />
+        <Route path="/cart" element={<Cart />} />
         
       </Routes>
     </BrowserRouter>

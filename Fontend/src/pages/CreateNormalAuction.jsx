@@ -643,7 +643,7 @@ const CreateNormalAuction = () => {
       console.log("WS Event:", event);
 
       // xử lý khi auction kết thúc
-      if (event.type === "AUCTION_END") {
+      if (event.type === "AUCTION_ENDED") {
         showToast("Một phiên đấu giá đã kết thúc!", "info");
 
         // Cách 1: gọi lại API (đơn giản nhất)

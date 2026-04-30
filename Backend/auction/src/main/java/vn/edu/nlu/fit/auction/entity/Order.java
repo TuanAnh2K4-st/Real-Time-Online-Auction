@@ -24,7 +24,7 @@ public class Order {
     private Auction auction;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "address_id", nullable = false)
+    @JoinColumn(name = "address_id", nullable = true)
     private Address address;
 
     @Column(name = "total_amount", nullable = false, precision = 15, scale = 0)

@@ -34,7 +34,7 @@ export default function Login() {
 
       // Gọi hàm login trong context để lưu token + user
       // Context sẽ map các trường cần thiết (token, username, userId, role)
-      login(data);
+      login(data.data);
 
       showNotification('Đăng nhập thành công!', 'info');
 
