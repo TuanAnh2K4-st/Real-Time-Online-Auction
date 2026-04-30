@@ -11,6 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import vn.edu.nlu.fit.auction.security.JwtFilter;
+import vn.edu.nlu.fit.auction.security.OAuth2SuccessHandler;
 
 @Configuration
 @EnableMethodSecurity
@@ -18,6 +19,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtFilter jwtFilter;
+
+    @Autowired
+    private OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder(){
@@ -40,8 +44,24 @@ public class SecurityConfig {
             // phân quyền
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll() // login, register
-                .requestMatchers("/api/stores/**").permitAll() // public API
+                // public API
+                .requestMatchers("/api/stores/**").permitAll()
+                .requestMatchers("/api/categories/**").permitAll()
+                .requestMatchers("/api/provinces/**").permitAll()
+                .requestMatchers("/ws/**").permitAll() // WebSocket
+                .requestMatchers("/api/auctions/*/detail").permitAll() // xem chi tiết auction
+                .requestMatchers("/api/auctions/home/**").permitAll() // trang chủ
                 .anyRequest().authenticated()
+            )
+
+            // Khi chưa xác thực → trả 401 JSON thay vì redirect sang Google OAuth
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.setStatus(401);
+                    response.getWriter().write("{\"message\":\"Unauthorized - Vui lòng đăng nhập\"}");
+                })
             )
 
             // disable login form mặc định
@@ -50,7 +70,12 @@ public class SecurityConfig {
             // disable basic auth
             .httpBasic(basic -> basic.disable())
 
-            // ADD JWT FILTER (QUAN TRỌNG NHẤT)
+            // OAuth2 login
+            .oauth2Login(oauth2 -> oauth2
+                .successHandler(oAuth2SuccessHandler) // xử lý sau login Google
+            )
+
+            // ADD JWT FILTER
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

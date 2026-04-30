@@ -2,9 +2,11 @@ package vn.edu.nlu.fit.auction;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
+@EnableScheduling
 @SpringBootApplication
 public class AuctionApplication {
 

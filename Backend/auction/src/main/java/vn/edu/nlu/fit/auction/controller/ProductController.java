@@ -1,14 +1,16 @@
 package vn.edu.nlu.fit.auction.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.CreateProductRequest;
+import vn.edu.nlu.fit.auction.dto.request.FilterProduct;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.ProductResponse;
 import vn.edu.nlu.fit.auction.service.ProductService;
@@ -22,11 +24,24 @@ public class ProductController {
 
     // Create product
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse<ProductResponse>> create(
-            @Valid @RequestBody CreateProductRequest request) {
+    public ResponseEntity<ApiResponse<Void>> createProduct(
+            @ModelAttribute CreateProductRequest request ) {
+
+        productService.createProduct(request);
+
+        return ResponseEntity.ok( new ApiResponse<>("Tạo sản phẩm thành công", null));
+    }
+
+    // Filter Search
+    @PostMapping("/filter")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> filterProducts(
+            @RequestBody FilterProduct filter) {
+
+        List<ProductResponse> data = productService.filterProducts(filter);
 
         return ResponseEntity.ok(
-            new ApiResponse<>("Tạo thành công", productService.create(request))
+                new ApiResponse<>("Lấy danh sách thành công", data)
         );
     }
+    
 }

@@ -4,10 +4,12 @@ import java.util.UUID;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import vn.edu.nlu.fit.auction.dto.request.ChangePasswordRequest;
 import vn.edu.nlu.fit.auction.dto.request.LoginRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterSellerRequest;
 import vn.edu.nlu.fit.auction.dto.request.RegisterUserRequest;
 import vn.edu.nlu.fit.auction.dto.response.LoginResponse;
+import vn.edu.nlu.fit.auction.dto.response.UserResponse;
 import vn.edu.nlu.fit.auction.entity.AuctionRoom;
 import vn.edu.nlu.fit.auction.entity.Business;
 import vn.edu.nlu.fit.auction.entity.Profile;
@@ -129,4 +131,50 @@ public class AuthService {
                 user.getRole().name()
         );
     }
+
+    // Lấy thông tin user từ token
+    public UserResponse getCurrentUser(String token) {
+        // token = "Bearer <token>" hay chỉ token? Tùy controller gọi
+        // nếu truyền từ header, controller sẽ loại bỏ "Bearer "
+        
+        String email = jwtService.extractEmail(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new UserResponse(
+                user.getUserId().longValue(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.getStatus().name()
+        );
+    }
+
+    public void changePassword(String token, ChangePasswordRequest request) {
+
+        // 1. Lấy email từ token
+        String email = jwtService.extractEmail(token);
+
+        // 2. Lấy user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        // 3. Check mật khẩu cũ
+        if (!passwordEncoder.matches(request.getOldPass(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không đúng");
+        }
+
+        // 4. Check mật khẩu mới khác mật khẩu cũ
+        if (passwordEncoder.matches(request.getNewPass(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu mới không được trùng mật khẩu cũ");
+        }
+
+        // 5. Encode mật khẩu mới
+        user.setPassword(passwordEncoder.encode(request.getNewPass()));
+
+        // 6. Save lại
+        userRepository.save(user);
+    }
+    
 }

@@ -80,5 +80,17 @@ public class StoreService {
                           .map(storeMapper::toResponse)
                           .collect(Collectors.toList());
     }
+
+    // Lấy danh sách store theo tỉnh thành
+    public List<StoreResponse> getStoresByProvince(Integer provinceId) {
+        return storeRepository
+                .findByAddress_Province_ProvinceIdAndStoreStatus(
+                        provinceId,
+                        StoreStatus.ACTIVE
+                )
+                .stream()
+                .map(storeMapper::toResponse)
+                .collect(Collectors.toList());
+    }
     
 }

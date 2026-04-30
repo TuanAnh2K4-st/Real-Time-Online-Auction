@@ -1,6 +1,8 @@
 package vn.edu.nlu.fit.auction.controller;
 
 import java.util.List;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,28 +24,50 @@ public class ProvinceController {
 
     private final ProvinceService provinceService;
 
+    // ===== CREATE =====
     @PostMapping("/create")
-    public ApiResponse<ProvinceResponse> create(@RequestBody ProvinceRequest request) {
-        return new ApiResponse<>(
-            "Created",
-            provinceService.create(request)
+    public ResponseEntity<ApiResponse<ProvinceResponse>> create(
+            @RequestBody ProvinceRequest request) {
+
+        ProvinceResponse data = provinceService.create(request);
+
+        return ResponseEntity.status(201)
+                .body(new ApiResponse<>("Created", data));
+    }
+
+    // ===== UPDATE =====
+    @PutMapping("/update/{id}")
+    public ResponseEntity<ApiResponse<ProvinceResponse>> update(
+            @PathVariable Integer id,
+            @RequestBody ProvinceRequest request) {
+
+        ProvinceResponse data = provinceService.update(id, request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Updated", data)
         );
     }
 
-    @PutMapping("/update/{id}")
-    public ApiResponse<ProvinceResponse> update(@PathVariable Integer id,
-                                                @RequestBody ProvinceRequest request) {
-        return new ApiResponse<>("Updated", provinceService.update(id, request));
-    }
-
+    // ===== DELETE =====
     @DeleteMapping("/delete/{id}")
-    public ApiResponse<Void> delete(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable Integer id) {
+
         provinceService.delete(id);
-        return new ApiResponse<>("Deleted", null);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Deleted", null)
+        );
     }
 
+    // ===== GET ALL =====
     @GetMapping("/all")
-    public ApiResponse<List<ProvinceResponse>> getAll() {
-        return new ApiResponse<>("Success", provinceService.getAll());
+    public ResponseEntity<ApiResponse<List<ProvinceResponse>>> getAll() {
+
+        List<ProvinceResponse> data = provinceService.getAll();
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Success", data)
+        );
     }
 }

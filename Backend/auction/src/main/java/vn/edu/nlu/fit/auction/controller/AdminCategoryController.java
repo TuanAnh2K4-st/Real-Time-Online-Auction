@@ -19,36 +19,6 @@ import vn.edu.nlu.fit.auction.service.CategoryService;
 @RequiredArgsConstructor
 public class AdminCategoryController {
 
-    private final CategoryService categoryService;
+    
 
-    // tạo
-    @PostMapping("/create")
-    public CategoryResponse create(@RequestBody CategoryRequest request) {
-        return categoryService.create(request);
-    }
-
-    // sửa
-    @PutMapping("/update/{id}")
-    public CategoryResponse update(@PathVariable Integer id,
-                                   @RequestBody CategoryRequest request) {
-        return categoryService.update(id, request);
-    }
-
-    // xóa
-    @DeleteMapping("/delete/{id}")
-    public void delete(@PathVariable Integer id) {
-        categoryService.delete(id);
-    }
-
-    // danh sách category cha
-    @GetMapping("/root")
-    public List<CategoryResponse> getRoot() {
-        return categoryService.getAllRootForAdmin();
-    }
-
-    // danh sách theo parent
-    @GetMapping("/parent/{parentId}")
-    public List<CategoryResponse> getByParent(@PathVariable Integer parentId) {
-        return categoryService.getByParentForAdmin(parentId);
-    }
 }

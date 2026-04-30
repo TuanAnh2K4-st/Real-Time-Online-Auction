@@ -1,6 +1,7 @@
 package vn.edu.nlu.fit.auction.controller;
 
 import java.util.List;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,26 +23,51 @@ public class WardController {
 
     private final WardService wardService;
 
+    // ===== CREATE =====
     @PostMapping("/create")
-    public ApiResponse<WardResponse> create(@RequestBody WardRequest request) {
-        return new ApiResponse<>("Created", wardService.create(request));
+    public ResponseEntity<ApiResponse<WardResponse>> create(
+            @RequestBody WardRequest request) {
+
+        WardResponse data = wardService.create(request);
+
+        return ResponseEntity.status(201)
+                .body(new ApiResponse<>("Created", data));
     }
 
+    // ===== UPDATE =====
     @PutMapping("/update/{id}")
-    public ApiResponse<WardResponse> update(@PathVariable Integer id,
-                                            @RequestBody WardRequest request) {
-        return new ApiResponse<>("Updated", wardService.update(id, request));
+    public ResponseEntity<ApiResponse<WardResponse>> update(
+            @PathVariable Integer id,
+            @RequestBody WardRequest request) {
+
+        WardResponse data = wardService.update(id, request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Updated", data)
+        );
     }
 
+    // ===== DELETE =====
     @DeleteMapping("/delete/{id}")
-    public ApiResponse<Void> delete(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable Integer id) {
+
         wardService.delete(id);
-        return new ApiResponse<>("Deleted", null);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Deleted", null)
+        );
     }
 
-    // GET theo province
+    // ===== GET BY PROVINCE =====
     @GetMapping("/all-to-province/{provinceId}")
-    public ApiResponse<List<WardResponse>> getByProvince(@PathVariable Integer provinceId) {
-        return new ApiResponse<>("Success", wardService.getByProvince(provinceId));
+    public ResponseEntity<ApiResponse<List<WardResponse>>> getByProvince(
+            @PathVariable Integer provinceId) {
+
+        List<WardResponse> data = wardService.getByProvince(provinceId);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Success", data)
+        );
     }
 }

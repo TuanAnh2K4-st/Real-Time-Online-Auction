@@ -8,5 +8,11 @@ import vn.edu.nlu.fit.auction.enums.StoreStatus;
 public interface StoreRepository extends JpaRepository<Store, Integer> {
     
     List<Store> findByStoreStatus(StoreStatus status);
+
+    // Lọc theo province + active
+    List<Store> findByAddress_Province_ProvinceIdAndStoreStatus(
+            Integer provinceId,
+            StoreStatus status
+    );
     
 }
