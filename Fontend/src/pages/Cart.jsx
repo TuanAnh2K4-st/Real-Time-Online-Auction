@@ -6,6 +6,7 @@ import {
   AlertCircle, Gavel, Timer, History, ChevronDown, ShoppingBag,
   Archive, ExternalLink
 } from 'lucide-react';
+import orderApi from "../services/api/orderApi";
 
 // --- HÀM TRỢ GIÚP ---
 const formatCurrency = (amount) => {
@@ -13,54 +14,63 @@ const formatCurrency = (amount) => {
 };
 
 // --- DỮ LIỆU GIẢ LẬP ---
-const WON_ITEMS = [
-  {
-    id: 1,
-    title: "iPhone 15 Pro Max 1TB - Phiên bản mạ vàng 24K",
-    finalBid: 85000000,
-    image: "https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=800",
-    category: "Công nghệ",
-    seller: "TechWorld VN",
-    auctionId: "#DG-2024-001",
-    wonAt: "2024-05-20T10:00:00",
-    deadline: "2024-05-22T10:00:00",
-  },
-  {
-    id: 3,
-    title: "Túi Hermes Birkin 35 - Da cá sấu Niloticus",
-    finalBid: 1200000000,
-    image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&q=80&w=800",
-    category: "Thời trang xa xỉ",
-    seller: "Antique Heritage",
-    auctionId: "#DG-2024-085",
-    wonAt: "2024-05-20T14:30:00",
-    deadline: "2024-05-22T14:30:00",
-  }
-];
+// const WON_ITEMS = [
+//   {
+//     id: 1,
+//     title: "iPhone 15 Pro Max 1TB - Phiên bản mạ vàng 24K",
+//     finalBid: 85000000,
+//     image: "https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=800",
+//     category: "Công nghệ",
+//     seller: "TechWorld VN",
+//     auctionId: "#DG-2024-001",
+//     wonAt: "2024-05-20T10:00:00",
+//     deadline: "2024-05-22T10:00:00",
+//   },
+//   {
+//     id: 3,
+//     title: "Túi Hermes Birkin 35 - Da cá sấu Niloticus",
+//     finalBid: 1200000000,
+//     image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&q=80&w=800",
+//     category: "Thời trang xa xỉ",
+//     seller: "Antique Heritage",
+//     auctionId: "#DG-2024-085",
+//     wonAt: "2024-05-20T14:30:00",
+//     deadline: "2024-05-22T14:30:00",
+//   }
+// ];
 
 const PROVINCES = ["TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Cần Thơ", "Hải Phòng"];
 const WARDS = ["Phường Bến Nghé", "Phường Đa Kao", "Phường Tân Phong", "Phường 22", "Xã Hiệp Phước", "Phường Thảo Điền"];
 
-const CountdownTimer = ({ deadline }) => {
+const CountdownTimer = ({ createdAt }) => {
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
+    if (!createdAt) return;
+
     const timer = setInterval(() => {
       const now = new Date().getTime();
-      const distance = new Date(deadline).getTime() - now;
-      
-      if (distance < 0) {
+
+      // deadline = createdAt + 48h
+      const createdTime = new Date(createdAt).getTime();
+      const deadline = createdTime + 48 * 60 * 60 * 1000;
+
+      const distance = deadline - now;
+
+      if (distance <= 0) {
         setTimeLeft("ĐÃ HẾT HẠN");
         clearInterval(timer);
       } else {
         const hours = Math.floor(distance / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        setTimeLeft(`${hours}giờ ${minutes}phút ${seconds}giây`);
+
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
       }
     }, 1000);
+
     return () => clearInterval(timer);
-  }, [deadline]);
+  }, [createdAt]);
 
   return (
     <div className="flex items-center gap-2 text-amber-400 font-black italic">
@@ -71,13 +81,43 @@ const CountdownTimer = ({ deadline }) => {
 };
 
 const App = () => {
-  const [selectedItem, setSelectedItem] = useState(WON_ITEMS[0]);
+
+  const [orders, setOrders] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  const fetchOrders = async () => {
+    try {
+      const res = await orderApi.getCartOrders();
+
+      const data = res.data || [];
+
+      setOrders(data);
+
+      if (data.length > 0) {
+        setSelectedItem(data[0]);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    fetchOrders();
+  }, []);
+
   const [paymentMethod, setPaymentMethod] = useState("bank");
   const [address, setAddress] = useState({ province: "", ward: "", street: "" });
 
-  const insuranceFee = selectedItem.finalBid * 0.01;
-  const shippingFee = selectedItem.finalBid > 100000000 ? 0 : 250000;
-  const total = selectedItem.finalBid + insuranceFee + shippingFee;
+  const insuranceFee = (selectedItem?.totalAmount || 0) * 0.01;
+  const shippingFee = (selectedItem?.totalAmount || 0) > 100000000 ? 0 : 250000;
+  const total = (selectedItem?.totalAmount || 0) + insuranceFee + shippingFee;
+
+  if (loading || !selectedItem) {
+    return <div className="text-white p-10">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-blue-500/30 pb-20">
@@ -114,16 +154,16 @@ const App = () => {
           {/* Cart Stats Summary */}
           <div className="flex items-center gap-6 bg-slate-900/50 border border-white/5 rounded-3xl p-4 pr-6 backdrop-blur-md">
              <div className="flex -space-x-3">
-                {WON_ITEMS.map((item) => (
-                  <div key={item.id} className="w-10 h-10 rounded-full border-2 border-slate-950 overflow-hidden bg-slate-800">
-                    <img src={item.image} alt="Cart item" className="w-full h-full object-cover" />
+                {orders.map((item, index) => (
+                  <div key={item.orderId} className="w-10 h-10 rounded-full border-2 border-slate-950 overflow-hidden bg-slate-800">
+                    <img src={item.imageUrl} alt="Cart item" className="w-full h-full object-cover" />
                   </div>
                 ))}
              </div>
              <div className="h-8 w-px bg-white/10"></div>
              <div>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Đang chờ</p>
-                <p className="text-lg font-black text-white leading-none">{WON_ITEMS.length} Vật phẩm</p>
+                <p className="text-lg font-black text-white leading-none">{orders.length} Vật phẩm</p>
              </div>
           </div>
         </div>
@@ -150,25 +190,25 @@ const App = () => {
                 </button>
             </div>
             
-            {WON_ITEMS.map((item, index) => (
+            {orders.map((item, index) => (
               <div 
-                key={item.id} 
+                key={item.orderId} 
                 onClick={() => setSelectedItem(item)}
                 className={`group relative cursor-pointer rounded-[2.5rem] p-6 border transition-all duration-500 animate-in fade-in slide-in-from-left-4 ${
-                  selectedItem.id === item.id 
+                  selectedItem.orderId === item.orderId 
                   ? 'bg-slate-900/60 border-blue-500/50 shadow-2xl shadow-blue-900/20' 
                   : 'bg-slate-900/30 border-white/5 hover:border-white/20'
                 }`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 {/* Active Indicator */}
-                {selectedItem.id === item.id && (
+                {selectedItem.orderId === item.orderId && (
                   <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-12 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
                 )}
 
                 <div className="flex flex-col md:flex-row items-center gap-8">
                   <div className="relative w-full md:w-40 aspect-square rounded-3xl overflow-hidden bg-slate-800 border border-white/10 shrink-0">
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                    <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                        <span className="text-[8px] font-black text-white uppercase flex items-center gap-1"><ExternalLink className="w-2 h-2" /> Xem chi tiết thầu</span>
                     </div>
@@ -176,19 +216,19 @@ const App = () => {
 
                   <div className="flex-grow space-y-3 text-center md:text-left">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.category}</span>
-                        <CountdownTimer deadline={item.deadline} />
+                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.categoryName}</span>
+                        <CountdownTimer createdAt={item.createdAt} />
                     </div>
-                    <h3 className="text-xl font-black text-white leading-tight">{item.title}</h3>
+                    <h3 className="text-xl font-black text-white leading-tight">{item.productName}</h3>
                     <div className="flex flex-wrap justify-center md:justify-start gap-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                      <div className="flex items-center gap-1.5"><BadgeCheck className="w-3.5 h-3.5 text-cyan-400" /> {item.seller}</div>
+                      <div className="flex items-center gap-1.5"><BadgeCheck className="w-3.5 h-3.5 text-cyan-400" /> {item.sellName}</div>
                       <div className="flex items-center gap-1.5"><Tag className="w-3.5 h-3.5 text-blue-400" /> {item.auctionId}</div>
                     </div>
                   </div>
 
                   <div className="text-center md:text-right shrink-0">
                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Giá thắng cuộc</p>
-                    <p className="text-2xl font-black text-white tracking-tighter">{formatCurrency(item.finalBid)}</p>
+                    <p className="text-2xl font-black text-white tracking-tighter">{formatCurrency(item.totalAmount)}</p>
                   </div>
                 </div>
               </div>
@@ -262,7 +302,7 @@ const App = () => {
                 <div className="space-y-5 mb-8">
                   <div className="flex justify-between items-center text-sm font-bold">
                     <span className="text-slate-500">Giá thắng thầu</span>
-                    <span className="text-white">{formatCurrency(selectedItem.finalBid)}</span>
+                    <span className="text-white">{formatCurrency(selectedItem.totalAmount)}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-bold">
                     <span className="text-slate-500 flex items-center gap-2">Bảo hiểm vật phẩm (1%) <Info className="w-3 h-3 cursor-help" /></span>
