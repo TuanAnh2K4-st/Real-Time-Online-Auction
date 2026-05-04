@@ -8,7 +8,7 @@ import vn.edu.nlu.fit.auction.dto.request.CategoryRequest;
 import vn.edu.nlu.fit.auction.dto.response.CategoryResponse;
 import vn.edu.nlu.fit.auction.entity.Category;
 import vn.edu.nlu.fit.auction.mapper.CategoryMapper;
-import vn.edu.nlu.fit.auction.repository.CategoryRepository;
+import vn.edu.nlu.fit.auction.repository.Category.CategoryRepository;
 
 @Service
 @RequiredArgsConstructor

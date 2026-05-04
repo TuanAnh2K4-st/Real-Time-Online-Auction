@@ -7,7 +7,7 @@ import vn.edu.nlu.fit.auction.dto.response.OrderResponse;
 import vn.edu.nlu.fit.auction.entity.Order;
 import vn.edu.nlu.fit.auction.enums.OrderStatus;
 import vn.edu.nlu.fit.auction.mapper.OrderMapper;
-import vn.edu.nlu.fit.auction.repository.OrderRepository;
+import vn.edu.nlu.fit.auction.repository.Order.OrderRepository;
 
 @Service
 @RequiredArgsConstructor

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.entity.User;
-import vn.edu.nlu.fit.auction.repository.UserRepository;
+import vn.edu.nlu.fit.auction.repository.Auth.UserRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -55,7 +55,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                         }
                     }
                 } catch (Exception e) {
-                    System.err.println("❌ WebSocket auth error: " + e.getMessage());
+                    System.err.println("WebSocket auth error: " + e.getMessage());
                 }
             }
         }

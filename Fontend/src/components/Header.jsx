@@ -7,14 +7,19 @@ import {
 } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { getMyProfile } from '../services/api/profileApi';
 
-const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+const formatCurrency = (amount) => {
+  const n = Number(amount);
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number.isFinite(n) ? n : 0);
+};
 
-const MOCK_USER = {
-  name: 'Người Dùng',
-  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80',
-  balance: 12000000,
-  level: 'Member'
+const roleLabel = (role) => {
+  if (!role) return 'Thành viên';
+  const r = String(role).toUpperCase();
+  if (r.includes('ADMIN')) return 'Quản trị';
+  if (r.includes('SELLER')) return 'Người bán';
+  return 'Thành viên';
 };
 
 const SearchBar = () => {
@@ -103,16 +108,39 @@ const SearchBar = () => {
 export default function Header() {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [scrolled, setScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!user);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
 
   const menuRef = useRef(null);
   const profileRef = useRef(null);
 
+  const displayName = profile?.fullName?.trim() || user?.username || 'Người dùng';
+  const avatarUrl = profile?.avatarUrl || null;
+
   useEffect(() => setIsLoggedIn(!!user), [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getMyProfile();
+        const data = res?.data ?? res;
+        if (!cancelled && data) setProfile(data);
+      } catch {
+        if (!cancelled) setProfile(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.userId]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -183,20 +211,18 @@ export default function Header() {
             </button>
           ) : (
             <div className="flex items-center gap-2 sm:gap-3">
-              <button onClick={() => navigate('/cart')} className="relative p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+              <button onClick={() => navigate('/cart')} className="relative p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors" aria-label="Giỏ hàng">
                 <ShoppingCart className="w-5 h-5 text-slate-300" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-950">3</span>
               </button>
 
-              <button className="hidden sm:block relative p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+              <button type="button" className="hidden sm:block relative p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors" aria-label="Thông báo">
                 <Bell className="w-5 h-5 text-slate-300" />
-                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-slate-950"></span>
               </button>
 
               <div className="relative" ref={profileRef}>
                 <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="relative p-0.5 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 hover:scale-105 transition-transform">
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt="User" className="w-10 h-10 sm:w-11 sm:h-11 rounded-[14px] border-2 border-slate-950 object-cover" />
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="w-10 h-10 sm:w-11 sm:h-11 rounded-[14px] border-2 border-slate-950 object-cover" />
                   ) : (
                     <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[14px] border-2 border-slate-950 bg-white/5 flex items-center justify-center text-blue-400">
                       <User className="w-5 h-5" />
@@ -207,16 +233,16 @@ export default function Header() {
                 {isProfileOpen && (
                   <div className="absolute top-full right-0 mt-3 w-64 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200 p-2">
                     <div className="p-4 bg-white/5 rounded-2xl mb-2 flex items-center gap-3">
-                      {user?.avatar ? (
-                        <img src={user.avatar} alt="User" className="w-12 h-12 rounded-xl object-cover" />
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="" className="w-12 h-12 rounded-xl object-cover" />
                       ) : (
                         <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-blue-400">
                           <User className="w-6 h-6" />
                         </div>
                       )}
                       <div>
-                        <p className="text-white font-bold">{user?.username || user?.name || 'Người dùng'}</p>
-                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">{user?.level || MOCK_USER.level}</p>
+                        <p className="text-white font-bold">{displayName}</p>
+                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">{roleLabel(user?.role)}</p>
                       </div>
                     </div>
                     <div className="flex flex-col gap-1 p-1">
@@ -249,18 +275,23 @@ export default function Header() {
                     </div>
                     <div className="flex flex-col gap-1">
                       {[
-                        { icon: <Wallet className="w-5 h-5" />, label: 'Ví thanh toán', value: formatCurrency(user?.balance || MOCK_USER.balance), color: 'text-green-400', bg: 'bg-green-400/10' },
-                        { icon: <Package className="w-5 h-5" />, label: 'Đơn hàng của tôi', info: '2 đang giao', color: 'text-blue-400', bg: 'bg-blue-400/10' },
-                        { icon: <Gavel className="w-5 h-5" />, label: 'Tài sản đang đấu giá', info: '5 sản phẩm', color: 'text-purple-400', bg: 'bg-purple-400/10' },
-                        { icon: <PlusCircle className="w-5 h-5" />, label: 'Đăng sản phẩm kiểm duyệt', info: 'Tạo mới', color: 'text-amber-400', bg: 'bg-amber-400/10' },
-                        { icon: <PlayCircle className="w-5 h-5" />, label: 'Mở phiên đấu giá phổ thông', info: 'Bắt đầu', color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
-                        { icon: <Radio className="w-5 h-5" />, label: 'Mở phiên Live', info: 'Trực tiếp', color: 'text-rose-400', bg: 'bg-rose-400/10' },
+                        { icon: <Wallet className="w-5 h-5" />, label: 'Ví thanh toán', value: formatCurrency(profile?.walletBalance ?? 0), color: 'text-green-400', bg: 'bg-green-400/10' },
+                        { icon: <Package className="w-5 h-5" />, label: 'Đơn hàng của tôi', color: 'text-blue-400', bg: 'bg-blue-400/10' },
+                        { icon: <Gavel className="w-5 h-5" />, label: 'Tài sản đang đấu giá', color: 'text-purple-400', bg: 'bg-purple-400/10' },
+                        { icon: <PlusCircle className="w-5 h-5" />, label: 'Đăng sản phẩm kiểm duyệt', color: 'text-amber-400', bg: 'bg-amber-400/10' },
+                        { icon: <PlayCircle className="w-5 h-5" />, label: 'Mở phiên đấu giá phổ thông', color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
+                        { icon: <Radio className="w-5 h-5" />, label: 'Mở phiên Live', color: 'text-rose-400', bg: 'bg-rose-400/10' },
                         { icon: <Heart className="w-5 h-5" />, label: 'Sản phẩm yêu thích', color: 'text-red-400', bg: 'bg-red-400/10' },
                         { icon: <Lock className="w-5 h-5" />, label: 'Đổi mật khẩu', color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
                         { icon: <Settings className="w-5 h-5" />, label: 'Cài đặt tài khoản', color: 'text-slate-400', bg: 'bg-white/5' },
                       ].map((item, idx) => (
                         <button key={idx} 
                         onClick={() => {
+                          if (item.label === 'Ví thanh toán') {
+                            navigate('/wallet');
+                            setIsUserMenuOpen(false);
+                            return;
+                          }
                           if (item.label === 'Đăng sản phẩm kiểm duyệt') {
                             navigate('/my-products');
                             setIsUserMenuOpen(false);

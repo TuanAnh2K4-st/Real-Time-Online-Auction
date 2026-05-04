@@ -4,10 +4,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import jakarta.persistence.*;
+import lombok.*;
 import vn.edu.nlu.fit.auction.enums.ProductCondition;
 
 @Entity
-@Table(name = "products")
+@Table(name = "product")
+@ Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Product {
 
     @Id
@@ -56,127 +62,5 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;
-
-    // Constructor
-
-    public Product() {
-    }
-
-    public Product(Integer productId, User user, Category category, String productName, String brand, String origin,
-            ProductCondition productCondition, String description, String attributesJson, BigDecimal basePrice,
-            LocalDateTime createdAt, List<ProductImage> images) {
-        this.productId = productId;
-        this.user = user;
-        this.category = category;
-        this.productName = productName;
-        this.brand = brand;
-        this.origin = origin;
-        this.productCondition = productCondition;
-        this.description = description;
-        this.attributesJson = attributesJson;
-        this.basePrice = basePrice;
-        this.createdAt = createdAt;
-        this.images = images;
-    }
-
-    public Integer getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Integer productId) {
-        this.productId = productId;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public void setBrand(String brand) {
-        this.brand = brand;
-    }
-
-    public String getOrigin() {
-        return origin;
-    }
-
-    public void setOrigin(String origin) {
-        this.origin = origin;
-    }
-
-    public ProductCondition getProductCondition() {
-        return productCondition;
-    }
-
-    public void setProductCondition(ProductCondition productCondition) {
-        this.productCondition = productCondition;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getAttributesJson() {
-        return attributesJson;
-    }
-
-    public void setAttributesJson(String attributesJson) {
-        this.attributesJson = attributesJson;
-    }
-
-    public BigDecimal getBasePrice() {
-        return basePrice;
-    }
-
-    public void setBasePrice(BigDecimal basePrice) {
-        this.basePrice = basePrice;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public List<ProductImage> getImages() {
-        return images;
-    }
-
-    public void setImages(List<ProductImage> images) {
-        this.images = images;
-    }
-
-    // Getters and Setters
-
-    
 
 }

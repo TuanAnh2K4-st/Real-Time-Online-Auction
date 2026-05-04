@@ -1,8 +1,10 @@
 package vn.edu.nlu.fit.auction.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,6 +17,7 @@ import vn.edu.nlu.fit.auction.dto.request.ChatMessageRequest;
 import vn.edu.nlu.fit.auction.dto.request.CreateNormalAuctionRequest;
 import vn.edu.nlu.fit.auction.entity.Auction;
 import vn.edu.nlu.fit.auction.entity.AuctionMessage;
+import vn.edu.nlu.fit.auction.entity.AuctionParticipant;
 import vn.edu.nlu.fit.auction.entity.Bid;
 import vn.edu.nlu.fit.auction.entity.Order;
 import vn.edu.nlu.fit.auction.entity.Product;
@@ -22,19 +25,28 @@ import vn.edu.nlu.fit.auction.entity.Profile;
 import vn.edu.nlu.fit.auction.entity.ProductImage;
 import vn.edu.nlu.fit.auction.entity.StoreItem;
 import vn.edu.nlu.fit.auction.entity.User;
+import vn.edu.nlu.fit.auction.entity.Wallet;
+import vn.edu.nlu.fit.auction.entity.WalletTransaction;
 import vn.edu.nlu.fit.auction.enums.AuctionStatus;
 import vn.edu.nlu.fit.auction.enums.AuctionType;
+import vn.edu.nlu.fit.auction.enums.DepositStatus;
 import vn.edu.nlu.fit.auction.enums.EventType;
 import vn.edu.nlu.fit.auction.enums.NotificationType;
 import vn.edu.nlu.fit.auction.enums.OrderStatus;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
-import vn.edu.nlu.fit.auction.repository.AuctionMessageRepository;
-import vn.edu.nlu.fit.auction.repository.AuctionRepository;
-import vn.edu.nlu.fit.auction.repository.BidRepository;
-import vn.edu.nlu.fit.auction.repository.OrderRepository;
-import vn.edu.nlu.fit.auction.repository.ProfileRepository;
-import vn.edu.nlu.fit.auction.repository.ProductRepository;
-import vn.edu.nlu.fit.auction.repository.StoreItemRepository;
+import vn.edu.nlu.fit.auction.enums.TransactionDirection;
+import vn.edu.nlu.fit.auction.enums.TransactionType;
+import vn.edu.nlu.fit.auction.enums.WalletStatus;
+import vn.edu.nlu.fit.auction.repository.Auction.AuctionMessageRepository;
+import vn.edu.nlu.fit.auction.repository.Auction.AuctionParticipantRepository;
+import vn.edu.nlu.fit.auction.repository.Auction.AuctionRepository;
+import vn.edu.nlu.fit.auction.repository.Auction.BidRepository;
+import vn.edu.nlu.fit.auction.repository.Wallet.WalletRepository;
+import vn.edu.nlu.fit.auction.repository.Wallet.WalletTransactionRepository;
+import vn.edu.nlu.fit.auction.repository.Order.OrderRepository;
+import vn.edu.nlu.fit.auction.repository.Product.ProductRepository;
+import vn.edu.nlu.fit.auction.repository.Profile.ProfileRepository;
+import vn.edu.nlu.fit.auction.repository.Store.StoreItemRepository;
 import vn.edu.nlu.fit.auction.security.SecurityUtil;
 import vn.edu.nlu.fit.auction.dto.response.AuctionHomeCardResponse;
 import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
@@ -59,6 +71,9 @@ public class AuctionService {
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
     private final ProfileRepository profileRepository;
+    private final AuctionParticipantRepository auctionParticipantRepository;
+    private final WalletRepository walletRepository;
+    private final WalletTransactionRepository walletTransactionRepository;
 
     public void createNormalAuction(CreateNormalAuctionRequest request) {
 
@@ -205,7 +220,7 @@ public class AuctionService {
             boolean existed = orderRepository.existsByAuction(auction);
             if (!existed) {
                 // Lấy address từ profile của winner
-                Profile winnerProfile = profileRepository.findByUser_UserId(winner.getUserId())
+                Profile winnerProfile = profileRepository.findByUser(winner)
                         .orElse(null);
 
                 Order order = new Order();
@@ -368,7 +383,108 @@ public class AuctionService {
                 .collect(Collectors.toList());
         res.setChatHistory(chatHistory);
 
+        // Cọc tham gia (chỉ đấu giá phổ thông NORMAL)
+        if (auction.getAuctionType() != AuctionType.NORMAL) {
+            res.setDepositRequiredAmount(BigDecimal.ZERO);
+            res.setHasPaidDeposit(true);
+        } else {
+            BigDecimal depositRequired = computeDepositAmount(auction.getStartPrice());
+            res.setDepositRequiredAmount(depositRequired);
+            User viewer = securityUtil.getCurrentUserOrNull();
+            if (viewer == null) {
+                res.setHasPaidDeposit(false);
+            } else if (viewer.getUserId().equals(auction.getSeller().getUserId())) {
+                res.setHasPaidDeposit(true);
+            } else {
+                boolean holding = auctionParticipantRepository
+                        .findByAuctionIdAndUserId(auctionId, viewer.getUserId())
+                        .map(p -> p.getDepositStatus() == DepositStatus.HOLDING)
+                        .orElse(false);
+                res.setHasPaidDeposit(holding);
+            }
+        }
+
         return res;
+    }
+
+    /** 10% giá khởi điểm, làm tròn VND, tối thiểu 1 */
+    private BigDecimal computeDepositAmount(BigDecimal startPrice) {
+        if (startPrice == null || startPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ONE;
+        }
+        return startPrice.multiply(new BigDecimal("0.10")).setScale(0, RoundingMode.HALF_UP).max(BigDecimal.ONE);
+    }
+
+    /**
+     * Đặt cọc tham gia đấu giá phổ thông: giữ tiền ở frozen_balance + ghi nhận participant HOLDING.
+     */
+    @Transactional
+    public void placeAuctionDeposit(Integer auctionId) {
+
+        User user = securityUtil.getCurrentUser();
+
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
+
+        if (auction.getAuctionType() != AuctionType.NORMAL) {
+            throw new RuntimeException("Chỉ áp dụng đặt cọc cho đấu giá phổ thông");
+        }
+        if (auction.getAuctionStatus() != AuctionStatus.ACTIVE) {
+            throw new RuntimeException("Phiên đấu giá không hoạt động");
+        }
+        if (auction.getEndTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Phiên đấu giá đã kết thúc");
+        }
+        if (user.getUserId().equals(auction.getSeller().getUserId())) {
+            throw new RuntimeException("Người bán không cần đặt cọc");
+        }
+
+        Optional<AuctionParticipant> existingOpt = auctionParticipantRepository.findByAuctionIdAndUserId(auctionId,
+                user.getUserId());
+        if (existingOpt.isPresent() && existingOpt.get().getDepositStatus() == DepositStatus.HOLDING) {
+            throw new RuntimeException("Bạn đã đặt cọc cho phiên này");
+        }
+
+        BigDecimal depositAmount = computeDepositAmount(auction.getStartPrice());
+
+        Wallet wallet = walletRepository.findByUserIdForUpdate(user.getUserId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví"));
+        if (wallet.getWalletStatus() != WalletStatus.ACTIVE) {
+            throw new RuntimeException("Ví đang bị khóa");
+        }
+
+        BigDecimal available = wallet.getBalance().subtract(wallet.getFrozenBalance());
+        if (available.compareTo(depositAmount) < 0) {
+            throw new RuntimeException("Số dư khả dụng không đủ để đặt cọc");
+        }
+
+        wallet.setFrozenBalance(wallet.getFrozenBalance().add(depositAmount));
+        walletRepository.save(wallet);
+
+        WalletTransaction tx = WalletTransaction.builder()
+                .wallet(wallet)
+                .userId(user.getUserId())
+                .amount(depositAmount)
+                .direction(TransactionDirection.OUT)
+                .transactionType(TransactionType.AUCTION_DEPOSIT)
+                .referenceId(auctionId)
+                .build();
+        walletTransactionRepository.save(tx);
+
+        if (existingOpt.isPresent()) {
+            AuctionParticipant p = existingOpt.get();
+            p.setDepositAmount(depositAmount);
+            p.setDepositStatus(DepositStatus.HOLDING);
+            auctionParticipantRepository.save(p);
+        } else {
+            AuctionParticipant p = AuctionParticipant.builder()
+                    .auctionId(auctionId)
+                    .userId(user.getUserId())
+                    .depositAmount(depositAmount)
+                    .depositStatus(DepositStatus.HOLDING)
+                    .build();
+            auctionParticipantRepository.save(p);
+        }
     }
 
     // ===== HELPER =====
@@ -416,11 +532,29 @@ public class AuctionService {
             return;
         }
 
+        if (user.getUserId().equals(auction.getSeller().getUserId())) {
+            sendError(auction.getAuctionId(), "Người bán không được đặt giá");
+            return;
+        }
+
         BigDecimal minBid = auction.getCurrentPrice().add(auction.getStepPrice());
 
         if (request.getBidAmount().compareTo(minBid) < 0) {
             sendError(auction.getAuctionId(), "Giá phải >= " + minBid);
             return;
+        }
+
+        if (auction.getAuctionType() == AuctionType.NORMAL) {
+            boolean deposited = auctionParticipantRepository
+                    .findByAuctionIdAndUserId(auction.getAuctionId(), user.getUserId())
+                    .filter(p -> p.getDepositStatus() == DepositStatus.HOLDING)
+                    .isPresent();
+            if (!deposited) {
+                BigDecimal need = computeDepositAmount(auction.getStartPrice());
+                sendError(auction.getAuctionId(),
+                        "Bạn cần đặt cọc " + need + " VND (10% giá khởi điểm) trước khi đặt giá");
+                return;
+            }
         }
 
         // ===== SAVE BID =====

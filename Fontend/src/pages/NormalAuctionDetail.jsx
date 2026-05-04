@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
-  Gavel, Clock, Zap, FileText, 
+  Gavel, Clock, FileText, 
   MessageCircle, Send, History,
-  Tag, Coins, Loader2, AlertCircle
+  Tag, Coins, Loader2, AlertCircle, Landmark
 } from 'lucide-react';
 import normalAuctionDetailApi from '../services/api/normalAuctionDetailApi';
 import { connectWebSocket, disconnectWebSocket, sendBid, sendChatMessage } from '../services/websocket';
@@ -60,6 +60,7 @@ const NormalAuctionDetail = () => {
   const [bidding, setBidding] = useState(false);
   const [bidError, setBidError] = useState("");
   const [bidSuccess, setBidSuccess] = useState("");
+  const [depositLoading, setDepositLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState('history');
   const [timeLeft, setTimeLeft] = useState("00:00:00");
@@ -70,29 +71,30 @@ const NormalAuctionDetail = () => {
 
   const chatEndRef = useRef(null);
 
-  // 1. Fetch auction detail
-  useEffect(() => {
-    const fetchDetail = async () => {
-      try {
-        setLoading(true);
-        const res = await normalAuctionDetailApi.getAuctionDetail(auctionId);
-        const data = res?.data || res;
-        setAuction(data);
-        setIsEnded(data.auctionStatus !== 'ACTIVE');
-        if (data.chatHistory) {
-          setMessages(data.chatHistory.map((m, i) => ({
-            id: i, sender: m.sender, text: m.content, type: 'user', createdAt: m.createdAt
-          })));
-        }
-      } catch (err) {
-        setError("Không thể tải thông tin phiên đấu giá");
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const loadAuctionDetail = useCallback(async (showFullLoader = true) => {
+    try {
+      if (showFullLoader) setLoading(true);
+      const res = await normalAuctionDetailApi.getAuctionDetail(auctionId);
+      const data = res?.data || res;
+      setAuction(data);
+      setIsEnded(data.auctionStatus !== 'ACTIVE');
+      if (data.chatHistory) {
+        setMessages(data.chatHistory.map((m, i) => ({
+          id: i, sender: m.sender, text: m.content, type: 'user', createdAt: m.createdAt
+        })));
       }
-    };
-    fetchDetail();
+      setError(null);
+    } catch (err) {
+      if (showFullLoader) setError("Không thể tải thông tin phiên đấu giá");
+      console.error(err);
+    } finally {
+      if (showFullLoader) setLoading(false);
+    }
   }, [auctionId]);
+
+  useEffect(() => {
+    loadAuctionDetail(true);
+  }, [loadAuctionDetail]);
 
   // 2. WebSocket connection
   useEffect(() => {
@@ -149,10 +151,40 @@ const NormalAuctionDetail = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const isViewerSeller = user && auction && String(user.userId) === String(auction.sellerId);
+  const needsDeposit =
+    user &&
+    auction &&
+    !isViewerSeller &&
+    auction.hasPaidDeposit !== true &&
+    auction.auctionStatus === 'ACTIVE' &&
+    !isEnded;
+
+  const handlePlaceDeposit = async () => {
+    if (!user || !auctionId) return;
+    setDepositLoading(true);
+    setBidError("");
+    try {
+      await normalAuctionDetailApi.placeAuctionDeposit(auctionId);
+      await loadAuctionDetail(false);
+      setBidSuccess("Đặt cọc thành công — bạn có thể đặt giá.");
+      setTimeout(() => setBidSuccess(""), 5000);
+    } catch (err) {
+      const msg = err?.message || err?.error || (typeof err === 'string' ? err : 'Không thể đặt cọc');
+      setBidError(msg);
+    } finally {
+      setDepositLoading(false);
+    }
+  };
+
   // Handlers
   const handlePlaceBid = () => {
     if (!user) { setBidError("Vui lòng đăng nhập để đặt giá"); return; }
     if (isEnded) { setBidError("Phiên đấu giá đã kết thúc"); return; }
+    if (needsDeposit) {
+      setBidError(`Bạn cần đặt cọc ${formatCurrency(auction.depositRequiredAmount)} (10% giá khởi điểm) trước khi đặt giá.`);
+      return;
+    }
     const amount = parseInputNumber(manualBid);
     if (!amount) { setBidError("Vui lòng nhập giá"); return; }
     const minBid = (auction?.currentPrice || 0) + (auction?.stepPrice || 0);
@@ -324,6 +356,38 @@ const NormalAuctionDetail = () => {
               {/* Bid input */}
               {!isEnded && (
                 <div className="space-y-4">
+                  {needsDeposit && (
+                    <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+                          <Landmark className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Đặt cọc tham gia</p>
+                          <p className="text-sm text-amber-100/90 font-medium mt-1 leading-snug">
+                            Để đặt giá, bạn cần đặt cọc <span className="font-black text-white">{formatCurrency(auction.depositRequiredAmount)}</span>
+                            {' '}(10% giá khởi điểm). Số tiền được giữ trong ví (số dư đóng băng) cho đến khi phiên kết thúc.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handlePlaceDeposit}
+                        disabled={depositLoading}
+                        className="w-full py-3.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                      >
+                        {depositLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Coins className="w-4 h-4" />}
+                        {depositLoading ? 'Đang xử lý...' : 'Đặt cọc ngay'}
+                      </button>
+                    </div>
+                  )}
+
+                  {user && isViewerSeller && (
+                    <div className="p-3 rounded-xl bg-slate-800/50 border border-white/10 text-[11px] text-slate-400 font-bold">
+                      Bạn là người bán — không cần đặt cọc và không thể tự đặt giá trên sản phẩm của mình.
+                    </div>
+                  )}
+
                   <div>
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Nhập giá đặt mua (VNĐ)</p>
                     <div className="relative">
@@ -345,11 +409,12 @@ const NormalAuctionDetail = () => {
                   )}
 
                   <button 
-                    onClick={handlePlaceBid} disabled={bidding}
+                    onClick={handlePlaceBid} 
+                    disabled={bidding || needsDeposit || isViewerSeller}
                     className="w-full py-5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-2xl text-base font-black uppercase italic tracking-widest shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3 transition-all active:scale-95"
                   >
                     {bidding ? <Loader2 className="w-6 h-6 animate-spin" /> : <Gavel className="w-6 h-6" />}
-                    {bidding ? "Đang gửi..." : "Xác nhận đặt giá"}
+                    {bidding ? "Đang gửi..." : needsDeposit ? "Đặt cọc để đặt giá" : isViewerSeller ? "Người bán không đặt giá" : "Xác nhận đặt giá"}
                   </button>
                 </div>
               )}

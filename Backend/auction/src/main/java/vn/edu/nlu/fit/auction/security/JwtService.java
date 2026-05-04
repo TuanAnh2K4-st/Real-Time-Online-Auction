@@ -25,6 +25,7 @@ public class JwtService {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
+    // Tạo token từ user
     public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
@@ -36,6 +37,7 @@ public class JwtService {
                 .compact();
     }
 
+    // Lấy thông tin từ token
     public Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getKey())
@@ -44,6 +46,7 @@ public class JwtService {
                 .getBody();
     }
 
+    // Kiểm tra token có hợp lệ không
     public boolean isTokenValid(String token) {
         try {
             extractAllClaims(token);
@@ -53,6 +56,7 @@ public class JwtService {
         }
     }
 
+    // Các phương thức tiện ích để lấy thông tin cụ thể từ token
     public Integer extractUserId(String token) {
         Claims claims = extractAllClaims(token);
         return ((Number) claims.get("userId")).intValue();

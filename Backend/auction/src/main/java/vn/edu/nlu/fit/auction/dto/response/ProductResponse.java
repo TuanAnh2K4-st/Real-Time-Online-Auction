@@ -30,6 +30,10 @@ public class ProductResponse {
     private String street;
     private String provinceName;
     private String wardName;
+
+    public ProductResponse() {
+    }
+
     public ProductResponse(Integer id, String productName, String brand, String origin,
             ProductCondition productCondition, String description, BigDecimal basePrice, Integer categoryId,
             String categoryName, LocalDateTime createdAt, StoreItemStatus itemStatus, String street,

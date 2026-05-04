@@ -21,11 +21,12 @@ import vn.edu.nlu.fit.auction.entity.StoreItem;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
 import vn.edu.nlu.fit.auction.mapper.ProductMapper;
-import vn.edu.nlu.fit.auction.repository.CategoryRepository;
-import vn.edu.nlu.fit.auction.repository.ProductRepository;
-import vn.edu.nlu.fit.auction.repository.StoreItemRepository;
-import vn.edu.nlu.fit.auction.repository.StoreRepository;
+import vn.edu.nlu.fit.auction.repository.Category.CategoryRepository;
+import vn.edu.nlu.fit.auction.repository.Product.ProductRepository;
+import vn.edu.nlu.fit.auction.repository.Store.StoreItemRepository;
+import vn.edu.nlu.fit.auction.repository.Store.StoreRepository;
 import vn.edu.nlu.fit.auction.security.SecurityUtil;
+import vn.edu.nlu.fit.auction.service.Cloudinary.CloudinaryService;
 
 @Service
 @RequiredArgsConstructor

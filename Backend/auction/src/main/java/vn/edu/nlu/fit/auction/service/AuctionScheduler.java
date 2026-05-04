@@ -18,11 +18,11 @@ import vn.edu.nlu.fit.auction.enums.EventType;
 import vn.edu.nlu.fit.auction.enums.NotificationType;
 import vn.edu.nlu.fit.auction.enums.OrderStatus;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
-import vn.edu.nlu.fit.auction.repository.AuctionRepository;
-import vn.edu.nlu.fit.auction.repository.BidRepository;
-import vn.edu.nlu.fit.auction.repository.OrderRepository;
-import vn.edu.nlu.fit.auction.repository.ProfileRepository;
-import vn.edu.nlu.fit.auction.repository.StoreItemRepository;
+import vn.edu.nlu.fit.auction.repository.Auction.AuctionRepository;
+import vn.edu.nlu.fit.auction.repository.Auction.BidRepository;
+import vn.edu.nlu.fit.auction.repository.Order.OrderRepository;
+import vn.edu.nlu.fit.auction.repository.Profile.ProfileRepository;
+import vn.edu.nlu.fit.auction.repository.Store.StoreItemRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -75,7 +75,7 @@ public class AuctionScheduler {
 
                 if (!existed) {
                     // Lấy address từ profile của winner
-                    Profile winnerProfile = profileRepository.findByUser_UserId(winner.getUserId())
+                    Profile winnerProfile = profileRepository.findByUser(winner)
                             .orElse(null);
 
                     Order order = new Order();

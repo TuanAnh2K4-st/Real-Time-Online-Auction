@@ -14,10 +14,10 @@ import vn.edu.nlu.fit.auction.entity.Store;
 import vn.edu.nlu.fit.auction.entity.Ward;
 import vn.edu.nlu.fit.auction.enums.StoreStatus;
 import vn.edu.nlu.fit.auction.mapper.StoreMapper;
-import vn.edu.nlu.fit.auction.repository.AddressRepository;
-import vn.edu.nlu.fit.auction.repository.ProvinceRepository;
-import vn.edu.nlu.fit.auction.repository.StoreRepository;
-import vn.edu.nlu.fit.auction.repository.WardRepository;
+import vn.edu.nlu.fit.auction.repository.Address.AddressRepository;
+import vn.edu.nlu.fit.auction.repository.Address.ProvinceRepository;
+import vn.edu.nlu.fit.auction.repository.Address.WardRepository;
+import vn.edu.nlu.fit.auction.repository.Store.StoreRepository;
 
 @Service
 @RequiredArgsConstructor

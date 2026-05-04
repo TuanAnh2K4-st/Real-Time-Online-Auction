@@ -38,6 +38,12 @@ public class NormalAuctionDetailResponse {
     // Chat history
     private List<ChatHistoryItem> chatHistory;
 
+    /** 10% giá khởi điểm — số tiền cọc cần đặt để tham gia đấu giá */
+    private BigDecimal depositRequiredAmount;
+
+    /** Người xem đã đặt cọc (HOLDING) chưa; true nếu là người bán hoặc chưa đăng nhập thì false */
+    private Boolean hasPaidDeposit;
+
     @Data
     public static class BidHistoryItem {
         private String bidder;

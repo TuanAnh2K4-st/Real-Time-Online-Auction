@@ -12,6 +12,7 @@ import com.cloudinary.Cloudinary;
 @Configuration
 public class CloudinaryConfig {
 
+    // Lấy giá trị từ file application.properties
     @Value("${cloudinary.cloud_name}")
     private String cloudName;
 
@@ -23,11 +24,13 @@ public class CloudinaryConfig {
 
     @Bean
     public Cloudinary cloudinary() {
+        // B1: Tạo Map chứa config kết nối
         Map<String, String> config = new HashMap<>();
+        // Gán các thông tin xác thực từ file config vào Map
         config.put("cloud_name", cloudName);
         config.put("api_key", apiKey);
         config.put("api_secret", apiSecret);
-
+        // B2: Khởi tạo và trả về đối tượng Cloudinary với config trên
         return new Cloudinary(config);
     }
 }

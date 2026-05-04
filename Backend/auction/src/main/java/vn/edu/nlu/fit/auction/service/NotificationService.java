@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.entity.Notification;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.enums.NotificationType;
-import vn.edu.nlu.fit.auction.repository.NotificationRepository;
+import vn.edu.nlu.fit.auction.repository.Notification.NotificationRepository;
 
 @Service
 @RequiredArgsConstructor

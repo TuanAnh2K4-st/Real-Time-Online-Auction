@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Mail, Lock, ArrowRight, Gavel, ShieldCheck, User, 
   Store, Eye, EyeOff, LogIn, CheckCircle2, XCircle, 
-  Building2, Laptop
+  Building2
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerUserApi, registerSellerApi } from '../services/api/authApi';
@@ -24,7 +24,6 @@ export default function Register() {
     const [formData, setFormData] = useState({
       username: '',
       companyName: '',
-      roomName: '',
       email: '',
       password: '',
     });
@@ -106,10 +105,10 @@ export default function Register() {
         } else {
           // Chuẩn bị payload cho API đăng ký doanh nghiệp
           const payload = {
+            username: formData.username,
             companyName: formData.companyName,
             email: formData.email,
             password: formData.password,
-            roomName: formData.roomName,
           };
           await registerSellerApi(payload);
         }
@@ -249,9 +248,26 @@ export default function Register() {
                   </div>
                 )}
 
-                {/* Company & Room for Seller */}
+                {/* Username & Company for Seller */}
                 {type === "seller" && (
                   <div className="space-y-5 animate-in slide-in-from-right-4">
+                    <div className="group">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1 group-focus-within:text-blue-400">
+                        Tên hiển thị
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400" size={18} />
+                        <input
+                          name="username"
+                          type="text"
+                          placeholder="Nguyễn Văn A"
+                          required
+                          value={formData.username}
+                          onChange={handleInputChange}
+                          className="w-full pl-12 pr-4 py-3.5 bg-slate-800/30 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-white transition-all"
+                        />
+                      </div>
+                    </div>
                     <div className="group">
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1 group-focus-within:text-blue-400">
                         Tên công ty
@@ -264,23 +280,6 @@ export default function Register() {
                           placeholder="Công ty TNHH BidMaster"
                           required
                           value={formData.companyName}
-                          onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-3.5 bg-slate-800/30 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-white transition-all"
-                        />
-                      </div>
-                    </div>
-                    <div className="group">
-                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1 group-focus-within:text-blue-400">
-                        Mã phòng / Gian hàng
-                      </label>
-                      <div className="relative">
-                        <Laptop className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400" size={18} />
-                        <input
-                          name="roomName"
-                          type="text"
-                          placeholder="ROOM-888"
-                          required
-                          value={formData.roomName}
                           onChange={handleInputChange}
                           className="w-full pl-12 pr-4 py-3.5 bg-slate-800/30 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-white transition-all"
                         />

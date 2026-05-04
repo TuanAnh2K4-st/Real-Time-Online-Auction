@@ -1,6 +1,7 @@
 package vn.edu.nlu.fit.auction.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -89,6 +90,15 @@ public class AuctionController {
     ) {
         NormalAuctionDetailResponse data = auctionService.getNormalAuctionDetail(auctionId);
         return ResponseEntity.ok(new ApiResponse<>("Lấy chi tiết auction thành công", data));
+    }
+
+    /** Đặt cọc 10% giá khởi điểm để tham gia đấu giá phổ thông */
+    @PostMapping("/{auctionId}/deposit")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> placeAuctionDeposit(
+            @PathVariable Integer auctionId
+    ) {
+        auctionService.placeAuctionDeposit(auctionId);
+        return ResponseEntity.ok(new ApiResponse<>("Đặt cọc thành công", Map.of("success", true)));
     }
 }
 

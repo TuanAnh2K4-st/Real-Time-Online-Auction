@@ -8,6 +8,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+
+// Cấu hình CORS cho backend (Spring Boot)
+// Cho phép frontend (React) gọi API khác domain
+
 @Configuration
 public class CorsConfig {
     
