@@ -26,11 +26,13 @@ import vn.edu.nlu.fit.auction.entity.ProductImage;
 import vn.edu.nlu.fit.auction.entity.StoreItem;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.entity.Wallet;
+import vn.edu.nlu.fit.auction.entity.WalletHold;
 import vn.edu.nlu.fit.auction.entity.WalletTransaction;
 import vn.edu.nlu.fit.auction.enums.AuctionStatus;
 import vn.edu.nlu.fit.auction.enums.AuctionType;
 import vn.edu.nlu.fit.auction.enums.DepositStatus;
 import vn.edu.nlu.fit.auction.enums.EventType;
+import vn.edu.nlu.fit.auction.enums.HoldStatus;
 import vn.edu.nlu.fit.auction.enums.NotificationType;
 import vn.edu.nlu.fit.auction.enums.OrderStatus;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
@@ -41,6 +43,7 @@ import vn.edu.nlu.fit.auction.repository.Auction.AuctionMessageRepository;
 import vn.edu.nlu.fit.auction.repository.Auction.AuctionParticipantRepository;
 import vn.edu.nlu.fit.auction.repository.Auction.AuctionRepository;
 import vn.edu.nlu.fit.auction.repository.Auction.BidRepository;
+import vn.edu.nlu.fit.auction.repository.Wallet.WalletHoldRepository;
 import vn.edu.nlu.fit.auction.repository.Wallet.WalletRepository;
 import vn.edu.nlu.fit.auction.repository.Wallet.WalletTransactionRepository;
 import vn.edu.nlu.fit.auction.repository.Order.OrderRepository;
@@ -74,6 +77,7 @@ public class AuctionService {
     private final AuctionParticipantRepository auctionParticipantRepository;
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
+    private final WalletHoldRepository walletHoldRepository;
 
     public void createNormalAuction(CreateNormalAuctionRequest request) {
 
@@ -460,6 +464,17 @@ public class AuctionService {
 
         wallet.setFrozenBalance(wallet.getFrozenBalance().add(depositAmount));
         walletRepository.save(wallet);
+
+        // ===== CREATE WALLET HOLD =====
+        WalletHold walletHold = WalletHold.builder()
+                .wallet(wallet)
+                .userId(user.getUserId())
+                .auctionId(auction.getAuctionId())
+                .amount(depositAmount)
+                .holdStatus(HoldStatus.HOLDING)
+                .build();
+
+        walletHoldRepository.save(walletHold);
 
         WalletTransaction tx = WalletTransaction.builder()
                 .wallet(wallet)

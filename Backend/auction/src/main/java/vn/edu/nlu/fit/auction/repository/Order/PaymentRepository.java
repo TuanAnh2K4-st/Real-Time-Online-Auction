@@ -5,4 +5,6 @@ import vn.edu.nlu.fit.auction.entity.Payment;
 
 public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     
+    boolean existsByOrderOrderId(Integer orderId);
+
 }

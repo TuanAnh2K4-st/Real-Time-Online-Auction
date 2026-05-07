@@ -40,11 +40,11 @@ public class Payment {
     private LocalDateTime paidAt;
 
     // ================== AUTO DEFAULT ==================
-    @PrePersist
-    public void prePersist() {
-        if (this.paymentStatus == null) {
-            this.paymentStatus = PaymentStatus.PENDING;
-        }
-    }
+    // @PrePersist
+    // public void prePersist() {
+    //     if (this.paymentStatus == null) {
+    //         this.paymentStatus = PaymentStatus.PENDING;
+    //     }
+    // }
     
 }
