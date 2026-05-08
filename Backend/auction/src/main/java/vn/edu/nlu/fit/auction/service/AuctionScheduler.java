@@ -23,6 +23,7 @@ import vn.edu.nlu.fit.auction.repository.Auction.BidRepository;
 import vn.edu.nlu.fit.auction.repository.Order.OrderRepository;
 import vn.edu.nlu.fit.auction.repository.Profile.ProfileRepository;
 import vn.edu.nlu.fit.auction.repository.Store.StoreItemRepository;
+import vn.edu.nlu.fit.auction.service.Notification.NotificationService;
 
 @Component
 @RequiredArgsConstructor

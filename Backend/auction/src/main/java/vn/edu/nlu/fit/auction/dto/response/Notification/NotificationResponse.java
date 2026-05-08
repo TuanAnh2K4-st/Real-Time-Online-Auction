@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.dto.response;
+package vn.edu.nlu.fit.auction.dto.response.Notification;
 
 import java.time.LocalDateTime;
 import lombok.Data;
