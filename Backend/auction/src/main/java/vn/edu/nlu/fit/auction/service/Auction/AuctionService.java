@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.service;
+package vn.edu.nlu.fit.auction.service.Auction;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -54,12 +54,12 @@ import vn.edu.nlu.fit.auction.repository.Profile.ProfileRepository;
 import vn.edu.nlu.fit.auction.repository.Store.StoreItemRepository;
 import vn.edu.nlu.fit.auction.security.SecurityUtil;
 import vn.edu.nlu.fit.auction.service.Notification.NotificationService;
-import vn.edu.nlu.fit.auction.dto.response.AuctionNormalCardResponse;
-import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
 import vn.edu.nlu.fit.auction.dto.response.BidResponse;
 import vn.edu.nlu.fit.auction.dto.response.ChatMessageResponse;
-import vn.edu.nlu.fit.auction.dto.response.NormalAuctionDetailResponse;
 import vn.edu.nlu.fit.auction.dto.response.PageResponse;
+import vn.edu.nlu.fit.auction.dto.response.Auction.AuctionNormalCardResponse;
+import vn.edu.nlu.fit.auction.dto.response.Auction.AuctionResponse;
+import vn.edu.nlu.fit.auction.dto.response.Auction.NormalAuctionDetailResponse;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

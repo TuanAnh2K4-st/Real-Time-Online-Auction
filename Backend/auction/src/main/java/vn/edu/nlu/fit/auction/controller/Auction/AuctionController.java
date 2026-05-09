@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.controller;
+package vn.edu.nlu.fit.auction.controller.Auction;
 
 import java.util.List;
 import java.util.Map;
@@ -16,13 +16,13 @@ import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.CreateNormalAuctionRequest;
 import vn.edu.nlu.fit.auction.dto.request.Auction.AuctionNormalFilterRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
-import vn.edu.nlu.fit.auction.dto.response.AuctionNormalCardResponse;
-import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
-import vn.edu.nlu.fit.auction.dto.response.NormalAuctionDetailResponse;
 import vn.edu.nlu.fit.auction.dto.response.PageResponse;
 import vn.edu.nlu.fit.auction.dto.response.ProductAuctionResponse;
-import vn.edu.nlu.fit.auction.service.AuctionService;
+import vn.edu.nlu.fit.auction.dto.response.Auction.AuctionNormalCardResponse;
+import vn.edu.nlu.fit.auction.dto.response.Auction.AuctionResponse;
+import vn.edu.nlu.fit.auction.dto.response.Auction.NormalAuctionDetailResponse;
 import vn.edu.nlu.fit.auction.service.ProductService;
+import vn.edu.nlu.fit.auction.service.Auction.AuctionService;
 
 @RestController
 @RequestMapping("/api/auctions")

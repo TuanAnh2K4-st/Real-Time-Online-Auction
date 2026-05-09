@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.dto.response;
+package vn.edu.nlu.fit.auction.dto.response.Auction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
