@@ -2,7 +2,9 @@ package vn.edu.nlu.fit.auction.controller.Notification;
 
 import java.util.List;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,6 +41,32 @@ public class NotificationController {
 
         return new ApiResponse<>(
                 "Đã đánh dấu notification là đã đọc",
+                null
+        );
+    }
+
+    // Api đánh dấu tất cả đã đọc
+    @PutMapping("/read-all")
+    public ApiResponse<String> markAllAsRead() {
+
+        notificationService.markAllAsRead();
+
+        return new ApiResponse<>(
+                "Đã đánh dấu tất cả notification là đã đọc",
+                null
+        );
+    }
+
+    // Api xóa notification
+    @DeleteMapping("/{notificationId}")
+    public ApiResponse<String> deleteNotification(
+            @PathVariable Integer notificationId
+    ) {
+
+        notificationService.deleteNotification(notificationId);
+
+        return new ApiResponse<>(
+                "Xóa notification thành công",
                 null
         );
     }

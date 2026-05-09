@@ -15,6 +15,7 @@ import LiveAuctionDetail from "../pages/LiveAuctionDetail";
 import Cart from "../pages/Cart"
 import  Wallet from "../pages/Wallet";
 import Legal from "../pages/Legal";
+import MyNotification from "../pages/MyNotification"
 
 
 
@@ -39,6 +40,7 @@ export default function AppRoutes() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/legal" element={<Legal />} />
         <Route path="/wallet" element={<Wallet />} />
+        <Route path="/my-notification" element={<MyNotification/>} />
       </Routes>
     </BrowserRouter>
   );

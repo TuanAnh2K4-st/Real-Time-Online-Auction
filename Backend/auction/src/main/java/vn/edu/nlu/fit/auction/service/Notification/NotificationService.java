@@ -47,8 +47,10 @@ public class NotificationService {
                 .map(n -> new NotificationResponse(
                         n.getNotificationId(),
                         n.getTitle(),
+                        n.getContent(),
                         n.getCreatedAt(),
-                        n.getIsRead()
+                        n.getIsRead(),
+                        n.getNotificationType()
                 ))
                 .toList();
     }
@@ -63,7 +65,7 @@ public class NotificationService {
         }
 
         Notification notification = notificationRepository
-                .findByIdAndUserId(
+                .findByNotificationIdAndUser_UserId(
                         request.getNotificationId(),
                         currentUser.getUserId()
                 )
@@ -74,6 +76,43 @@ public class NotificationService {
         notification.setIsRead(true);
 
         notificationRepository.save(notification);
+    }
+
+    // đánh dấu tất cả đã đọc
+    public void markAllAsRead() {
+
+        User currentUser = securityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        List<Notification> notifications = notificationRepository.findByUserSorted(
+                        currentUser.getUserId()
+                );
+
+        notifications.forEach(n -> n.setIsRead(true));
+
+        notificationRepository.saveAll(notifications);
+    }
+
+    // Xoá Notification
+     public void deleteNotification(Integer notificationId) {
+
+        User currentUser = securityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        Notification notification = notificationRepository
+                        .findByNotificationIdAndUser_UserId(
+                                notificationId,
+                                currentUser.getUserId()
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException("Notification not found")
+                        );
+
+        notificationRepository.delete(notification);
     }
 
 }

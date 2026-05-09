@@ -215,7 +215,7 @@ export default function Header() {
                 <ShoppingCart className="w-5 h-5 text-slate-300" />
               </button>
 
-              <button type="button" className="hidden sm:block relative p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors" aria-label="Thông báo">
+              <button onClick={() => navigate('/my-notification')} type="button" className="hidden sm:block relative p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors" aria-label="Thông báo">
                 <Bell className="w-5 h-5 text-slate-300" />
               </button>
 

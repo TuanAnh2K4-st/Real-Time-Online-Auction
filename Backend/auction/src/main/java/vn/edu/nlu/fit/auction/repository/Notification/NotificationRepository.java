@@ -21,8 +21,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
     List<Notification> findByUserSorted(@Param("userId") Integer userId);
     
     // Tìm thông báo
-    Optional<Notification> findByIdAndUserId(
-            Integer id,
+    Optional<Notification> findByNotificationIdAndUser_UserId(
+            Integer notificationId,
             Integer userId
     );
 }
