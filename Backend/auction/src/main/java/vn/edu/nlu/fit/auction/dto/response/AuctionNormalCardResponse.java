@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import lombok.Data;
 
 @Data
-public class AuctionHomeCardResponse {
+public class AuctionNormalCardResponse {
     
     private Integer auctionId;
     private String productName;
@@ -14,7 +14,7 @@ public class AuctionHomeCardResponse {
     private BigDecimal currentPrice;
     private LocalDateTime endTime;
     
-    public AuctionHomeCardResponse(Integer auctionId, String productName, String primaryImage, String categoryName,
+    public AuctionNormalCardResponse(Integer auctionId, String productName, String primaryImage, String categoryName,
             BigDecimal currentPrice, LocalDateTime endTime) {
         this.auctionId = auctionId;
         this.productName = productName;
@@ -23,7 +23,5 @@ public class AuctionHomeCardResponse {
         this.currentPrice = currentPrice;
         this.endTime = endTime;
     }
-
-    
 
 }

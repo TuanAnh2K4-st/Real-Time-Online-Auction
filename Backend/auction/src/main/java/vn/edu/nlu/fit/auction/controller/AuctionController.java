@@ -10,13 +10,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.CreateNormalAuctionRequest;
+import vn.edu.nlu.fit.auction.dto.request.Auction.AuctionNormalFilterRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
-import vn.edu.nlu.fit.auction.dto.response.AuctionHomeCardResponse;
+import vn.edu.nlu.fit.auction.dto.response.AuctionNormalCardResponse;
 import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
 import vn.edu.nlu.fit.auction.dto.response.NormalAuctionDetailResponse;
+import vn.edu.nlu.fit.auction.dto.response.PageResponse;
 import vn.edu.nlu.fit.auction.dto.response.ProductAuctionResponse;
 import vn.edu.nlu.fit.auction.service.AuctionService;
 import vn.edu.nlu.fit.auction.service.ProductService;
@@ -61,15 +64,30 @@ public class AuctionController {
 
     // Lấy top 4 auction normal đang active mới nhất
     @GetMapping("/home/top4-active-normal")
-    public ResponseEntity<ApiResponse<List<AuctionHomeCardResponse>>> getTop4ActiveNormalAuctions() {
+    public ResponseEntity<ApiResponse<List<AuctionNormalCardResponse>>> getTop4ActiveNormalAuctions() {
 
-        List<AuctionHomeCardResponse> auctions =
+        List<AuctionNormalCardResponse> auctions =
                 auctionService.getTop4ActiveNormalAuctions();
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         "Lấy top 4 auction NORMAL đang active mới nhất thành công",
                         auctions
+                )
+        );
+    }
+
+    // Danh sách card normal filter
+    @PostMapping("/normal/filter")
+    public ResponseEntity<ApiResponse<PageResponse<AuctionNormalCardResponse>>> filterNormalAuctions(@RequestBody AuctionNormalFilterRequest request, @RequestParam(defaultValue = "0") int page) {
+
+        PageResponse<AuctionNormalCardResponse> response = 
+                        auctionService.filterNormalAuctions(request,page);
+                        
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        "Lọc auction NORMAL thành công",
+                        response
                 )
         );
     }

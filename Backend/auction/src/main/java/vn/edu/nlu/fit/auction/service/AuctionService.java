@@ -6,6 +6,7 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.BidRequest;
 import vn.edu.nlu.fit.auction.dto.request.ChatMessageRequest;
 import vn.edu.nlu.fit.auction.dto.request.CreateNormalAuctionRequest;
+import vn.edu.nlu.fit.auction.dto.request.Auction.AuctionNormalFilterRequest;
 import vn.edu.nlu.fit.auction.entity.Auction;
 import vn.edu.nlu.fit.auction.entity.AuctionMessage;
 import vn.edu.nlu.fit.auction.entity.AuctionParticipant;
@@ -52,11 +54,17 @@ import vn.edu.nlu.fit.auction.repository.Profile.ProfileRepository;
 import vn.edu.nlu.fit.auction.repository.Store.StoreItemRepository;
 import vn.edu.nlu.fit.auction.security.SecurityUtil;
 import vn.edu.nlu.fit.auction.service.Notification.NotificationService;
-import vn.edu.nlu.fit.auction.dto.response.AuctionHomeCardResponse;
+import vn.edu.nlu.fit.auction.dto.response.AuctionNormalCardResponse;
 import vn.edu.nlu.fit.auction.dto.response.AuctionResponse;
 import vn.edu.nlu.fit.auction.dto.response.BidResponse;
 import vn.edu.nlu.fit.auction.dto.response.ChatMessageResponse;
 import vn.edu.nlu.fit.auction.dto.response.NormalAuctionDetailResponse;
+import vn.edu.nlu.fit.auction.dto.response.PageResponse;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +151,7 @@ public class AuctionService {
     }
 
     // Lấy top 4 auction normal đang active mới nhất
-    public List<AuctionHomeCardResponse> getTop4ActiveNormalAuctions() {
+    public List<AuctionNormalCardResponse> getTop4ActiveNormalAuctions() {
 
         List<Auction> auctions =
                 auctionRepository.findTop4ByAuctionStatusAndAuctionTypeOrderByStartTimeDesc(
@@ -168,7 +176,7 @@ public class AuctionService {
                 image = product.getImages().get(0).getImageUrl();
             }
 
-            return new AuctionHomeCardResponse(
+            return new AuctionNormalCardResponse(
                     a.getAuctionId(),
                     product.getProductName(),
                     image,
@@ -177,6 +185,72 @@ public class AuctionService {
                     a.getEndTime()
             );
         }).toList();
+    }
+
+    // Lấy ra danh sách auction normal filter
+    public PageResponse<AuctionNormalCardResponse> filterNormalAuctions(AuctionNormalFilterRequest request, int page) {
+        Sort sort;
+        String sortBy = request.getSortBy();
+
+        if (sortBy == null || sortBy.equals("newest")) {
+            sort = Sort.by("startTime").descending();
+        } else if (sortBy.equals("oldest")) {
+            sort = Sort.by("startTime").ascending();
+        } else if (sortBy.equals("price_asc")) {
+            sort = Sort.by("currentPrice").ascending();
+        } else if (sortBy.equals("price_desc")) {
+            sort = Sort.by("currentPrice").descending();
+        } else {
+            sort = Sort.by("startTime").descending();
+        }
+        // mỗi page gồm 9 card
+        Pageable pageable = PageRequest.of(page, 9, sort);
+
+        Page<Auction> auctionPage = auctionRepository.filterNormalAuctions(
+                        request.getKeyword(),
+                        request.getCategoryId(),
+                        request.getMinPrice(),
+                        request.getMaxPrice(),
+                        pageable
+        );
+      
+        List<AuctionNormalCardResponse> content = auctionPage.getContent().stream().map(a -> {
+                            Product product = a.getProduct();
+                            // lấy primary image
+                            String image = product.getImages()
+                                    .stream()
+                                    .filter(ProductImage::getIsPrimary)
+                                    .map(ProductImage::getImageUrl)
+                                    .findFirst()
+                                    .orElse(null);
+                            // fallback ảnh đầu tiên
+                            if (image == null &&
+                                    !product.getImages().isEmpty()) {
+                                image = product.getImages()
+                                        .get(0)
+                                        .getImageUrl();
+                            }
+                            return new AuctionNormalCardResponse(
+                                    a.getAuctionId(),
+                                    product.getProductName(),
+                                    image,
+                                    product.getCategory().getName(),
+
+                                    a.getCurrentPrice() != null
+                                            ? a.getCurrentPrice()
+                                            : a.getStartPrice(),
+
+                                    a.getEndTime()
+                            );
+                        }).toList();
+        return new PageResponse<>(
+                content,
+                auctionPage.getNumber(),
+                auctionPage.getSize(),
+                auctionPage.getTotalElements(),
+                auctionPage.getTotalPages(),
+                auctionPage.isLast()
+        );
     }
 
     // ===== END AUCTION EARLY =====
@@ -290,7 +364,7 @@ public class AuctionService {
         // ===== 10. SAVE =====
         auctionRepository.save(auction);
 
-        System.out.println("✅ Early ended auction: " + auction.getAuctionId());
+        System.out.println("Early ended auction: " + auction.getAuctionId());
     }
 
     public List<AuctionResponse> getMyNormalAuctions() {
