@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, Bell, User, Gavel, Radio, Clock, 
   ChevronRight, Heart, ShieldCheck, Zap, 
@@ -10,6 +11,8 @@ import {
   Trash2, SortAsc, SortDesc, Laptop, ChevronUp
 } from 'lucide-react';
 import Header from '../components/Header';
+import {filterNormalAuctionsApi} from "../services/api/auctionNormalApi"
+import {getRootCategories, getChildCategories} from "../services/api/categoryApi"
 
 // --- HÀM TRỢ GIÚP ---
 const formatCurrency = (amount) => {
@@ -44,53 +47,216 @@ const convertToVietnameseWords = (numStr) => {
   return `${num} đồng`;
 };
 
-// --- DỮ LIỆU GIẢ LẬP ---
-const CATEGORIES = [
-  { id: "all", label: "Tất cả" },
-  { 
-    id: "tech", 
-    label: "Công nghệ", 
-    subCategories: [
-      { id: "phone", label: "Điện thoại" },
-      { id: "laptop", label: "Laptop" }
-    ] 
-  },
-  { id: "watch", label: "Đồng hồ" },
-  { id: "fashion", label: "Thời trang" },
-  { id: "fengshui", label: "Đồ phong thủy" },
-  { id: "vehicle", label: "Xe cộ" }
-];
+// Đếm giờ kết thúc auction card
+const CountdownTimer = ({ endTime }) => {
 
-const INITIAL_AUCTIONS = [
-  { id: 1, title: "iPhone 15 Pro Max 1TB - Phiên bản mạ vàng 24K", currentBid: 85000000, bidsCount: 42, timeLeft: "01:14:05", image: "https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=800", categoryId: "phone", parentId: "tech", status: "Hot", createdAt: new Date('2024-03-20T10:00:00') },
-  { id: 7, title: "MacBook Pro M3 Max 128GB RAM - Full Option", currentBid: 125000000, bidsCount: 18, timeLeft: "10:30:00", image: "https://images.unsplash.com/photo-1517336714460-4c50d1103f73?auto=format&fit=crop&q=80&w=800", categoryId: "laptop", parentId: "tech", status: "Mới", createdAt: new Date('2024-03-22T15:00:00') },
-  { id: 2, title: "Tượng Phật Di Lặc Gỗ Sưa Đỏ Ngàn Năm", currentBid: 245000000, bidsCount: 15, timeLeft: "2 ngày 05 giờ", image: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&q=80&w=800", categoryId: "fengshui", status: "Mới", createdAt: new Date('2024-03-21T08:30:00') },
-  { id: 3, title: "Túi Hermes Birkin 35 - Da cá sấu Niloticus", currentBid: 1200000000, bidsCount: 7, timeLeft: "5 ngày 12 giờ", image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&q=80&w=800", categoryId: "fashion", status: "Cao cấp", createdAt: new Date('2024-03-15T14:20:00') },
-  { id: 5, title: "Rolex Submariner Date 126610LN", currentBid: 320000000, bidsCount: 56, timeLeft: "12:45:00", image: "https://images.unsplash.com/photo-1523170335258-f5ed11844a1e?auto=format&fit=crop&q=80&w=800", categoryId: "watch", status: "Đang đấu", createdAt: new Date('2024-03-19T11:45:00') },
-  { id: 8, title: "Samsung Galaxy S24 Ultra - Special Edition", currentBid: 32000000, bidsCount: 25, timeLeft: "05:15:00", image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&q=80&w=800", categoryId: "phone", parentId: "tech", status: "Hot", createdAt: new Date('2024-03-23T11:00:00') },
-];
+  const calculateTimeLeft = () => {
 
-const HistoryIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
-);
+    const difference = new Date(endTime.replace("T", " ") + " GMT+0700") - new Date();
 
-const SORT_OPTIONS = [
-  { id: 'newest', label: 'Mới nhất', icon: Clock },
-  { id: 'oldest', label: 'Cũ nhất', icon: HistoryIcon },
-  { id: 'price_asc', label: 'Giá thấp đến cao', icon: SortAsc },
-  { id: 'price_desc', label: 'Giá cao đến thấp', icon: SortDesc }
-];
+    if (difference <= 0) {
+      return "Đã kết thúc";
+    }
+
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(
+      (difference % (1000 * 60 * 60 * 24)) /
+      (1000 * 60 * 60)
+    );
+
+    const minutes = Math.floor(
+      (difference % (1000 * 60 * 60)) /
+      (1000 * 60)
+    );
+
+    const seconds = Math.floor(
+      (difference % (1000 * 60)) / 1000
+    );
+
+    if (days > 0) {
+      return `${days} ngày ${hours} giờ`;
+    }
+
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+
+  }, [endTime]);
+
+  return (
+    <span className={`text-[10px] font-black ${ timeLeft === "Đã kết thúc" ? "text-red-300" : "text-white" }`}>
+      {timeLeft}
+    </span>
+  );
+};
 
 const App = () => {
+
+  const navigate = useNavigate();
+
+  const HistoryIcon = ({ className }) => (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+      <path d="M3 3v5h5"/>
+      <path d="M12 7v5l4 2"/>
+    </svg>
+  );
+
+  const SORT_OPTIONS = [
+    { id: 'newest', label: 'Mới nhất', name: 'Mới nhất', icon: Clock },
+    { id: 'oldest', label: 'Cũ nhất', name: 'Cũ nhất', icon: HistoryIcon },
+    { id: 'price_asc', label: 'Giá thấp đến cao', name: 'Giá thấp đến cao', icon: SortAsc },
+    { id: 'price_desc', label: 'Giá cao đến thấp', name: 'Giá cao đến thấp', icon: SortDesc }
+  ];
+
   const [selectedCatId, setSelectedCatId] = useState("all");
-  const [expandedCats, setExpandedCats] = useState(["tech"]);
+  const [expandedCats, setExpandedCats] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [activeStatus, setActiveStatus] = useState([]);
   const [sortBy, setSortBy] = useState('newest');
   const [isClearing, setIsClearing] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
 
+  const [auctions, setAuctions] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
   const hasActiveFilters = selectedCatId !== "all" || priceRange.min !== "" || priceRange.max !== "" || activeStatus.length > 0;
+
+  const fetchAuctions = async () => {
+    try {
+
+      setLoading(true);
+
+      const request = {
+        categoryId: selectedCatId === "all"
+          ? null
+          : Number(selectedCatId),
+
+        minPrice: priceRange.min
+          ? Number(priceRange.min)
+          : null,
+
+        maxPrice: priceRange.max
+          ? Number(priceRange.max)
+          : null,
+
+        sortBy: sortBy
+      };
+
+      console.log("FILTER REQUEST", request);
+
+      const response = await filterNormalAuctionsApi(request, page);
+
+      console.log("FILTER RESPONSE", response);
+
+      const data = response.data;
+
+      setAuctions(data?.content || []);
+      setTotalPages(data?.totalPages || 0);
+
+    } catch (error) {
+
+      console.error("Lỗi filter auction", error);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
+
+  useEffect(() => {
+
+  fetchAuctions(); }, [
+    selectedCatId,
+    priceRange.min,
+    priceRange.max,
+    sortBy,
+    page
+  ]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [
+    selectedCatId,
+    priceRange.min,
+    priceRange.max,
+    sortBy
+  ]);
+
+    const fetchCategories = async () => {
+    try {
+
+      const response = await getRootCategories();
+
+      console.log("ROOT CATEGORIES", response.data);
+
+      const roots = response.data || [];
+
+      const categoriesWithChildren = await Promise.all(
+        roots.map(async (cat) => {
+
+          try {
+
+            const childRes = await getChildCategories(cat.id);
+
+            return {
+              ...cat,
+              subCategories: childRes.data || []
+            };
+
+          } catch (err) {
+
+            return {
+              ...cat,
+              subCategories: []
+            };
+
+          }
+
+        })
+      );
+
+      setCategories([
+        {
+          id: "all",
+          name: "Tất cả",
+          subCategories: []
+        },
+        ...categoriesWithChildren
+      ]);
+
+    } catch (error) {
+
+      console.error("Lỗi load categories", error);
+
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   // Xử lý khi nhập giá (chỉ cho phép số và format)
   const handlePriceInput = (value, type) => {
@@ -98,28 +264,6 @@ const App = () => {
     const cleanValue = value.replace(/\D/g, '');
     setPriceRange(prev => ({ ...prev, [type]: cleanValue }));
   };
-
-  const filteredAndSortedAuctions = useMemo(() => {
-    let result = [...INITIAL_AUCTIONS];
-
-    if (selectedCatId !== "all") {
-      result = result.filter(item => 
-        item.categoryId === selectedCatId || item.parentId === selectedCatId
-      );
-    }
-
-    if (priceRange.min) result = result.filter(item => item.currentBid >= parseInt(priceRange.min));
-    if (priceRange.max) result = result.filter(item => item.currentBid <= parseInt(priceRange.max));
-
-    switch (sortBy) {
-      case 'newest': result.sort((a, b) => b.createdAt - a.createdAt); break;
-      case 'oldest': result.sort((a, b) => a.createdAt - b.createdAt); break;
-      case 'price_asc': result.sort((a, b) => a.currentBid - b.currentBid); break;
-      case 'price_desc': result.sort((a, b) => b.currentBid - a.currentBid); break;
-    }
-
-    return result;
-  }, [selectedCatId, priceRange, activeStatus, sortBy]);
 
   const handleClearAll = () => {
     setIsClearing(true);
@@ -129,6 +273,7 @@ const App = () => {
       setActiveStatus([]);
       setSortBy('newest');
       setIsClearing(false);
+      setPage(0);
     }, 400);
   };
 
@@ -139,11 +284,16 @@ const App = () => {
   };
 
   const getCategoryLabel = (id) => {
-    for (const cat of CATEGORIES) {
-      if (cat.id === id) return cat.label;
+    for (const cat of categories) {
+      if (String(cat.id) === String(id)) {
+        return cat.name;
+      }
       if (cat.subCategories) {
-        const sub = cat.subCategories.find(s => s.id === id);
-        if (sub) return sub.label;
+        const sub = cat.subCategories.find(
+          s => String(s.id) === String(id));
+        if (sub) {
+          return sub.name;
+        }
       }
     }
     return "";
@@ -177,11 +327,11 @@ const App = () => {
           <div className="space-y-3">
             <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Danh mục</p>
             <div className="flex flex-col gap-1">
-              {CATEGORIES.map(cat => (
+              {categories.map(cat => (
                 <div key={cat.id} className="space-y-1">
                   <div 
                     className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all font-bold text-sm border cursor-pointer ${
-                      selectedCatId === cat.id 
+                      String(selectedCatId) === String(cat.id) 
                         ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' 
                         : 'text-slate-400 hover:bg-white/5 hover:text-white border-transparent'
                     }`}
@@ -190,7 +340,7 @@ const App = () => {
                       if (cat.subCategories) toggleExpand(cat.id);
                     }}
                   >
-                    {cat.label}
+                    {cat.name}
                     {cat.subCategories ? (
                       expandedCats.includes(cat.id) ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
                     ) : (
@@ -205,13 +355,12 @@ const App = () => {
                           key={sub.id}
                           onClick={() => setSelectedCatId(sub.id)}
                           className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                            selectedCatId === sub.id 
+                            String(selectedCatId) === String(sub.id) 
                             ? 'text-blue-400 bg-blue-600/5' 
                             : 'text-slate-500 hover:text-white hover:bg-white/5'
                           }`}
                         >
-                          {sub.id === 'phone' ? <Smartphone className="w-3.5 h-3.5" /> : <Laptop className="w-3.5 h-3.5" />}
-                          {sub.label}
+                          <Layers className="w-3.5 h-3.5" /> {sub.name}
                         </button>
                       ))}
                     </div>
@@ -287,7 +436,7 @@ const App = () => {
 
             <div className="relative">
               <button onClick={() => setShowSortMenu(!showSortMenu)} className="flex items-center gap-3 px-5 py-2.5 bg-slate-900 border border-white/10 rounded-2xl text-xs font-black text-white">
-                {SORT_OPTIONS.find(o => o.id === sortBy).label} <ArrowUpDown className="w-4 h-4 text-blue-400" />
+                {SORT_OPTIONS.find(o => o.id === sortBy)?.name} <ArrowUpDown className="w-4 h-4 text-blue-400" />
               </button>
               {showSortMenu && (
                 <div className="absolute top-full right-0 mt-2 w-56 bg-slate-900 border border-white/10 rounded-2xl z-50 py-2 shadow-2xl">
@@ -304,29 +453,108 @@ const App = () => {
             </div>
           </div>
 
+          {loading && (
+            <div className="text-center py-20">
+              <p className="text-slate-400 font-bold">
+                Đang tải auctions...
+              </p>
+            </div>
+          )}
+          {!loading && auctions.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-slate-500 font-bold">
+                Không có phiên đấu giá phù hợp
+              </p>
+            </div>
+          )}
+
+          {!loading && auctions.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredAndSortedAuctions.map(item => (
-              <div key={item.id} className="group bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-4 hover:border-blue-500/40 transition-all">
-                <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-slate-800 mb-5">
-                  <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute top-4 left-4 px-3 py-1 bg-blue-600 rounded-lg text-[9px] font-black text-white">{item.status}</div>
+            {auctions.map(item => (
+            <div
+              key={item.auctionId}
+              onClick={() => navigate(`/auction/${item.auctionId}`)}
+              className="group bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-4 hover:border-blue-500/40 hover:-translate-y-1 transition-all duration-300">
+
+              <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-slate-800 mb-5">
+
+                <img
+                  src={item.primaryImage}
+                  alt={item.productName}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+
+                <div className="absolute top-4 left-4 px-3 py-1 bg-orange-500 rounded-lg text-[9px] font-black text-white flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  <CountdownTimer endTime={item.endTime} />
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{getCategoryLabel(item.categoryId)}</span>
-                    <h3 className="font-bold text-white text-base line-clamp-2">{item.title}</h3>
-                  </div>
-                  <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                    <div>
-                      <p className="text-[9px] font-bold text-slate-600 uppercase">Giá hiện tại</p>
-                      <p className="text-lg font-black text-white">{formatCurrency(item.currentBid)}</p>
-                    </div>
-                    <button className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center"><Gavel className="w-5 h-5" /></button>
-                  </div>
-                </div>
+
               </div>
-            ))}
-          </div>
+
+              <div className="space-y-4">
+
+                <div>
+
+                  <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
+                    {item.categoryName}
+                  </span>
+
+                  <h3 className="font-bold text-white text-base line-clamp-2">
+                    {item.productName}
+                  </h3>
+
+                </div>
+
+                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+
+                  <div>
+
+                    <p className="text-[9px] font-bold text-slate-600 uppercase">
+                      Giá hiện tại
+                    </p>
+
+                    <p className="text-lg font-black text-white">
+                      {formatCurrency(item.currentPrice)}
+                    </p>
+
+                  </div>
+
+                  <button className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-500 transition-all">
+                    <Gavel className="w-5 h-5" />
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+          ))}
+          </div>)}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 pt-10">
+
+              <button
+                disabled={page === 0}
+                onClick={() => setPage(prev => prev - 1)}
+                className="px-4 py-2 rounded-xl bg-slate-800 disabled:opacity-30"
+              >
+                Prev
+              </button>
+
+              <span className="text-white font-bold">
+                {page + 1} / {totalPages}
+              </span>
+
+              <button
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage(prev => prev + 1)}
+                className="px-4 py-2 rounded-xl bg-slate-800 disabled:opacity-30"
+              >
+                Next
+              </button>
+
+            </div>
+          )}
         </div>
       </section>
     </div>

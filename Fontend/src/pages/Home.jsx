@@ -9,7 +9,7 @@ import {
   Users, Verified, Command, ShoppingCart, LogOut, Settings, Package, Wallet, PlusCircle, PlayCircle, Lock
 } from 'lucide-react';
 import Header from '../components/Header';
-import { getTop4ActiveNormalAuctionsApi } from "../services/api/homeApi";
+import { getTop4ActiveNormalAuctionsApi } from "../services/api/auctionNormalApi";
 
 // Helper
 const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
