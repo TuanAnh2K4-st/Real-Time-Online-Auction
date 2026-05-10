@@ -392,12 +392,32 @@ const NormalAuctionDetail = () => {
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Nhập giá đặt mua (VNĐ)</p>
                     <div className="relative">
                       <input 
-                        type="text" value={manualBid}
+                        type="text"
+                        value={manualBid}
                         onChange={e => setManualBid(formatInputNumber(e.target.value))}
                         placeholder={`Tối thiểu: ${formatCurrency((auction.currentPrice || 0) + (auction.stepPrice || 0))}`}
-                        className="w-full bg-slate-950 border border-white/10 rounded-2xl px-6 py-5 text-xl font-black text-white focus:border-blue-500 outline-none pr-16 shadow-inner"
+                        className="w-full bg-slate-950 border border-white/10 rounded-2xl px-6 py-5 text-xl font-black text-white focus:border-blue-500 outline-none pr-32 shadow-inner"
                       />
-                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-black text-slate-700 italic">VNĐ</span>
+
+                      {/* VNĐ */}
+                      <span className="absolute right-16 top-1/2 -translate-y-1/2 text-sm font-black text-slate-700 italic">
+                        VNĐ
+                      </span>
+
+                      {/* Quick Bid */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const quickBid =
+                            (auction.currentPrice || 0) +
+                            (auction.stepPrice || 0);
+
+                          setManualBid(formatInputNumber(String(quickBid)));
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center transition-all active:scale-95 shadow-lg"
+                      >
+                        <Gavel className="w-4 h-4 text-white" />
+                      </button>
                     </div>
                   </div>
 

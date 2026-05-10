@@ -23,6 +23,7 @@ const roleLabel = (role) => {
 };
 
 const SearchBar = () => {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const inputRef = useRef(null);
@@ -43,6 +44,17 @@ const SearchBar = () => {
   const closeSearch = () => { setIsExpanded(false); setSearchValue(''); };
   const location = useLocation();
 
+  const handleSearch = () => {
+
+    if (!searchValue.trim()) return;
+
+    navigate(
+      `/list-normal-auctions?keyword=${encodeURIComponent(searchValue)}`
+    );
+
+    closeSearch();
+  };
+
   return (
     <div className="relative flex items-center">
       <div
@@ -60,6 +72,7 @@ const SearchBar = () => {
           type="text"
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { handleSearch();}}}
           onBlur={() => !searchValue && closeSearch()}
           placeholder="Tìm sản phẩm, phiên đấu..."
           className={`bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-600 transition-all duration-300 w-full ${isExpanded ? 'opacity-100 px-1' : 'opacity-0 w-0 pointer-events-none'}`}
@@ -86,7 +99,7 @@ const SearchBar = () => {
         <div className="absolute top-full right-0 mt-3 w-80 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-50 animate-in slide-in-from-top-2 duration-300">
           <div className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">Gợi ý nhanh</div>
           <div className="flex flex-col gap-1">
-            <div className="p-3 hover:bg-blue-600/20 rounded-xl flex items-center gap-3 cursor-pointer group transition-all">
+            <div onClick={handleSearch} className="p-3 hover:bg-blue-600/20 rounded-xl flex items-center gap-3 cursor-pointer group transition-all">
               <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center group-hover:bg-blue-600/30">
                 <TrendingUp className="w-4 h-4 text-blue-400" />
               </div>

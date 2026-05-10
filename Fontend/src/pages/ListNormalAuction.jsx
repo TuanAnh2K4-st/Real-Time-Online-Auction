@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Search, Bell, User, Gavel, Radio, Clock, 
   ChevronRight, Heart, ShieldCheck, Zap, 
@@ -102,6 +102,7 @@ const CountdownTimer = ({ endTime }) => {
 const App = () => {
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const HistoryIcon = ({ className }) => (
     <svg
@@ -126,6 +127,7 @@ const App = () => {
     { id: 'price_desc', label: 'Giá cao đến thấp', name: 'Giá cao đến thấp', icon: SortDesc }
   ];
 
+  const [keyword, setKeyword] = useState( searchParams.get("keyword") || "" );
   const [selectedCatId, setSelectedCatId] = useState("all");
   const [expandedCats, setExpandedCats] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
@@ -149,6 +151,8 @@ const App = () => {
       setLoading(true);
 
       const request = {
+        keyword: keyword || null,
+
         categoryId: selectedCatId === "all"
           ? null
           : Number(selectedCatId),
@@ -189,6 +193,7 @@ const App = () => {
   useEffect(() => {
 
   fetchAuctions(); }, [
+    keyword,
     selectedCatId,
     priceRange.min,
     priceRange.max,
@@ -257,6 +262,11 @@ const App = () => {
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    setKeyword(searchParams.get("keyword") || "");
+    setPage(0);
+  }, [searchParams]);
 
   // Xử lý khi nhập giá (chỉ cho phép số và format)
   const handlePriceInput = (value, type) => {
@@ -336,8 +346,13 @@ const App = () => {
                         : 'text-slate-400 hover:bg-white/5 hover:text-white border-transparent'
                     }`}
                     onClick={() => {
+
+                      // Nếu có category con -> chỉ expand/collapse
+                      if (cat.subCategories && cat.subCategories.length > 0) { toggleExpand(cat.id); return; }
+
+                      // Nếu không có category con -> chọn category
                       setSelectedCatId(cat.id);
-                      if (cat.subCategories) toggleExpand(cat.id);
+
                     }}
                   >
                     {cat.name}
