@@ -36,6 +36,7 @@ public class AuctionScheduler {
     private final OrderRepository orderRepository;
     private final ProfileRepository profileRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AuctionSettlementService auctionSettlementService;
 
     @Scheduled(fixedDelay = 60000) // Chạy mỗi 60 giây
     @Transactional
@@ -54,6 +55,8 @@ public class AuctionScheduler {
             // ===== 1. END AUCTION =====
             auction.setAuctionStatus(AuctionStatus.ENDED);
             User winner = auction.getWinner();
+
+            auctionSettlementService.releaseLoserDeposits(auction, winner);
 
             // ===== 2. UPDATE STORE ITEM =====
             StoreItem storeItem = storeItemRepository

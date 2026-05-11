@@ -87,6 +87,7 @@ public class AuctionService {
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
     private final WalletHoldRepository walletHoldRepository;
+    private final AuctionSettlementService auctionSettlementService;
 
     public void createNormalAuction(CreateNormalAuctionRequest request) {
 
@@ -281,6 +282,7 @@ public class AuctionService {
         auction.setAuctionStatus(AuctionStatus.ENDED);
         auction.setEndTime(LocalDateTime.now());
         User winner = auction.getWinner();
+        auctionSettlementService.releaseLoserDeposits(auction, winner);
 
         // ===== 6. UPDATE STORE ITEM =====
         StoreItem storeItem = storeItemRepository.findByProduct(auction.getProduct())
@@ -602,6 +604,8 @@ public class AuctionService {
         }
         throw new RuntimeException("Unauthorized: invalid principal");
     }
+
+    // WEBSOCKET
 
     // Đặt giá (WebSocket)
     @Transactional
