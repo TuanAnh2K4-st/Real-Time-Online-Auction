@@ -35,6 +35,7 @@ const TRANSACTION_TYPES = {
   AUCTION_REFUND: { label: 'Hoàn tiền cọc', color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
   AUCTION_FORFEIT: { label: 'Vi phạm/Phạt', color: 'text-amber-400', bg: 'bg-amber-400/10' },
   PAYMENT: { label: 'Thanh toán', color: 'text-purple-400', bg: 'bg-purple-400/10' },
+  SUBSCRIPTION_PURCHASE: { label: 'Đăng ký gói', color: 'text-purple-400', bg: 'bg-purple-400/10' },
 };
 
 const BANKS = [

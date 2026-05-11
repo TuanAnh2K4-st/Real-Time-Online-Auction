@@ -6,5 +6,6 @@ public enum TransactionType {
     AUCTION_DEPOSIT,
     AUCTION_REFUND,
     AUCTION_FORFEIT,
-    PAYMENT
+    PAYMENT,
+    SUBSCRIPTION_PURCHASE
 }

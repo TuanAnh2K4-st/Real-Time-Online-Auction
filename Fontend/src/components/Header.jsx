@@ -3,7 +3,7 @@ import {
   Search, Bell, User, Gavel, Radio, Clock,
   ChevronRight, Heart, ShieldCheck, Zap,
   ArrowRight, Menu as MenuIcon, X, TrendingUp,
-  Command, ShoppingCart, LogOut, Settings, Package, Wallet, PlusCircle, PlayCircle, Lock, Menu
+  Command, ShoppingCart, LogOut, Settings, Package, Wallet, Crown, PlusCircle, PlayCircle, Lock, Menu
 } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -296,6 +296,7 @@ export default function Header() {
                         { icon: <Radio className="w-5 h-5" />, label: 'Mở phiên Live', color: 'text-rose-400', bg: 'bg-rose-400/10' },
                         { icon: <Heart className="w-5 h-5" />, label: 'Sản phẩm yêu thích', color: 'text-red-400', bg: 'bg-red-400/10' },
                         { icon: <Lock className="w-5 h-5" />, label: 'Đổi mật khẩu', color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
+                        { icon: <Crown className="w-5 h-5" />, label: 'Nâng cấp gói dịch vụ', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
                         { icon: <Settings className="w-5 h-5" />, label: 'Cài đặt tài khoản', color: 'text-slate-400', bg: 'bg-white/5' },
                       ].map((item, idx) => (
                         <button key={idx} 
@@ -312,6 +313,11 @@ export default function Header() {
                           }
                           if (item.label === 'Mở phiên đấu giá phổ thông') {
                             navigate('/create-normal-auction');
+                            setIsUserMenuOpen(false);
+                            return;
+                          }
+                          if (item.label === 'Nâng cấp gói dịch vụ') {
+                            navigate('/subscription');
                             setIsUserMenuOpen(false);
                             return;
                           }

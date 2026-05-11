@@ -108,6 +108,17 @@ public class PaymentService {
         payment.setPaymentStatus(PaymentStatus.SUCCESS);
         payment.setPaidAt(LocalDateTime.now());
         paymentRepository.save(payment);
+        // Tạo WalletTransaction RELEASE DEPOSIT
+        WalletTransaction releaseDepositTransaction =
+                WalletTransaction.builder()
+                        .wallet(wallet)
+                        .userId(currentUser.getUserId())
+                        .amount(deposit)
+                        .direction(TransactionDirection.IN)
+                        .transactionType(TransactionType.AUCTION_REFUND)
+                        .referenceId(order.getAuction().getAuctionId())
+                        .build();
+        walletTransactionRepository.save(releaseDepositTransaction);
         // Tạo WalletTransaction
         WalletTransaction transaction = new WalletTransaction();
         transaction.setWallet(wallet);
