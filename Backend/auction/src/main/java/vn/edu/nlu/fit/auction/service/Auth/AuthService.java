@@ -159,17 +159,17 @@ public class AuthService {
         }
 
         // kiểm tra mật khẩu cũ có đúng không
-        if (!passwordEncoder.matches(request.getOldPass(), currentUser.getPassword())) {
+        if (!passwordEncoder.matches(request.getOldPassword(), currentUser.getPassword())) {
             throw new RuntimeException("Mật khẩu cũ không đúng");
         }
 
         // kiểm tra mật khẩu mới không được trùng mật khẩu cũ
-        if (passwordEncoder.matches(request.getNewPass(), currentUser.getPassword())) {
+        if (passwordEncoder.matches(request.getNewPassword(), currentUser.getPassword())) {
             throw new RuntimeException("Mật khẩu mới không được trùng mật khẩu cũ");
         }
 
         // cập nhật mật khẩu mới cho user
-        currentUser.setPassword(passwordEncoder.encode(request.getNewPass()));
+        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
         // lưu user vào database
         userRepository.save(currentUser);

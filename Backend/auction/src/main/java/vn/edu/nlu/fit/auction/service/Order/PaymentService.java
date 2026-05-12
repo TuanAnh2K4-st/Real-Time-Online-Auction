@@ -3,6 +3,7 @@ package vn.edu.nlu.fit.auction.service.Order;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,6 +101,29 @@ public class PaymentService {
         // Giải phóng frozen deposit (đã được tính vào paymentAmount ở trên)
         wallet.setFrozenBalance(wallet.getFrozenBalance().subtract(deposit));
         walletRepository.save(wallet);
+        // Systerm xử lý tiền sản phẩm cho seller
+        User seller = order.getAuction().getSeller();
+
+        Wallet sellerWallet =
+                walletRepository
+                        .findByUserIdForUpdate(seller.getUserId())
+                        .orElseThrow(() ->
+                                new RuntimeException("Seller wallet không tìm thấy"));
+        
+        sellerWallet.setBalance(sellerWallet.getBalance().add(subtotal));
+        walletRepository.save(sellerWallet);
+
+        WalletTransaction sellerTransaction = WalletTransaction.builder()
+                        .wallet(sellerWallet)
+                        .userId(seller.getUserId())
+                        .amount(subtotal)
+                        .direction(TransactionDirection.IN)
+                        .transactionType(TransactionType.AUCTION_SELL)
+                        .referenceId(order.getOrderId())
+                        .createdAt(LocalDateTime.now())
+                        .build();
+
+        walletTransactionRepository.save(sellerTransaction);
         // Tạo Payment
         Payment payment = new Payment();
         payment.setOrder(order);

@@ -316,6 +316,11 @@ export default function Header() {
                             setIsUserMenuOpen(false);
                             return;
                           }
+                          if (item.label === 'Đổi mật khẩu') {
+                            navigate('/change-password');
+                            setIsUserMenuOpen(false);
+                            return;
+                          }                          
                           if (item.label === 'Nâng cấp gói dịch vụ') {
                             navigate('/subscription');
                             setIsUserMenuOpen(false);

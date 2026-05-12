@@ -19,3 +19,8 @@ export const registerSellerApi = (data) => {
 export const getMeApi = () => {
   return axiosClient.get("/auth/me");
 };
+
+// ChangePassWord
+export const changePassword = (data) => {
+  return axiosClient.put("/auth/change-password", data);
+};

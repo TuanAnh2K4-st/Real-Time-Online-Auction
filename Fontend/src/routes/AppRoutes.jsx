@@ -19,6 +19,7 @@ import MyNotification from "../pages/MyNotification"
 import CreateLiveAuction from "../pages/CreateLiveAuction"
 import Favourite from "../pages/Favourite"
 import Subscription from "../pages/Subscription";
+import ChangePassword from "../pages/ChangePassword";
 
 /* ROUTE GUARD */
 import ProtectedRoute from "./ProtectedRoute";
@@ -41,7 +42,7 @@ export default function AppRoutes() {
         <Route path="/my-products" element={<MyProduct />} />
         <Route path="/create-normal-auction" element={<CreateNormalAuction />} />
         <Route path="/auction/:auctionId" element={<NormalAuctionDetail />} />
-        <Route path="/list-normal-auctions" element={<ProtectedRoute> <ListNormalAuction /> </ProtectedRoute>} />
+        <Route path="/list-normal-auctions" element={<ListNormalAuction />} />
         <Route path="/list-live-auctions" element={<ListLiveAuction />} />
         <Route path="/user-guide" element={<UserGuide />} />
         <Route path="/live-auction" element={<LiveAuctionDetail />} />
@@ -52,6 +53,7 @@ export default function AppRoutes() {
         <Route path="/create-live-auction" element={<CreateLiveAuction />} />
         <Route path="/favourite" element={<Favourite />} />
         <Route path="/subscription" element={<Subscription />} />
+        <Route path="/change-password" element={<ChangePassword />} />
 
       </Routes>
     </BrowserRouter>
