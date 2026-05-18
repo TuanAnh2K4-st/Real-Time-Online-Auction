@@ -2482,13 +2482,6 @@ export default function ProductManagement() {
                           >
                             <Eye size={13} />
                           </button>
-                          {/* <button 
-                            onClick={(e) => handleOpenAudit(e, item)}
-                            className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-1"
-                          >
-                            <Shield size={11} />
-                            Đánh giá
-                          </button> */}
                         </div>
                       </td>
                     </tr>
