@@ -2155,816 +2155,96 @@ const DashboardOverview = () => (
   </div>
 );
 
-export default function ProductManagement() {
-  const [storeItems, setStoreItems] = useState(INITIAL_STORE_ITEMS);
-  const [searchStoreName, setSearchStoreName] = useState('');
-  const [searchProductName, setSearchProductName] = useState('');
-  const [activeStatusTab, setActiveStatusTab] = useState('ALL');
-  
-  // Trạng thái tách biệt Form Xem Thông tin & Form Đánh giá
-  const [selectedItem, setSelectedItem] = useState(null); // Sử dụng cho Drawer xem chi tiết bên phải
-  const [auditItem, setAuditItem] = useState(null);       // Sử dụng cho Modal Đánh giá riêng biệt
-  
-  // Trạng thái cho Modal nhập mới sản phẩm
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newProduct, setNewProduct] = useState({
-    productName: '', brand: '', origin: '', productCondition: 'NEW', // Chỉ NEW, USED
-    basePrice: '', description: '', storeId: 1, categoryId: 1,
-    primaryImageUrl: '',
-    subImages: ['', '', '']
-  });
-
-  // Lưu trữ dữ liệu thuộc tính động (attributesJson) khi tạo mới
-  const [dynamicAttrs, setDynamicAttrs] = useState({});
-
-  // Trạng thái cho việc Đánh giá, Thẩm định (Kiểm định) trong Modal riêng
-  const [auditStatus, setAuditStatus] = useState('PENDING');
-  const [auditNote, setAuditNote] = useState('');
-
-  // Tính số lượng badge hiển thị ở bộ lọc Tab nhanh
-  const countByStatus = {
-    ALL: storeItems.length,
-    PENDING: storeItems.filter(i => i.itemStatus === 'PENDING').length,
-    RECEIVED: storeItems.filter(i => i.itemStatus === 'RECEIVED').length,
-    APPROVED: storeItems.filter(i => i.itemStatus === 'APPROVED').length,
-    REJECTED: storeItems.filter(i => i.itemStatus === 'REJECTED').length
-  };
-
-  const QC_TEMPLATES = [
-    "Sản phẩm còn mới nguyên seal, tem bảo hành chính hãng đầy đủ.",
-    "Trầy xước cực nhẹ ở viền, các nút bấm nhạy, màn hình không trầy.",
-    "Đồng hồ có xước dăm vỏ thép, kim chạy chuẩn xác, lịch nhảy đều.",
-    "Sản phẩm không vượt qua kiểm định (máy có dấu hiệu cạy mở, thay linh kiện)."
-  ];
-
-  // Lọc kép nâng cao: Tên kho hàng + Tên sản phẩm + Tab trạng thái
-  const filteredItems = storeItems.filter(item => {
-    const matchStore = item.store.storeName.toLowerCase().includes(searchStoreName.toLowerCase().trim());
-    const matchProductName = item.product.productName.toLowerCase().includes(searchProductName.toLowerCase().trim());
-    const matchStatusTab = activeStatusTab === 'ALL' || item.itemStatus === activeStatusTab;
-    return matchStore && matchProductName && matchStatusTab;
-  });
-
-  // Cập nhật Đánh giá chất lượng sản phẩm từ Modal Đánh giá riêng
-  const handleUpdateAudit = (id) => {
-    setStoreItems(storeItems.map(item => {
-      if (item.storeItemId === id) {
-        const updated = {
-          ...item,
-          itemStatus: auditStatus,
-          conditionNote: auditNote
-        };
-        if (selectedItem && selectedItem.storeItemId === id) {
-          setSelectedItem(updated);
-        }
-        return updated;
-      }
-      return item;
-    }));
-    setAuditItem(null); // Đóng modal đánh giá
-    alert("Đã cập nhật tình trạng kiểm định thành công!");
-  };
-
-  // Tạo mới hàng ký gửi & Sản phẩm kèm ảnh chính/phụ và thuộc tính động JSON
-  const handleAddStoreItem = (e) => {
-    e.preventDefault();
-    if (!newProduct.productName || !newProduct.basePrice || !newProduct.primaryImageUrl) {
-      alert("Vui lòng nhập tên sản phẩm, giá khởi điểm và tải ảnh chính lên!");
-      return;
-    }
-
-    const matchedStore = INITIAL_STORES.find(s => s.storeId === parseInt(newProduct.storeId));
-    const matchedCategory = MOCK_CATEGORIES.find(c => c.categoryId === parseInt(newProduct.categoryId));
-    const generatedProductId = Math.floor(100 + Math.random() * 900);
-    const generatedStoreItemId = Math.floor(1000 + Math.random() * 9000);
-
-    // Chuẩn bị mảng ProductImages (gồm ảnh chính và các ảnh phụ)
-    const productImages = [
-      { imageId: Date.now(), imageUrl: newProduct.primaryImageUrl, isPrimary: true }
-    ];
-    newProduct.subImages.forEach((url, index) => {
-      if (url.trim() !== '') {
-        productImages.push({ imageId: Date.now() + index + 1, imageUrl: url.trim(), isPrimary: false });
-      }
-    });
-
-    const newItem = {
-      storeItemId: generatedStoreItemId,
-      store: matchedStore,
-      itemStatus: "PENDING",
-      conditionNote: "Chờ kho nhận hàng thực tế và tiến hành quy trình thẩm duyệt.",
-      product: {
-        productId: generatedProductId,
-        productName: newProduct.productName,
-        brand: newProduct.brand || "N/A",
-        origin: newProduct.origin || "N/A",
-        productCondition: newProduct.productCondition,
-        basePrice: parseFloat(newProduct.basePrice),
-        description: newProduct.description || "Chưa có mô tả chi tiết.",
-        createdAt: new Date().toISOString(),
-        user: MOCK_USERS[1], // Gán cho seller mặc định
-        category: matchedCategory,
-        attributesJson: JSON.stringify(dynamicAttrs),
-        images: productImages
-      }
-    };
-
-    setStoreItems([newItem, ...storeItems]);
-    setIsAddModalOpen(false);
-
-    // Reset Forms
-    setNewProduct({
-      productName: '', brand: '', origin: '', productCondition: 'NEW',
-      basePrice: '', description: '', storeId: 1, categoryId: 1,
-      primaryImageUrl: '',
-      subImages: ['', '', '']
-    });
-    setDynamicAttrs({});
-  };
-
-  // Hàm xử lý Upload ảnh chính (Chuyển đổi thành Object URL cục bộ để hiển thị ngay)
-  const handlePrimaryImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setNewProduct(prev => ({ ...prev, primaryImageUrl: url }));
-    }
-  };
-
-  // Hàm xử lý Upload ảnh phụ (Chuyển đổi thành Object URL cục bộ)
-  const handleSubImageUpload = (e, index) => {
-    const file = e.target.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      const updatedSubImages = [...newProduct.subImages];
-      updatedSubImages[index] = url;
-      setNewProduct(prev => ({ ...prev, subImages: updatedSubImages }));
-    }
-  };
-
-  // Hàm xóa ảnh phụ đã tải lên
-  const handleRemoveSubImage = (index) => {
-    const updatedSubImages = [...newProduct.subImages];
-    updatedSubImages[index] = '';
-    setNewProduct(prev => ({ ...prev, subImages: updatedSubImages }));
-  };
-
-  // Mở riêng Modal Đánh giá
-  const handleOpenAudit = (e, item) => {
-    e.stopPropagation(); // Tránh kích hoạt sự kiện click dòng mở Drawer
-    setAuditItem(item);
-    setAuditStatus(item.itemStatus);
-    setAuditNote(item.conditionNote);
-  };
-
-  const formatVND = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-
-  // Helper lấy cấu hình template động theo category được chọn
-  const getSelectedTemplate = () => {
-    const matchedCat = MOCK_CATEGORIES.find(c => c.categoryId === parseInt(newProduct.categoryId));
-    if (!matchedCat) return null;
-    return SUBCATEGORY_TEMPLATES[matchedCat.key] || null;
-  };
-
-  const selectedTemplate = getSelectedTemplate();
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
-      {/* Khung điều khiển & Tìm kiếm */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-8">
-        <div>
-          <h2 className="text-2xl font-black dark:text-white uppercase italic tracking-tight">Kiểm định hàng ký gửi</h2>
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">Giám định chất lượng, xem chi tiết và phê duyệt đưa lên sàn</p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
-          {/* Nhập tên sản phẩm để tìm kiếm */}
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Nhập tên sản phẩm cần tìm..."
-              value={searchProductName}
-              onChange={(e) => setSearchProductName(e.target.value)}
-              className="w-full bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 rounded-xl py-2.5 pl-9 pr-8 text-xs focus:outline-none focus:border-blue-500/50 transition-all text-slate-900 dark:text-slate-200"
-            />
-            {searchProductName && (
-              <button onClick={() => setSearchProductName('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
-          {/* Tìm tên cửa hàng kho lưu trữ */}
-          <div className="relative flex-1 sm:w-56">
-            <StoreIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Lọc tên kho..."
-              value={searchStoreName}
-              onChange={(e) => setSearchStoreName(e.target.value)}
-              className="w-full bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 rounded-xl py-2 pl-9 pr-8 text-xs focus:outline-none focus:border-blue-500/50 transition-all text-slate-900 dark:text-slate-200"
-            />
-            {searchStoreName && (
-              <button onClick={() => setSearchStoreName('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-blue-600/20 active:scale-95"
-          >
-            <Plus size={14} /> Thêm sản phẩm
-          </button>
-        </div>
-      </div>
-
-      {/* Lọc nhanh theo Tab kèm số lượng trong ngoặc */}
-      <div className="flex flex-wrap items-center gap-2 mb-6 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl w-fit">
-        {[
-          { key: 'ALL', label: 'Tất cả' },
-          { key: 'PENDING', label: 'Chờ duyệt' },
-          { key: 'RECEIVED', label: 'Đã nhận kho' },
-          { key: 'APPROVED', label: 'Thông qua' },
-          { key: 'REJECTED', label: 'Từ chối' }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveStatusTab(tab.key)}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all flex items-center gap-1.5 ${
-              activeStatusTab === tab.key
-                ? 'bg-white dark:bg-[#0b1120] text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
-          >
-            {tab.label}
-            <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold ${
-              activeStatusTab === tab.key
-                ? 'bg-blue-500/10 text-blue-600'
-                : 'bg-slate-200 dark:bg-white/10 text-slate-500'
-            }`}>
-              {countByStatus[tab.key]}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Grid danh sách & Side Panel xem chi tiết kiểm định */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div className={`${isDarkMode ? 'dark' : ''} transition-colors duration-300`}>
+      <div className="flex min-h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-200 font-sans">
         
-        {/* Bảng Danh sách hàng ký gửi trong kho */}
-        <div className={`${selectedItem ? 'lg:col-span-7' : 'lg:col-span-12'} bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm transition-all duration-500`}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-white/5">
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Sản phẩm ký gửi</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tình trạng</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Danh mục</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Kho lưu</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Giá khởi điểm</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Trạng thái kho</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Hành động</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                {filteredItems.map((item) => {
-                  const statusConf = getStatusStyle(item.itemStatus);
-                  const primaryImg = item.product.images.find(img => img.isPrimary)?.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100";
-                  return (
-                    <tr 
-                      key={item.storeItemId}
-                      onClick={() => setSelectedItem(item)}
-                      className={`hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors cursor-pointer ${selectedItem?.storeItemId === item.storeItemId ? 'bg-blue-50/50 dark:bg-blue-500/5' : ''}`}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-slate-200 dark:border-white/10 shadow-sm">
-                            <img src={primaryImg} alt="" className="w-full h-full object-cover" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-black dark:text-white leading-tight line-clamp-1">{item.product.productName}</p>
-                            <p className="text-[10px] text-slate-400 mt-1">Hãng: <span className="font-bold dark:text-slate-300">{item.product.brand}</span> • SP ID: <span className="font-bold dark:text-slate-300">#{item.product.productId}</span></p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-block px-2 py-1 text-[10px] font-black rounded-lg ${item.product.productCondition === 'NEW' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/10' : 'bg-amber-500/10 text-amber-500 border border-amber-500/10'}`}>
-                          {item.product.productCondition === 'NEW' ? 'Mới (NEW)' : 'Cũ (USED)'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400">
-                        {item.product.category?.name || "Chưa phân loại"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1 text-xs dark:text-slate-300 font-semibold">
-                          <StoreIcon size={12} className="text-blue-500 shrink-0" />
-                          <span className="line-clamp-1">{item.store.storeName}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right text-xs font-black dark:text-white">
-                        {formatVND(item.product.basePrice)}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border ${statusConf.style}`}>
-                          {statusConf.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-1.5 justify-center">
-                          <button 
-                            onClick={() => setSelectedItem(item)}
-                            className="p-1.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-slate-300 rounded-lg transition-all"
-                            title="Xem chi tiết sản phẩm"
-                          >
-                            <Eye size={13} />
-                          </button>
-                          {/* <button 
-                            onClick={(e) => handleOpenAudit(e, item)}
-                            className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-1"
-                          >
-                            <Shield size={11} />
-                            Đánh giá
-                          </button> */}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        {/* Sidebar */}
+        <aside className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#0b1120] border-r border-slate-200 dark:border-white/5 transition-all duration-300 ease-in-out 
+          ${collapsed ? 'w-20' : 'w-64'}`}>
+          
+          <div className={`p-6 flex items-center transition-all ${collapsed ? 'justify-center' : 'gap-3'}`}>
+            <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-600/30">
+              <Gavel className="w-5 h-5" />
+            </div>
+            {!collapsed && <span className="text-lg font-black uppercase italic tracking-tighter dark:text-white">Auction Admin</span>}
           </div>
 
-          {filteredItems.length === 0 && (
-            <div className="p-16 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
-               <AlertTriangle size={36} className="mb-3 opacity-30 text-amber-500 animate-pulse" />
-               <p className="text-xs font-black uppercase tracking-widest italic mb-2">Không tìm thấy sản phẩm phù hợp</p>
-               <p className="text-[10px] text-slate-500 dark:text-slate-600">Thử thay đổi từ khóa tên sản phẩm hoặc bộ lọc</p>
-            </div>
-          )}
-        </div>
+          <nav className="mt-4">
+            <SidebarItem icon={<LayoutDashboard size={20}/>} label="Tổng quan" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} collapsed={collapsed} />
+            <SidebarItem icon={<Users size={20}/>} label="Người dùng" active={activeTab === 'users'} onClick={() => setActiveTab('users')} collapsed={collapsed} />
+            <SidebarItem icon={<StoreIcon size={20}/>} label="Kho hàng" active={activeTab === 'stores'} onClick={() => setActiveTab('stores')} collapsed={collapsed} />
+            <SidebarItem icon={<Box size={20}/>} label="Sản phẩm kho" active={activeTab === 'store-items'} onClick={() => setActiveTab('store-items')} collapsed={collapsed} />
+            <SidebarItem icon={<Gavel size={20}/>} label="Phiên đấu" active={activeTab === 'auctions'} onClick={() => setActiveTab('auctions')} collapsed={collapsed} />
+            <SidebarItem icon={<CreditCard size={20}/>} label="Tài chính" active={activeTab === 'subscriptions'} onClick={() => setActiveTab('subscriptions')} collapsed={collapsed} />
+            <SidebarItem icon={<Settings size={20}/>} label="Cài đặt" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} collapsed={collapsed} />
+          </nav>
 
-        {/* FORM 1: Sidebar Drawer Xem Chi Tiết Sản Phẩm (Đã tách rời hoàn toàn khỏi Form Đánh Giá) */}
-        {selectedItem && (
-          <div className="lg:col-span-5 bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-xl animate-in slide-in-from-right-4 duration-300 relative h-fit sticky top-24">
-            
-            <button 
-              onClick={() => setSelectedItem(null)} 
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 transition-all rounded-lg hover:bg-red-500/5"
-            >
-              <X size={18} />
-            </button>
-
-            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
-              <Box size={14} className="text-blue-500" />
-              Chi tiết sản phẩm lưu kho
-            </h3>
-            
-            <div className="flex items-start gap-4 pb-4 border-b border-slate-100 dark:border-white/5">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex-shrink-0 shadow-inner">
-                <img 
-                  src={selectedItem.product.images.find(img => img.isPrimary)?.imageUrl} 
-                  alt="" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest italic">Mã sản phẩm: #{selectedItem.product.productId}</span>
-                <h4 className="text-md font-black dark:text-white mt-0.5 leading-tight">{selectedItem.product.productName}</h4>
-                <p className="text-xs font-bold text-slate-500 mt-1">Sở hữu: <span className="text-blue-500">@{selectedItem.product.user.username}</span></p>
-              </div>
-            </div>
-
-            {/* Thông số kỹ thuật sản phẩm & JSON Attributes */}
-            <div className="py-4 border-b border-slate-100 dark:border-white/5 text-xs">
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Thương hiệu</p>
-                  <p className="font-bold dark:text-slate-200">{selectedItem.product.brand}</p>
-                </div>
-                <div>
-                  <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Xuất xứ</p>
-                  <p className="font-bold dark:text-slate-200">{selectedItem.product.origin}</p>
-                </div>
-                <div>
-                  <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Giá trị đề xuất</p>
-                  <p className="font-black text-emerald-500">{formatVND(selectedItem.product.basePrice)}</p>
-                </div>
-                <div>
-                  <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Tình trạng vật lý</p>
-                  <span className="font-bold dark:text-slate-200">
-                    {selectedItem.product.productCondition === 'NEW' ? 'Mới (NEW)' : 'Đã sử dụng (USED)'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Hiển thị chi tiết thuộc tính JSON */}
-              {selectedItem.product.attributesJson && (
-                <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 mt-3">
-                  <p className="text-[8px] font-black text-blue-500 uppercase mb-2">Thông số kỹ thuật cụ thể (JSON Attributes)</p>
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    {Object.entries(JSON.parse(selectedItem.product.attributesJson)).map(([key, val]) => (
-                      <div key={key} className="flex flex-col">
-                        <span className="text-slate-400 capitalize">{key}:</span>
-                        <span className="font-bold dark:text-slate-200">{val}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Trạng thái duyệt kho thực tế & Ghi chú kiểm định hiện tại */}
-            <div className="py-4 border-b border-slate-100 dark:border-white/5 text-xs space-y-2">
-              <p className="text-[9px] font-black text-slate-400 uppercase">Trạng thái & ghi chú thẩm định hiện thời</p>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400">Trạng thái:</span>
-                <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${getStatusStyle(selectedItem.itemStatus).style}`}>
-                  {getStatusStyle(selectedItem.itemStatus).label}
-                </span>
-              </div>
-              <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 italic">
-                <p className="text-[9px] font-black text-slate-400 uppercase not-italic mb-1">Condition Note:</p>
-                "{selectedItem.conditionNote || "Chưa có ghi chú kiểm định chất lượng."}"
-              </div>
-            </div>
-
-            {/* Bộ sưu tập hình ảnh đầy đủ (Ảnh chính & Ảnh phụ) */}
-            <div className="py-4">
-              <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Bộ sưu tập hình ảnh</p>
-              <div className="flex flex-wrap gap-2">
-                {selectedItem.product.images.map((img) => (
-                  <div key={img.imageId} className={`w-14 h-14 rounded-lg overflow-hidden border bg-slate-800 shrink-0 relative ${img.isPrimary ? 'border-blue-500 ring-2 ring-blue-500/30' : 'border-slate-200 dark:border-white/10'}`}>
-                    <img src={img.imageUrl} alt="" className="w-full h-full object-cover" />
-                    {img.isPrimary && (
-                      <span className="absolute bottom-0 inset-x-0 bg-blue-600 text-[8px] font-bold text-center text-white py-0.5">ẢNH CHÍNH</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Nút hành động mở Form Đánh giá nhanh từ Drawer */}
-            <button
-              onClick={(e) => {
-                handleOpenAudit(e, selectedItem);
-                setSelectedItem(null); // Đóng drawer xem để mở modal đánh giá gọn gàng
-              }}
-              className="w-full mt-2 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1"
-            >
-              <Shield size={14} /> Đi tới Form thẩm định sản phẩm này
-            </button>
+          <div className="absolute bottom-6 w-full px-4">
+             <button className="flex items-center gap-3 w-full p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all">
+                <LogOut size={20} />
+                {!collapsed && <span className="text-xs font-black uppercase tracking-widest italic">Đăng xuất</span>}
+             </button>
           </div>
-        )}
+        </aside>
+
+        {/* Main Content */}
+        <main className={`flex-1 transition-all duration-300 ${collapsed ? 'ml-20' : 'ml-64'}`}>
+          {/* Top Navbar */}
+          <header className="h-16 border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-[#0b1120]/50 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-40">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setCollapsed(!collapsed)} 
+                className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all"
+              >
+                {collapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
+              </button>
+
+              <a href="/" target="_blank" className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-black uppercase hover:bg-blue-100 transition-all border border-blue-200 dark:border-blue-500/20">
+                <ExternalLink size={14} /> Xem trang web
+              </a>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-blue-500 rounded-lg transition-all"
+              >
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <div className="h-8 w-[1px] bg-slate-200 dark:bg-white/10 mx-2"></div>
+              <div className="flex items-center gap-3">
+                <div className="text-right hidden sm:block">
+                  <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase italic tracking-widest">Administrator</p>
+                  <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-[0.2em]">System Online</p>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-600/30">V</div>
+              </div>
+            </div>
+          </header>
+
+          <div className="p-8 max-w-[1600px] mx-auto">
+            {activeTab === 'dashboard' && <DashboardOverview />}
+            {activeTab === 'users' && <UserManagement />}
+            {activeTab === 'stores' && <StoreManagement />}
+            {activeTab === 'store-items' && <StoreItemManagement />}
+            
+            {/* Fallback mock UI for other tabs */}
+            {['auctions', 'subscriptions', 'settings'].includes(activeTab) && (
+              <div className="p-16 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-white dark:bg-[#0b1120] rounded-3xl border border-slate-200 dark:border-white/5">
+                <Activity className="w-12 h-12 text-blue-500 animate-pulse mb-4" />
+                <h3 className="text-sm font-black uppercase tracking-widest italic">Tính năng đang đồng bộ</h3>
+                <p className="text-[10px] text-slate-500 mt-1">Vui lòng quay lại các Tab chính để trải nghiệm</p>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
-
-      {/* FORM 2: MODAL ĐÁNH GIÁ CHẤT LƯỢNG SẢN PHẨM (DÀNH RIÊNG BIỆT) */}
-      {auditItem && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAuditItem(null)}></div>
-          
-          <div className="bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-2xl w-full max-w-lg relative z-10 animate-in zoom-in-95 duration-200">
-            <button 
-              onClick={() => setAuditItem(null)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
-            >
-              <X size={18} />
-            </button>
-
-            <h3 className="text-lg font-black dark:text-white uppercase italic mb-4 flex items-center gap-1.5">
-              <Shield className="text-blue-500" /> Thẩm định sản phẩm: {auditItem.product.productName}
-            </h3>
-            
-            <p className="text-[10px] text-slate-400 uppercase font-bold mb-6">Mã Store Item: #{auditItem.storeItemId} • Giá sàn đề xuất: {formatVND(auditItem.product.basePrice)}</p>
-
-            <div className="space-y-4">
-              {/* Chọn trạng thái */}
-              <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase mb-2">Trạng thái chất lượng thẩm duyệt *</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { status: 'PENDING', label: 'Chờ duyệt' },
-                    { status: 'RECEIVED', label: 'Đã nhận kho' },
-                    { status: 'APPROVED', label: 'Đạt kiểm định' },
-                    { status: 'REJECTED', label: 'Từ chối phê duyệt' }
-                  ].map(btn => (
-                    <button
-                      key={btn.status}
-                      type="button"
-                      onClick={() => setAuditStatus(btn.status)}
-                      className={`py-2.5 px-3 text-[10px] font-black rounded-xl border text-center transition-all ${
-                        auditStatus === btn.status 
-                          ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
-                          : 'bg-transparent dark:bg-white/5 hover:border-slate-500 text-slate-400'
-                      }`}
-                    >
-                      {btn.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Gợi ý mẫu thẩm định nhanh */}
-              <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase mb-1.5">Gợi ý nhận xét nhanh</label>
-                <div className="flex flex-col gap-1">
-                  {QC_TEMPLATES.map((tpl, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setAuditNote(tpl)}
-                      className="text-[9px] font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 bg-slate-100 dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all text-left truncate"
-                    >
-                      {tpl}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Nhập ghi chú nhận xét */}
-              <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase mb-1">Nhận xét chất lượng & tình trạng sản phẩm chi tiết *</label>
-                <textarea
-                  rows="3"
-                  value={auditNote}
-                  onChange={(e) => setAuditNote(e.target.value)}
-                  placeholder="Nhập nhận xét kiểm duyệt kỹ thuật, tình trạng lỗi hỏng nếu có..."
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 leading-normal"
-                ></textarea>
-              </div>
-
-              {/* Các nút bấm thao tác */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setAuditItem(null)}
-                  className="flex-1 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-300 rounded-xl text-xs font-black uppercase hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
-                >
-                  Đóng
-                </button>
-                <button
-                  onClick={() => handleUpdateAudit(auditItem.storeItemId)}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-blue-600/20"
-                >
-                  Xác nhận thẩm định
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL NHẬP MỚI SẢN PHẨM KÝ GỬI (Giao diện upload tệp cục bộ ảnh chính/phụ rõ ràng) */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)}></div>
-          
-          <div className="bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-2xl w-full max-w-xl relative z-10 my-8 animate-in zoom-in-95 duration-200">
-            <button 
-              onClick={() => setIsAddModalOpen(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
-            >
-              <X size={18} />
-            </button>
-
-            <h3 className="text-lg font-black dark:text-white uppercase italic mb-6 flex items-center gap-2">
-              <Box className="text-blue-500" /> Nhập mới sản phẩm lưu kho
-            </h3>
-
-            <form onSubmit={handleAddStoreItem} className="space-y-4 max-h-[75vh] overflow-y-auto pr-2">
-              
-              {/* Tên sản phẩm & Thương hiệu */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Tên sản phẩm *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newProduct.productName}
-                    onChange={(e) => setNewProduct({ ...newProduct, productName: e.target.value })}
-                    placeholder="ví dụ: Laptop Dell XPS 15 2024"
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Thương hiệu / Hãng *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newProduct.brand}
-                    onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
-                    placeholder="ví dụ: Dell"
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Xuất xứ & Tình trạng (Chỉ NEW, USED) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Xuất xứ / Nguồn gốc</label>
-                  <input
-                    type="text"
-                    value={newProduct.origin}
-                    onChange={(e) => setNewProduct({ ...newProduct, origin: e.target.value })}
-                    placeholder="ví dụ: Mỹ"
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Tình trạng vật lý *</label>
-                  <select
-                    value={newProduct.productCondition}
-                    onChange={(e) => setNewProduct({ ...newProduct, productCondition: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="NEW">Mới (NEW) - Hàng nguyên hộp</option>
-                    <option value="USED">Đã sử dụng (USED)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Danh mục (Category) - Quyết định các trường JSON Attributes động */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Phân loại danh mục *</label>
-                  <select
-                    value={newProduct.categoryId}
-                    onChange={(e) => {
-                      setNewProduct({ ...newProduct, categoryId: e.target.value });
-                      setDynamicAttrs({}); // Reset thuộc tính khi đổi category
-                    }}
-                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                  >
-                    {MOCK_CATEGORIES.map(cat => (
-                      <option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Kho gán lưu trữ & Giá khởi điểm đề xuất */}
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Gán vào Kho lưu trữ *</label>
-                  <select
-                    value={newProduct.storeId}
-                    onChange={(e) => setNewProduct({ ...newProduct, storeId: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                  >
-                    {INITIAL_STORES.map(s => (
-                      <option key={s.storeId} value={s.storeId}>{s.storeName}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* THÔNG SỐ ĐỘNG (JSON attributes) TÙY THEO CATEGORY ĐƯỢC CHỌN */}
-              {selectedTemplate && (
-                <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 space-y-3">
-                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
-                    <FileText size={12} /> Thuộc tính chi tiết ({selectedTemplate.label})
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {selectedTemplate.fields.map(f => (
-                      <div key={f.name}>
-                        <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">{f.label} {f.required && '*'}</label>
-                        <input
-                          type="text"
-                          required={f.required}
-                          placeholder={f.placeholder}
-                          value={dynamicAttrs[f.name] || ''}
-                          onChange={(e) => setDynamicAttrs({ ...dynamicAttrs, [f.name]: e.target.value })}
-                          className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-lg py-2 px-2.5 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Giá khởi điểm */}
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Giá khởi điểm sàn đề xuất (VND) *</label>
-                <input
-                  type="number"
-                  required
-                  value={newProduct.basePrice}
-                  onChange={(e) => setNewProduct({ ...newProduct, basePrice: e.target.value })}
-                  placeholder="ví dụ: 15000000"
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              {/* KHU VỰC TẢI ẢNH CHÍNH RIÊNG BIỆT (Primary Image) */}
-              <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5 space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5">
-                  <ImageIcon size={12} className="text-blue-500" /> Tải lên ảnh chính sản phẩm * (Bắt buộc)
-                </label>
-                
-                <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-white/10 rounded-2xl bg-white dark:bg-[#111827] relative hover:border-blue-500 transition-colors">
-                  {newProduct.primaryImageUrl ? (
-                    <div className="text-center">
-                      <img src={newProduct.primaryImageUrl} alt="Ảnh chính" className="max-h-32 object-cover rounded-xl mb-3 shadow-md" />
-                      <button 
-                        type="button" 
-                        onClick={() => setNewProduct(prev => ({ ...prev, primaryImageUrl: '' }))}
-                        className="text-xs text-red-500 font-bold hover:underline flex items-center gap-1 mx-auto"
-                      >
-                        <Trash size={12} /> Xóa & Thay đổi
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer text-center w-full block py-4">
-                      <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2 animate-bounce" />
-                      <span className="text-xs font-bold text-blue-500 dark:text-blue-400 hover:underline">Chọn ảnh từ máy tính</span>
-                      <p className="text-[9px] text-slate-500 mt-1">Hỗ trợ các định dạng tệp ảnh PNG, JPG, WEBP</p>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        required 
-                        onChange={handlePrimaryImageUpload} 
-                        className="hidden" 
-                      />
-                    </label>
-                  )}
-                </div>
-              </div>
-
-              {/* KHU VỰC TẢI ẢNH PHỤ RIÊNG BIỆT (Tối đa 3 ảnh) */}
-              <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5 space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5">
-                  <ImageIcon size={12} className="text-purple-500" /> Tải lên ảnh phụ bổ sung (Tối đa 3 ảnh phụ)
-                </label>
-                
-                <div className="grid grid-cols-3 gap-3">
-                  {[0, 1, 2].map((idx) => {
-                    const imgUrl = newProduct.subImages[idx];
-                    return (
-                      <div key={idx} className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-slate-300 dark:border-white/10 rounded-xl bg-white dark:bg-[#111827] aspect-square relative hover:border-purple-500 transition-colors">
-                        {imgUrl ? (
-                          <div className="absolute inset-0 p-1 flex flex-col items-center justify-center">
-                            <img src={imgUrl} alt={`Ảnh phụ ${idx + 1}`} className="w-full h-full object-cover rounded-lg shadow-sm" />
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSubImage(idx)}
-                              className="absolute top-1.5 right-1.5 bg-red-600 text-white p-1 rounded-full hover:scale-110 transition-transform shadow-md"
-                              title="Xóa ảnh"
-                            >
-                              <X size={10} />
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="cursor-pointer text-center flex flex-col items-center justify-center h-full w-full">
-                            <Upload className="w-5 h-5 text-slate-400 mb-1" />
-                            <span className="text-[9px] font-black text-slate-500 uppercase">Ảnh phụ {idx + 1}</span>
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={(e) => handleSubImageUpload(e, idx)} 
-                              className="hidden" 
-                            />
-                          </label>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Mô tả đặc điểm */}
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Mô tả đặc điểm sản phẩm</label>
-                <textarea
-                  rows="3"
-                  value={newProduct.description}
-                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                  placeholder="Nhập thông số, phụ kiện đi kèm nếu có..."
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 leading-normal"
-                ></textarea>
-              </div>
-
-              {/* Thao tác nút bấm */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-300 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
-                >
-                  Hủy bỏ
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-blue-600/20"
-                >
-                  Xác nhận ký gửi
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -27,6 +27,7 @@ import ChangePassword from "../pages/ChangePassword";
 import Subscription from "../pages/Subscription";
 
 /* ADMIN */
+import AdminLayout from "../components/admin/layout/AdminLayout";
 import Dashboard from "../pages/admin/dashboard/Dashboard"
 import UserManage from "../pages/admin/user/UserManage"
 import StoreManage from "../pages/admin/store/StoreManage"
@@ -66,11 +67,13 @@ export default function AppRoutes() {
         {/* SELLER */}
         <Route path="/subscription" element={<Subscription />} />       
         {/* ADMIN */}
-        <Route path="/admin/dashboard" element={<Dashboard />} />
-        <Route path="/admin/user-manage" element={<UserManage />} />
-        <Route path="/admin/store-manage" element={<StoreManage />} />
-        <Route path="/admin/product-manage" element={<ProductManage />} />
-        <Route path="/admin/subcription-manage" element={<SubscriptionManage />} />
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/user-manage" element={<UserManage />} />
+          <Route path="/admin/store-manage" element={<StoreManage />} />
+          <Route path="/admin/product-manage" element={<ProductManage />} />
+          <Route path="/admin/subcription-manage" element={<SubscriptionManage />} />
+        </Route>
 
       </Routes>
     </BrowserRouter>
