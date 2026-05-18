@@ -7,13 +7,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import vn.edu.nlu.fit.auction.dto.request.Admin.User.CreateUserRequest;
 import vn.edu.nlu.fit.auction.dto.response.Admin.User.AdminUserResponse;
+import vn.edu.nlu.fit.auction.entity.Business;
 import vn.edu.nlu.fit.auction.entity.Profile;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.enums.UserRole;
 import vn.edu.nlu.fit.auction.enums.UserStatus;
 import vn.edu.nlu.fit.auction.mapper.Admin.User.AdminUserMapper;
 import vn.edu.nlu.fit.auction.repository.Auth.UserRepository;
+import vn.edu.nlu.fit.auction.repository.Profile.BusinessRepository;
 import vn.edu.nlu.fit.auction.repository.Profile.ProfileRepository;
 
 @Service
@@ -22,6 +25,7 @@ public class AdminUserService {
 
     private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
+    private final BusinessRepository businessRepository;
     private final AdminUserMapper adminUserMapper;
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -72,5 +76,51 @@ public class AdminUserService {
 
         userRepository.save(user);
     }
-    
+
+    public void createUser(CreateUserRequest request) {
+
+        // ===== CHECK USERNAME =====
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException(
+                    "Username đã tồn tại"
+            );
+        }
+
+        // ===== CHECK EMAIL =====
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException(
+                    "Email đã tồn tại"
+            );
+        }
+
+        // ===== CREATE USER =====
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getUserRole())
+                .status(UserStatus.ACTIVE)
+                .build();
+
+        userRepository.save(user);
+
+        // ===== CREATE PROFILE =====
+        Profile profile = Profile.builder()
+                .user(user)
+                .build();
+
+        profileRepository.save(profile);
+
+        // ===== CREATE BUSINESS IF SELLER =====
+        if (request.getUserRole() == UserRole.SELLER) {
+
+            Business business = Business.builder()
+                    .user(user)
+                    .businessName(request.getUsername())
+                    .build();
+
+            businessRepository.save(business);
+        }
+    }
+
 }

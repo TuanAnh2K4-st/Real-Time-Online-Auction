@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.Admin.User.ChangeRoleRequest;
+import vn.edu.nlu.fit.auction.dto.request.Admin.User.CreateUserRequest;
 import vn.edu.nlu.fit.auction.dto.request.Admin.User.UserFilterRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.Admin.User.AdminUserResponse;
@@ -68,4 +69,15 @@ public class AdminUserController {
         );
     }
 
+    @PostMapping("/create-user")
+    public ApiResponse<String> createUser( @RequestBody CreateUserRequest request ) {
+
+        adminUserService.createUser(request);
+
+        return new ApiResponse<>(
+                "Tạo tài khoản thành công",
+                null
+        );
+    }
+    
 }
