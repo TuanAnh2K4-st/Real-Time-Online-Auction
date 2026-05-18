@@ -31,17 +31,9 @@ public class UserSpecification {
                                 cb.lower(root.get("username")),
                                 search
                         );
-
-                Predicate emailPredicate =
-                        cb.like(
-                                cb.lower(root.get("email")),
-                                search
-                        );
-
                 predicates.add(
                         cb.or(
-                                usernamePredicate,
-                                emailPredicate
+                                usernamePredicate
                         )
                 );
             }

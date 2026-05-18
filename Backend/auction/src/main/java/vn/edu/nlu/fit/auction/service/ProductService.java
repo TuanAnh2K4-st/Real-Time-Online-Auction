@@ -20,7 +20,7 @@ import vn.edu.nlu.fit.auction.entity.Store;
 import vn.edu.nlu.fit.auction.entity.StoreItem;
 import vn.edu.nlu.fit.auction.entity.User;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
-import vn.edu.nlu.fit.auction.mapper.ProductMapper;
+import vn.edu.nlu.fit.auction.mapper.Product.ProductMapper;
 import vn.edu.nlu.fit.auction.repository.Category.CategoryRepository;
 import vn.edu.nlu.fit.auction.repository.Product.ProductRepository;
 import vn.edu.nlu.fit.auction.repository.Store.StoreItemRepository;

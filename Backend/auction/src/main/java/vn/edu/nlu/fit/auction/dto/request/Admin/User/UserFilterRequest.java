@@ -12,7 +12,7 @@ import vn.edu.nlu.fit.auction.enums.UserRole;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AdminUserFilterRequest {
+public class UserFilterRequest {
 
     private String keyword;
 

@@ -17,7 +17,7 @@ import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.StoreResponse;
 import vn.edu.nlu.fit.auction.entity.Store;
 import vn.edu.nlu.fit.auction.enums.StoreStatus;
-import vn.edu.nlu.fit.auction.mapper.StoreMapper;
+import vn.edu.nlu.fit.auction.mapper.Store.StoreMapper;
 import vn.edu.nlu.fit.auction.service.StoreService;
 
 @RestController

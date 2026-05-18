@@ -3,13 +3,16 @@ package vn.edu.nlu.fit.auction.controller.Admin.User;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import vn.edu.nlu.fit.auction.dto.request.Admin.User.AdminUserFilterRequest;
+import vn.edu.nlu.fit.auction.dto.request.Admin.User.ChangeRoleRequest;
+import vn.edu.nlu.fit.auction.dto.request.Admin.User.UserFilterRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.Admin.User.AdminUserResponse;
 import vn.edu.nlu.fit.auction.service.Admin.User.AdminUserService;
@@ -24,7 +27,7 @@ public class AdminUserController {
     // @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/filter")
     public ApiResponse<List<AdminUserResponse>> getUsers(
-            @RequestBody AdminUserFilterRequest request
+            @RequestBody UserFilterRequest request
     ) {
 
         List<AdminUserResponse> users =
@@ -38,4 +41,31 @@ public class AdminUserController {
                 users
         );
     }
+
+    // CHANGE STATUS
+    @PutMapping("/change-status/{userId}")
+    public ApiResponse<String> changeStatus(
+            @PathVariable Integer userId
+    ) {
+
+        adminUserService.changeStatus(userId);
+
+        return new ApiResponse<>(
+                "Đổi trạng thái user thành công",
+                null
+        );
+    }
+
+    // CHANGE ROLE
+    @PutMapping("/{userId}/role")
+    public ApiResponse<String> changeRole( @PathVariable Integer userId, @RequestBody ChangeRoleRequest request) {
+
+        adminUserService.changeRole( userId, request.getUserRole());
+
+        return new ApiResponse<>(
+                "Đổi role user thành công",
+                null
+        );
+    }
+
 }

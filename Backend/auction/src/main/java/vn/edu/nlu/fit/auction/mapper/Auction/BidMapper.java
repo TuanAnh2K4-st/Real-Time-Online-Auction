@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.mapper;
+package vn.edu.nlu.fit.auction.mapper.Auction;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.mapper;
+package vn.edu.nlu.fit.auction.mapper.Category;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -11,9 +11,8 @@ import vn.edu.nlu.fit.auction.entity.Category;
 public interface CategoryMapper {
 
     @Mapping(source = "categoryId", target = "id")
-    @Mapping(target = "parentId",
-        expression = "java(category.getParent() != null ? category.getParent().getCategoryId() : null)")
-    CategoryResponse toDTO(Category category);
+    @Mapping(target = "parentId", expression = "java(category.getParent() != null ? category.getParent().getCategoryId() : null)")
+    CategoryResponse toResponse(Category category);
 
     @Mapping(target = "categoryId", ignore = true)
     @Mapping(target = "createAt", ignore = true)
