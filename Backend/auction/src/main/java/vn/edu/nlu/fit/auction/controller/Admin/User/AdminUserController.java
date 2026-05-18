@@ -71,7 +71,7 @@ public class AdminUserController {
 
     @PostMapping("/create-user")
     public ApiResponse<String> createUser( @RequestBody CreateUserRequest request ) {
-
+        System.out.println(request.getUserRole());
         adminUserService.createUser(request);
 
         return new ApiResponse<>(

@@ -12,6 +12,7 @@ import vn.edu.nlu.fit.auction.dto.response.Admin.User.AdminUserResponse;
 import vn.edu.nlu.fit.auction.entity.Business;
 import vn.edu.nlu.fit.auction.entity.Profile;
 import vn.edu.nlu.fit.auction.entity.User;
+import vn.edu.nlu.fit.auction.enums.AuthProvider;
 import vn.edu.nlu.fit.auction.enums.UserRole;
 import vn.edu.nlu.fit.auction.enums.UserStatus;
 import vn.edu.nlu.fit.auction.mapper.Admin.User.AdminUserMapper;
@@ -95,12 +96,15 @@ public class AdminUserService {
 
         // ===== CREATE USER =====
         User user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getUserRole())
-                .status(UserStatus.ACTIVE)
-                .build();
+            .username(request.getUsername())
+            .email(request.getEmail())
+            .password(passwordEncoder.encode(request.getPassword()))
+            .role(request.getUserRole())
+            .status(UserStatus.ACTIVE)
+            .provider(AuthProvider.LOCAL)
+            .providerId(null)
+            .reputationScore(80)
+            .build();
 
         userRepository.save(user);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Gavel, Users, CreditCard, 
   Settings, Bell, Search, TrendingUp, 
@@ -10,6 +10,7 @@ import {
   AlertTriangle, Crown, Store as StoreIcon, Truck, User,
   Plus, Edit3, CheckCircle2, Box, Eye, Check, AlertCircle, FileText, Image as ImageIcon, Upload, Trash, UserPlus
 } from 'lucide-react';
+import { filterUsersApi, changeUserStatusApi, changeUserRoleApi, createUserApi } from "../../../services/api/adminUserApi";
 
 // --- MOCK SUBCATEGORY TEMPLATES FOR JSON ATTRIBUTES ---
 const SUBCATEGORY_TEMPLATES = {
@@ -282,7 +283,23 @@ const SidebarItem = ({ icon, label, active, onClick, collapsed }) => (
   </button>
 );
 export default function UserManagement () {
-  const [users, setUsers] = useState(MOCK_USERS);
+  const [users, setUsers] = useState([]);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await filterUsersApi({
+          keyword: '',
+          role: null
+        });
+
+        setUsers(res.data || []);
+      } catch (err) {
+        console.error("Load users failed:", err);
+      }
+    };
+
+    fetchUsers();
+  }, []);
   const [filterRole, setFilterRole] = useState('ALL');
   const [searchUsername, setSearchUsername] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -302,15 +319,36 @@ export default function UserManagement () {
     username: '',
     email: '',
     password: '',
-    role: 'USER',
-    fullName: '',
-    phone: '',
-    avatarUrl: ''
+    role: 'USER'
   });
 
-  const filteredUsers = users.filter(u => {
-    const matchRole = filterRole === 'ALL' || u.role === filterRole;
-    const matchSearch = u.username.toLowerCase().includes(searchUsername.toLowerCase().trim());
+  const handleToggleStatus = async (user) => {
+    try {
+      const newStatus = user.status === "ACTIVE" ? "BANNED" : "ACTIVE";
+
+      await changeUserStatusApi(user.userId);
+
+      setUsers(prev =>
+        prev.map(u =>
+          u.userId === user.userId
+            ? { ...u, status: newStatus }
+            : u
+        )
+      );
+
+    } catch (err) {
+      console.error("Change status failed:", err);
+    }
+  };
+
+  const filteredUsers = users
+    .filter(u => u && typeof u === "object")
+    .filter(u => {
+      const matchRole = filterRole === 'ALL' || u.role === filterRole;
+      const matchSearch = (u.username ?? '')
+        .toLowerCase()
+        .includes(searchUsername.toLowerCase().trim());
+
     return matchRole && matchSearch;
   });
 
@@ -324,107 +362,108 @@ export default function UserManagement () {
     setIsUserModalOpen(true);
   };
 
-  const handleUserSubmit = (e) => {
+  const handleUserSubmit = async (e) => {
     e.preventDefault();
-    if (!formUsername || !formEmail) {
-      alert("Tên tài khoản và Email không được để trống!");
-      return;
-    }
 
-    const updatedUsers = users.map(u => u.userId === editingUser.userId ? {
-      ...u,
-      username: formUsername,
-      email: formEmail,
-      role: formRole,
-      reputationScore: parseInt(formReputation),
-      status: formUserStatus
-    } : u);
-
-    setUsers(updatedUsers);
-
-    if (selectedUser && selectedUser.userId === editingUser.userId) {
-      setSelectedUser({
-        ...selectedUser,
+    try {
+      const payload = {
+        userId: editingUser.userId,
         username: formUsername,
         email: formEmail,
         role: formRole,
-        reputationScore: parseInt(formReputation),
+        reputationScore: Number(formReputation),
         status: formUserStatus
-      });
-    }
+      };
 
-    setIsUserModalOpen(false);
+      // nếu có API update:
+      // await updateUserApi(payload);
+
+      setUsers(prev =>
+        prev.map(u =>
+          u.userId === editingUser.userId
+            ? { ...u, ...payload }
+            : u
+        )
+      );
+
+      setIsUserModalOpen(false);
+
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // Thay đổi quyền hạn trực tiếp từ Selector trong bảng
-  const handleRoleChange = (userId, newRole) => {
-    const updatedUsers = users.map(u => u.userId === userId ? { ...u, role: newRole } : u);
-    setUsers(updatedUsers);
-    
-    // Đồng bộ nếu tài khoản đó đang mở Sidebar Profile
-    if (selectedUser && selectedUser.userId === userId) {
-      setSelectedUser(prev => ({ ...prev, role: newRole }));
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await changeUserRoleApi(userId, newRole);
+
+      setUsers(prev =>
+        prev.map(u =>
+          u.userId === userId ? { ...u, role: newRole } : u
+        )
+      );
+
+    } catch (err) {
+      console.error("Change role failed:", err);
     }
   };
 
   // Hàm xử lý khi gửi yêu cầu TẠO TÀI KHOẢN MỚI
-  const handleCreateUserSubmit = (e) => {
+  const handleCreateUserSubmit = async (e) => {
     e.preventDefault();
-    
-    // Kiểm tra các trường bắt buộc (AdminRegisterUserRequest validation)
-    if (!newUser.username || !newUser.email || !newUser.password) {
-      alert("Tên tài khoản, Email và Mật khẩu không được để trống!");
-      return;
-    }
 
-    // Kiểm tra trùng lặp cơ bản
-    const isUsernameDup = users.some(u => u.username.toLowerCase() === newUser.username.toLowerCase().trim());
-    const isEmailDup = users.some(u => u.email.toLowerCase() === newUser.email.toLowerCase().trim());
-    
-    if (isUsernameDup) {
-      alert("Tên đăng ký đã tồn tại trong hệ thống!");
-      return;
-    }
-    if (isEmailDup) {
-      alert("Địa chỉ email đã được đăng ký tài khoản khác!");
-      return;
-    }
-
-    const generatedUserId = Math.floor(100 + Math.random() * 900);
-    const createdAccount = {
-      userId: generatedUserId,
-      username: newUser.username.trim(),
-      email: newUser.email.trim(),
-      password: newUser.password, // Simulated encrypted password
-      reputationScore: 80,       // Mặc định điểm uy tín là 80 như Entity yêu cầu
-      status: "ACTIVE",          // Mặc định ACTIVE khi tạo
-      role: newUser.role,
-      createdAt: new Date().toISOString(),
-      profile: {
-        fullName: newUser.fullName.trim() !== '' ? newUser.fullName.trim() : "Chưa cập nhật",
-        phone: newUser.phone.trim() !== '' ? newUser.phone.trim() : "N/A",
-        avatarUrl: newUser.avatarUrl !== '' ? newUser.avatarUrl : null,
-        gender: "MALE",
-        job: "Ký gửi tự do",
-        bio: "Thành viên đăng ký mới bởi ban quản trị."
+    try {
+      // validate
+      if (!newUser.username || !newUser.email || !newUser.password) {
+        alert("Tên tài khoản, Email và Mật khẩu không được để trống!");
+        return;
       }
-    };
 
-    setUsers([createdAccount, ...users]);
-    setIsAddUserModalOpen(false);
-    
-    // Reset Form Đăng ký mới
-    setNewUser({
-      username: '',
-      email: '',
-      password: '',
-      role: 'USER',
-      fullName: '',
-      phone: '',
-      avatarUrl: ''
-    });
+      const isUsernameDup = users.some(
+        u => (u.username || '').toLowerCase().trim() === newUser.username.toLowerCase().trim()
+      );
 
-    alert(`Tạo thành công tài khoản @${createdAccount.username}!`);
+      const isEmailDup = users.some(
+        u => (u.email || '').toLowerCase().trim() === newUser.email.toLowerCase().trim()
+      );
+
+      if (isUsernameDup) {
+        alert("Tên đăng ký đã tồn tại!");
+        return;
+      }
+
+      if (isEmailDup) {
+        alert("Email đã tồn tại!");
+        return;
+      }
+
+      const payload = {
+        username: newUser.username,
+        email: newUser.email,
+        password: newUser.password,
+        userRole: newUser.role
+      };
+
+      const res = await createUserApi(payload);
+
+      setUsers(prev => [res.data, ...prev]);
+
+      setIsAddUserModalOpen(false);
+
+      setNewUser({
+        username: '',
+        email: '',
+        password: '',
+        role: 'USER',
+        fullName: '',
+        phone: '',
+        avatarUrl: ''
+      });
+
+    } catch (err) {
+      console.error("Create user failed:", err);
+    }
   };
 
   // Xử lý upload ảnh đại diện (giả lập tệp cục bộ)
@@ -436,11 +475,19 @@ export default function UserManagement () {
     }
   };
 
-  const deleteUser = (e, id) => {
+  const deleteUser = async (e, id) => {
     e.stopPropagation();
-    if (window.confirm("Bạn có chắc chắn muốn xóa vĩnh viễn người dùng này?")) {
-      setUsers(users.filter(u => u.userId !== id));
-      if (selectedUser?.userId === id) setSelectedUser(null);
+
+    if (!window.confirm("Xóa user này?")) return;
+
+    try {
+      // nếu backend có API thì gọi ở đây
+      // await deleteUserApi(id);
+
+      setUsers(prev => prev.filter(u => u.userId !== id));
+
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -520,8 +567,8 @@ export default function UserManagement () {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-white/5 overflow-hidden flex-shrink-0">
-                          {user.profile.avatarUrl ? (
-                            <img src={user.profile.avatarUrl} alt="" onError={(e) => { e.target.src = "/default-avatar.png";}}className="w-full h-full object-cover"/>
+                          {user.profile?.avatarUrl ? (
+                            <img src={user.profile?.avatarUrl} alt="" onError={(e) => { e.target.src = "/default-avatar.png";}}className="w-full h-full object-cover"/>
                           ) : (
                             <div className="w-full h-full flex items-center justify-center font-black text-slate-400 text-xs">{user.username[0].toUpperCase()}</div>
                           )}
@@ -548,7 +595,15 @@ export default function UserManagement () {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <StatusBadge status={user.status} />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // không trigger select user
+                          handleToggleStatus(user);
+                        }}
+                        className="hover:scale-105 transition-transform"
+                      >
+                        <StatusBadge status={user.status} />
+                      </button>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -596,14 +651,14 @@ export default function UserManagement () {
             <div className="flex flex-col items-center text-center mb-8">
               <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-blue-600 to-cyan-400 p-1 mb-4 shadow-xl shadow-blue-500/20">
                 <div className="w-full h-full rounded-[1.4rem] bg-white dark:bg-[#0b1120] overflow-hidden">
-                  {selectedUser.profile.avatarUrl ? (
-                    <img src={selectedUser.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  {selectedUser.profile?.avatarUrl ? (
+                    <img src={selectedUser.profile?.avatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-3xl font-black text-slate-300 uppercase italic">{selectedUser.username[0]}</div>
                   )}
                 </div>
               </div>
-              <h3 className="text-xl font-black dark:text-white uppercase italic leading-none">{selectedUser.profile.fullName || 'Chưa cập nhật'}</h3>
+              <h3 className="text-xl font-black dark:text-white uppercase italic leading-none">{selectedUser.profile?.fullName || 'Chưa cập nhật'}</h3>
               <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] italic">@{selectedUser.username}</p>
                 <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
@@ -636,13 +691,13 @@ export default function UserManagement () {
                   <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
                     <Phone size={16} />
                   </div>
-                  <span className="text-xs font-bold">{selectedUser.profile.phone || 'N/A'}</span>
+                  <span className="text-xs font-bold">{selectedUser.profile?.phone || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
                   <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
                     <Briefcase size={16} />
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-tighter">{selectedUser.profile.job || 'N/A'}</span>
+                  <span className="text-xs font-bold uppercase tracking-tighter">{selectedUser.profile?.job || 'N/A'}</span>
                 </div>
               </div>
 
@@ -652,7 +707,7 @@ export default function UserManagement () {
                 </p>
                 <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic">
-                    "{selectedUser.profile.bio || 'Người dùng này chưa có tiểu sử.'}"
+                    "{selectedUser.profile?.bio || 'Người dùng này chưa có tiểu sử.'}"
                   </p>
                 </div>
               </div>
@@ -721,7 +776,7 @@ export default function UserManagement () {
                   min="0"
                   max="100"
                   value={formReputation}
-                  onChange={(e) => setFormReputation(e.target.value)}
+                  onChange={(e) => setFormReputation(Number(e.target.value))}
                   className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -843,63 +898,6 @@ export default function UserManagement () {
                     <option value="WAREHOUSE_STAFF">Nhân viên kho (WAREHOUSE_STAFF)</option>
                     <option value="ADMIN">Quản trị viên (ADMIN)</option>
                   </select>
-                </div>
-              </div>
-
-              {/* Profile: Họ và tên & Số điện thoại */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Họ và tên</label>
-                  <input
-                    type="text"
-                    value={newUser.fullName}
-                    onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
-                    placeholder="ví dụ: Alex Vũ"
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Số điện thoại</label>
-                  <input
-                    type="text"
-                    value={newUser.phone}
-                    onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-                    placeholder="ví dụ: 0901234567"
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Tải lên ảnh đại diện (Simulated Avatar Upload) */}
-              <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5 space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5">
-                  <ImageIcon size={12} className="text-blue-500" /> Tải lên ảnh đại diện
-                </label>
-                
-                <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-300 dark:border-white/10 rounded-2xl bg-white dark:bg-[#111827] relative hover:border-blue-500 transition-colors">
-                  {newUser.avatarUrl ? (
-                    <div className="text-center">
-                      <img src={newUser.avatarUrl} alt="Avatar Preview" className="w-16 h-16 rounded-full object-cover mb-2 shadow-md border-2 border-blue-500" />
-                      <button 
-                        type="button" 
-                        onClick={() => setNewUser(prev => ({ ...prev, avatarUrl: '' }))}
-                        className="text-[10px] text-red-500 font-bold hover:underline flex items-center gap-1 mx-auto"
-                      >
-                        <Trash size={10} /> Xóa ảnh
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer text-center w-full block py-2">
-                      <Upload className="w-6 h-6 mx-auto text-slate-400 mb-1 animate-pulse" />
-                      <span className="text-[10px] font-black text-blue-500 dark:text-blue-400 hover:underline uppercase">Chọn ảnh đại diện</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleAvatarUpload} 
-                        className="hidden" 
-                      />
-                    </label>
-                  )}
                 </div>
               </div>
 
