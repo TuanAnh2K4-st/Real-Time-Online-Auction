@@ -10,7 +10,8 @@ import {
   AlertTriangle, Crown, Store as StoreIcon, Truck, User,
   Plus, Edit3, CheckCircle2, Box, Eye, Check, AlertCircle, FileText, Image as ImageIcon, Upload, Trash, UserPlus
 } from 'lucide-react';
-import { filterProductsApi } from "../../../services/api/adminProductApi";
+import { filterProductsApi, noteStoreItemApi, createProductByAdminApi } from "../../../services/api/adminProductApi";
+import { getActiveStoresApi } from "../../../services/api/storeApi"
 
 // --- MOCK SUBCATEGORY TEMPLATES FOR JSON ATTRIBUTES ---
 const SUBCATEGORY_TEMPLATES = {
@@ -286,6 +287,8 @@ const SidebarItem = ({ icon, label, active, onClick, collapsed }) => (
 // --- VIEW: STORE ITEM MANAGEMENT ---
 export default function UserManagement () {
   const [storeItems, setStoreItems] = useState([]);
+  const [creating, setCreating] = useState(false);
+  const [createSuccess, setCreateSuccess] = useState(false);
   const [searchStoreName, setSearchStoreName] = useState('');
   const [searchProductName, setSearchProductName] = useState('');
   const [activeStatusTab, setActiveStatusTab] = useState('PENDING');
@@ -306,6 +309,18 @@ export default function UserManagement () {
 
   // Lưu trữ dữ liệu thuộc tính động (attributesJson) khi tạo mới
   const [dynamicAttrs, setDynamicAttrs] = useState({});
+
+  const [stores, setStores] = useState([]);
+
+  const [primaryImageFile, setPrimaryImageFile] =
+    useState(null);
+
+  const [subImageFiles, setSubImageFiles] =
+    useState([
+      null,
+      null,
+      null
+    ]);
 
   // Trạng thái cho việc Đánh giá, Thẩm định (Kiểm định) trong Modal riêng
   const [auditStatus, setAuditStatus] = useState('PENDING');
@@ -329,7 +344,7 @@ export default function UserManagement () {
 
     return () => clearTimeout(timeout);
 
-  }, [searchProductName, activeStatusTab]);
+  }, [searchProductName, searchStoreName, activeStatusTab]);
 
   const fetchProducts = async () => {
 
@@ -343,7 +358,9 @@ export default function UserManagement () {
         itemStatus:
           activeStatusTab === "ALL"
             ? null
-            : activeStatusTab
+            : activeStatusTab,
+
+        storeName: searchStoreName || null
       };
 
       const response =
@@ -363,6 +380,23 @@ export default function UserManagement () {
     }
   };
 
+  useEffect(() => { fetchStores(); }, []);
+
+  const fetchStores = async () => {
+
+    try {
+
+      const response =
+        await getActiveStoresApi();
+
+      setStores(response.data);
+
+    } catch (error) {
+
+      console.error(error);
+    }
+  };
+
   const QC_TEMPLATES = [
     "Sản phẩm còn mới nguyên seal, tem bảo hành chính hãng đầy đủ.",
     "Trầy xước cực nhẹ ở viền, các nút bấm nhạy, màn hình không trầy.",
@@ -371,110 +405,203 @@ export default function UserManagement () {
   ];
 
   // Lọc kép nâng cao: Tên kho hàng + Tên sản phẩm + Tab trạng thái
-  const filteredItems = storeItems.filter(item => {
-    const matchStore =
-      !searchStoreName ||
-      item.store?.storeName
-        ?.toLowerCase()
-        .includes(searchStoreName.toLowerCase());
-
-    return matchStore;
-  });
+  const filteredItems = storeItems;
 
   // Cập nhật Đánh giá chất lượng sản phẩm từ Modal Đánh giá riêng
-  const handleUpdateAudit = (id) => {
-    setStoreItems(storeItems.map(item => {
-      if (item.storeItemId === id) {
-        const updated = {
-          ...item,
+  const handleUpdateAudit = async () => {
+
+    try {
+
+      const request = {
+        storeItemId: auditItem.storeItemId,
+        status: auditStatus,
+        conditionNote: auditNote
+      };
+
+      await noteStoreItemApi(request);
+
+      setStoreItems(prev =>
+        prev.map(item => {
+
+          if (item.storeItemId === auditItem.storeItemId) {
+
+            return {
+              ...item,
+              itemStatus: auditStatus,
+              conditionNote: auditNote
+            };
+          }
+
+          return item;
+        })
+      );
+
+      if (selectedItem?.storeItemId === auditItem.storeItemId) {
+
+        setSelectedItem(prev => ({
+          ...prev,
           itemStatus: auditStatus,
           conditionNote: auditNote
-        };
-        if (selectedItem && selectedItem.storeItemId === id) {
-          setSelectedItem(updated);
-        }
-        return updated;
+        }));
       }
-      return item;
-    }));
-    setAuditItem(null); // Đóng modal đánh giá
-    alert("Đã cập nhật tình trạng kiểm định thành công!");
+
+      setAuditItem(null);
+
+      alert("Cập nhật kiểm định thành công!");
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert("Cập nhật thất bại!");
+    }
+  };
+
+  // Hàm upload ảnh chính
+  const handlePrimaryImageUpload = (e) => {
+
+    const file = e.target.files[0];
+
+    if (file) {
+
+      // lưu file thật để gửi API
+      setPrimaryImageFile(file);
+
+      // tạo preview local
+      const previewUrl = URL.createObjectURL(file);
+
+      setNewProduct(prev => ({
+        ...prev,
+        primaryImageUrl: previewUrl
+      }));
+    }
   };
 
   // Tạo mới hàng ký gửi & Sản phẩm kèm ảnh chính/phụ và thuộc tính động JSON
-  const handleAddStoreItem = (e) => {
+  const handleAddStoreItem = async (e) => {
+
     e.preventDefault();
-    if (!newProduct.productName || !newProduct.basePrice || !newProduct.primaryImageUrl) {
-      alert("Vui lòng nhập tên sản phẩm, giá khởi điểm và tải ảnh chính lên!");
-      return;
-    }
 
-    const matchedStore = INITIAL_STORES.find(s => s.storeId === parseInt(newProduct.storeId));
-    const matchedCategory = MOCK_CATEGORIES.find(c => c.categoryId === parseInt(newProduct.categoryId));
-    const generatedProductId = Math.floor(100 + Math.random() * 900);
-    const generatedStoreItemId = Math.floor(1000 + Math.random() * 9000);
+    try {
 
-    // Chuẩn bị mảng ProductImages (gồm ảnh chính và các ảnh phụ)
-    const productImages = [
-      { imageId: Date.now(), imageUrl: newProduct.primaryImageUrl, isPrimary: true }
-    ];
-    newProduct.subImages.forEach((url, index) => {
-      if (url.trim() !== '') {
-        productImages.push({ imageId: Date.now() + index + 1, imageUrl: url.trim(), isPrimary: false });
+      setCreating(true);
+
+      if (!primaryImageFile) {
+
+        alert("Vui lòng chọn ảnh chính!");
+
+        setCreating(false);
+
+        return;
       }
-    });
 
-    const newItem = {
-      storeItemId: generatedStoreItemId,
-      store: matchedStore,
-      itemStatus: "PENDING",
-      conditionNote: "Chờ kho nhận hàng thực tế và tiến hành quy trình thẩm duyệt.",
-      product: {
-        productId: generatedProductId,
-        productName: newProduct.productName,
-        brand: newProduct.brand || "N/A",
-        origin: newProduct.origin || "N/A",
-        productCondition: newProduct.productCondition,
-        basePrice: parseFloat(newProduct.basePrice),
-        description: newProduct.description || "Chưa có mô tả chi tiết.",
-        createdAt: new Date().toISOString(),
-        user: MOCK_USERS[1], // Gán cho seller mặc định
-        category: matchedCategory,
-        attributesJson: JSON.stringify(dynamicAttrs),
-        images: productImages
-      }
-    };
+      const formData = new FormData();
 
-    setStoreItems([newItem, ...storeItems]);
-    setIsAddModalOpen(false);
+      // ===== TEXT DATA =====
+      formData.append("productName", newProduct.productName);
+      formData.append("brand", newProduct.brand);
+      formData.append("origin", newProduct.origin);
+      formData.append("productCondition", newProduct.productCondition);
+      formData.append("description", newProduct.description);
+      formData.append("attributesJson", JSON.stringify(dynamicAttrs));
+      formData.append("basePrice", newProduct.basePrice);
+      formData.append("categoryId", Number(newProduct.categoryId));
+      formData.append("storeId", Number(newProduct.storeId));
 
-    // Reset Forms
-    setNewProduct({
-      productName: '', brand: '', origin: '', productCondition: 'NEW',
-      basePrice: '', description: '', storeId: 1, categoryId: 1,
-      primaryImageUrl: '',
-      subImages: ['', '', '']
-    });
-    setDynamicAttrs({});
-  };
+      // ===== PRIMARY IMAGE =====
+      formData.append("primaryImage", primaryImageFile);
 
-  // Hàm xử lý Upload ảnh chính (Chuyển đổi thành Object URL cục bộ để hiển thị ngay)
-  const handlePrimaryImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setNewProduct(prev => ({ ...prev, primaryImageUrl: url }));
+      // ===== SUB IMAGES =====
+      subImageFiles.forEach(file => {
+
+        if (file) {
+
+          formData.append("subImages", file);
+        }
+      });
+
+      const response =
+        await createProductByAdminApi(formData);
+
+      console.log(response);
+
+      // ===== SUCCESS EFFECT =====
+      setCreateSuccess(true);
+
+      // Delay để hiện animation success
+      setTimeout(() => {
+
+        fetchProducts();
+
+        // đóng modal
+        setIsAddModalOpen(false);
+
+        // reset data
+        setNewProduct({
+          productName: '',
+          brand: '',
+          origin: '',
+          productCondition: 'NEW',
+          basePrice: '',
+          description: '',
+          storeId: 1,
+          categoryId: 1,
+          primaryImageUrl: '',
+          subImages: ['', '', '']
+        });
+
+        setDynamicAttrs({});
+        setPrimaryImageFile(null);
+
+        setSubImageFiles([
+          null,
+          null,
+          null
+        ]);
+
+        setCreateSuccess(false);
+
+      }, 1400);
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        error?.response?.data?.message
+        || "Tạo sản phẩm thất bại!"
+      );
+
+    } finally {
+
+      setCreating(false);
     }
   };
 
   // Hàm xử lý Upload ảnh phụ (Chuyển đổi thành Object URL cục bộ)
-  const handleSubImageUpload = (e, index) => {
+  const handleSubImageUpload = ( e,index) => {
+
     const file = e.target.files[0];
+
     if (file) {
-      const url = URL.createObjectURL(file);
-      const updatedSubImages = [...newProduct.subImages];
-      updatedSubImages[index] = url;
-      setNewProduct(prev => ({ ...prev, subImages: updatedSubImages }));
+
+      const updatedFiles =
+        [...subImageFiles];
+
+      updatedFiles[index] = file;
+
+      setSubImageFiles(updatedFiles);
+
+      const updatedPreview =
+        [...newProduct.subImages];
+
+      updatedPreview[index] =
+        URL.createObjectURL(file);
+
+      setNewProduct(prev => ({
+        ...prev,
+        subImages: updatedPreview
+      }));
     }
   };
 
@@ -720,7 +847,7 @@ export default function UserManagement () {
               </div>
               <div>
                 <h4 className="text-md font-black dark:text-white mt-0.5 leading-tight">{selectedItem.productName}</h4>
-                <p className="text-xs font-bold text-slate-500 mt-1">Sở hữu: <span className="text-blue-500">{selectedItem.userId}</span></p>
+                <p className="text-xs font-bold text-slate-500 mt-1">Sở hữu bởi userId: <span className="text-blue-500">{selectedItem.userId}</span></p>
               </div>
             </div>
 
@@ -744,6 +871,18 @@ export default function UserManagement () {
                   <span className="font-bold dark:text-slate-200">
                     {selectedItem.productCondition === 'NEW' ? 'Mới (NEW)' : 'Đã sử dụng (USED)'}
                   </span>
+                </div>
+                {/* Mô tả sản phẩm */}
+                <div className="mt-4 w-full">
+                  <p className="text-[8px] font-black text-slate-400 uppercase mb-1">
+                    Mô tả sản phẩm
+                  </p>
+
+                  <div className="w-full block p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                    <p className="w-full block text-xs leading-relaxed text-slate-600 dark:text-slate-300 break-words whitespace-pre-wrap">
+                      {selectedItem.description || "Chưa có mô tả sản phẩm"}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -878,7 +1017,7 @@ export default function UserManagement () {
                   Đóng
                 </button>
                 <button
-                  onClick={() => handleUpdateAudit(auditItem.storeItemId)}
+                  onClick={handleUpdateAudit}
                   className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-blue-600/20"
                 >
                   Xác nhận thẩm định
@@ -985,7 +1124,7 @@ export default function UserManagement () {
                     onChange={(e) => setNewProduct({ ...newProduct, storeId: e.target.value })}
                     className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
                   >
-                    {INITIAL_STORES.map(s => (
+                    {stores.map(s => (
                       <option key={s.storeId} value={s.storeId}>{s.storeName}</option>
                     ))}
                   </select>
@@ -1020,11 +1159,25 @@ export default function UserManagement () {
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Giá khởi điểm sàn đề xuất (VND) *</label>
                 <input
-                  type="number"
+                  type="text"
                   required
-                  value={newProduct.basePrice}
-                  onChange={(e) => setNewProduct({ ...newProduct, basePrice: e.target.value })}
-                  placeholder="ví dụ: 15000000"
+                  value={
+                    newProduct.basePrice
+                      ? Number(newProduct.basePrice).toLocaleString("vi-VN")
+                      : ""
+                  }
+                  onChange={(e) => {
+
+                    // chỉ giữ số
+                    const rawValue =
+                      e.target.value.replace(/\D/g, "");
+
+                    setNewProduct({
+                      ...newProduct,
+                      basePrice: rawValue
+                    });
+                  }}
+                  placeholder="ví dụ: 15.000.000"
                   className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -1041,7 +1194,7 @@ export default function UserManagement () {
                       <img src={newProduct.primaryImageUrl} alt="Ảnh chính" className="max-h-32 object-cover rounded-xl mb-3 shadow-md" />
                       <button 
                         type="button" 
-                        onClick={() => setNewProduct(prev => ({ ...prev, primaryImageUrl: '' }))}
+                        onClick={() => { setPrimaryImageFile(null); setNewProduct(prev => ({...prev,primaryImageUrl: ''}));}}
                         className="text-xs text-red-500 font-bold hover:underline flex items-center gap-1 mx-auto"
                       >
                         <Trash size={12} /> Xóa & Thay đổi
@@ -1128,9 +1281,32 @@ export default function UserManagement () {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-blue-600/20"
+                  disabled={creating || createSuccess}
+                  className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-2
+                  ${
+                    createSuccess
+                      ? 'bg-emerald-600 shadow-emerald-600/30 scale-105'
+                      : creating
+                      ? 'bg-blue-500 cursor-not-allowed animate-pulse'
+                      : 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20 active:scale-95'
+                  } text-white`}
                 >
-                  Xác nhận ký gửi
+                  {createSuccess ? (
+                    <>
+                      <CheckCircle2 size={16} className="animate-bounce" />
+                      Tạo thành công
+                    </>
+                  ) : creating ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Đang tạo...
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={15} />
+                      Xác nhận ký gửi
+                    </>
+                  )}
                 </button>
               </div>
             </form>

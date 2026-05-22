@@ -12,9 +12,8 @@ import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductFilterRequest {
-
-    private String keyword;
-    private StoreItemStatus itemStatus;
-    private String storeName;
+public class NoteStoreItemRequest {
+    private Integer storeItemId;
+    private StoreItemStatus status;
+    private String conditionNote;
 }

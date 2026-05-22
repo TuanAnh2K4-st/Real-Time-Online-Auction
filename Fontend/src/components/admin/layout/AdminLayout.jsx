@@ -6,7 +6,7 @@ import AdminHeader from "./AdminHeader";
 
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   useEffect(() => {
     if (isDarkMode) {
         document.documentElement.classList.add("dark");
