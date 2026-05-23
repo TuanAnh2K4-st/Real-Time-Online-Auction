@@ -1,8 +1,12 @@
 package vn.edu.nlu.fit.auction.dto.request.Address;
 
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AddressRequest {
 
     private String street;
