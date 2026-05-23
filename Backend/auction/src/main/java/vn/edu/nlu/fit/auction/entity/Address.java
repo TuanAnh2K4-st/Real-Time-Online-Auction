@@ -28,4 +28,25 @@ public class Address {
     @JoinColumn(name = "ward_id", nullable = false)
     private Ward ward;
 
+    // ===== CUSTOM ADDRESS =====
+    public String getFullAddress() {
+
+        String provinceName =
+                province != null
+                        ? province.getName()
+                        : "";
+
+        String wardName =
+                ward != null
+                        ? ward.getName()
+                        : "";
+
+        return street
+                + ", "
+                + wardName
+                + ", "
+                + provinceName;
+    }
+
 }
+
