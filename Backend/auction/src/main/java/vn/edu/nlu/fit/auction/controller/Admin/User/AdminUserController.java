@@ -27,9 +27,7 @@ public class AdminUserController {
 
     // @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/filter")
-    public ApiResponse<List<AdminUserResponse>> getUsers(
-            @RequestBody UserFilterRequest request
-    ) {
+    public ApiResponse<List<AdminUserResponse>> getUsers( @RequestBody UserFilterRequest request) {
 
         List<AdminUserResponse> users =
                 adminUserService.getUsers(
