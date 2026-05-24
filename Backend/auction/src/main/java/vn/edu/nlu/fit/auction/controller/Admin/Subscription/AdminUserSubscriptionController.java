@@ -33,7 +33,7 @@ public class AdminUserSubscriptionController {
         );
     }
 
-    @PutMapping("/{id}/cancel")
+    @PutMapping("/cancel/{id}")
     public ApiResponse<String> cancelSubscription(@PathVariable Integer id) {
 
         service.cancelSubscription(id);
