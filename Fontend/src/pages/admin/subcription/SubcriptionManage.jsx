@@ -337,6 +337,10 @@ export default function SubscriptionManage() {
   }, []);
 
   useEffect(() => {
+    fetchUserSubs();
+  }, []);
+
+  useEffect(() => {
     const timeout = setTimeout(() => {
       fetchUserSubs();
     }, 300); // debounce search
