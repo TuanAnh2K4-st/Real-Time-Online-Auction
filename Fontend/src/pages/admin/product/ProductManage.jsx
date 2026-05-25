@@ -285,7 +285,7 @@ const SidebarItem = ({ icon, label, active, onClick, collapsed }) => (
 );
 
 // --- VIEW: STORE ITEM MANAGEMENT ---
-export default function UserManagement () {
+export default function ProductManage () {
   const [storeItems, setStoreItems] = useState([]);
   const [creating, setCreating] = useState(false);
   const [createSuccess, setCreateSuccess] = useState(false);

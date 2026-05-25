@@ -371,172 +371,8 @@ export default function App() {
   });
 
   return (
-    <div className={`${isDarkMode ? 'dark' : ''} transition-colors duration-300`}>
-      <div className="flex min-h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-200 font-sans">
-        
-        {/* Sidebar */}
-        <aside className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#0b1120] border-r border-slate-200 dark:border-white/5 transition-all duration-300 ease-in-out 
-          ${collapsed ? 'w-20' : 'w-64'}`}>
-          
-          <div className={`p-6 flex items-center transition-all ${collapsed ? 'justify-center' : 'gap-3'}`}>
-            <div className="bg-gradient-to-tr from-blue-600 to-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-500/20">
-              <Gavel className="w-5 h-5 animate-pulse" />
-            </div>
-            {!collapsed && (
-              <div className="flex flex-col">
-                <span className="text-sm font-black uppercase tracking-tighter dark:text-white flex items-center gap-1">
-                  Auction Hub <Sparkles size={12} className="text-amber-500" />
-                </span>
-                <span className="text-[8px] tracking-widest text-blue-500 font-black uppercase">Quản trị Hệ thống</span>
-              </div>
-            )}
-          </div>
-
-          <nav className="mt-4">
-            <SidebarItem icon={<LayoutDashboard size={18}/>} label="Tổng quan" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} collapsed={collapsed} />
-            <SidebarItem icon={<Gavel size={18}/>} label="Phiên đấu" active={activeTab === 'auctions'} onClick={() => setActiveTab('auctions')} collapsed={collapsed} />
-            <SidebarItem icon={<Users size={18}/>} label="Người dùng" active={activeTab === 'users'} onClick={() => setActiveTab('users')} collapsed={collapsed} />
-            <SidebarItem icon={<CreditCard size={18}/>} label="Tài chính (Subs)" active={activeTab === 'subscriptions'} onClick={() => setActiveTab('subscriptions')} collapsed={collapsed} />
-            <SidebarItem icon={<Settings size={18}/>} label="Cài đặt" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} collapsed={collapsed} />
-          </nav>
-
-          <div className="absolute bottom-6 w-full px-4">
-             <button className="flex items-center gap-3 w-full p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all font-semibold">
-                <LogOut size={18} />
-                {!collapsed && <span className="text-xs font-black uppercase tracking-wider">Đăng xuất</span>}
-             </button>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 ${collapsed ? 'ml-20' : 'ml-64'}`}>
-          {/* Top Navbar */}
-          <header className="h-16 border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-[#0b1120]/50 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-40">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setCollapsed(!collapsed)} 
-                className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all"
-              >
-                {collapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
-              </button>
-
-              <a 
-                href="/" 
-                target="_blank"
-                onClick={(e) => e.preventDefault()}
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-black uppercase hover:bg-blue-100 transition-all border border-blue-200 dark:border-blue-500/20"
-              >
-                <ExternalLink size={12} />
-                Xem trang chủ Web
-              </a>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-2 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-blue-500 rounded-lg transition-all shadow-inner"
-                title={isDarkMode ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
-              >
-                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-
-              <div className="h-8 w-[1px] bg-slate-200 dark:bg-white/10 mx-2"></div>
-
-              <div className="flex items-center gap-3">
-                <div className="text-right hidden sm:block">
-                  <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase italic">Quản trị viên</p>
-                  <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-wider">Online</p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-md">AD</div>
-              </div>
-            </div>
-          </header>
-
+      <>
           <div className="p-8">
-            
-            {/* TAB TỔNG QUAN (DASHBOARD) */}
-            {activeTab === 'dashboard' && (
-              <div className="animate-fadeIn space-y-8">
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <Activity className="w-5 h-5 text-blue-500" />
-                    <h1 className="text-2xl font-black dark:text-white tracking-tight uppercase italic">Tổng quan hệ thống</h1>
-                  </div>
-                  <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Cập nhật lúc: {new Date().toLocaleTimeString()}</p>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {INITIAL_STATS.map((stat, i) => (
-                    <div key={i} className="bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 p-5 rounded-3xl group relative overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
-                          {stat.icon}
-                        </div>
-                        <span className={`text-[10px] font-black ${stat.isUp ? 'text-emerald-500' : 'text-red-500'}`}>
-                          {stat.trend}
-                        </span>
-                      </div>
-                      <p className="text-slate-400 text-[10px] font-bold uppercase">{stat.label}</p>
-                      <h3 className="text-xl font-black dark:text-white mt-1">{stat.value}</h3>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                  {/* Chart Main */}
-                  <div className="lg:col-span-8 bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm">
-                    <h2 className="text-sm font-black dark:text-white uppercase mb-6 flex items-center gap-2">
-                      <TrendingUp size={16} className="text-blue-500"/> Doanh thu tuần này
-                    </h2>
-                    <RevenueChart />
-                  </div>
-
-                  {/* Chart Side */}
-                  <div className="lg:col-span-4 bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm">
-                    <h2 className="text-sm font-black dark:text-white uppercase mb-6 flex items-center gap-2">
-                      <CreditCard size={16} className="text-cyan-500"/> Gói đăng ký VIP
-                    </h2>
-                    <SubscriptionChart />
-                  </div>
-
-                  {/* Table */}
-                  <div className="lg:col-span-12 bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm">
-                    <div className="px-6 py-4 border-b border-slate-200 dark:border-white/5 flex justify-between items-center">
-                      <h2 className="text-sm font-black dark:text-white uppercase">Sản phẩm đang đấu giá</h2>
-                      <span className="text-[10px] bg-blue-500/10 text-blue-500 font-bold px-2 py-1 rounded-full uppercase tracking-wider">3 Đang chạy</span>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left">
-                        <thead>
-                          <tr className="bg-slate-50 dark:bg-slate-900/50">
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Sản phẩm</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Loại</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Giá</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Trạng thái</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                          {MOCK_AUCTIONS.map((auction) => (
-                            <tr key={auction.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                              <td className="px-6 py-4 font-bold text-xs dark:text-white">{auction.product}</td>
-                              <td className="px-6 py-4">
-                                <span className={`text-[9px] font-black px-2 py-1 rounded-md ${auction.type === 'LIVE' ? 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'}`}>
-                                  {auction.type}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-xs font-black dark:text-white">{formatCurrency(auction.currentPrice)}</td>
-                              <td className="px-6 py-4"><StatusBadge status={auction.status} /></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* TAB TÀI CHÍNH - QUẢN LÝ SUBSCRIPTIONS */}
             {activeTab === 'subscriptions' && (
               <div className="space-y-8 animate-fadeIn">
@@ -912,8 +748,6 @@ export default function App() {
             )}
 
           </div>
-        </main>
-      </div>
 
       {/* --- MODAL DIALOGS --- */}
 
@@ -1272,7 +1106,6 @@ export default function App() {
           </div>
         ))}
       </div>
-
-    </div>
+      </>
   );
 }

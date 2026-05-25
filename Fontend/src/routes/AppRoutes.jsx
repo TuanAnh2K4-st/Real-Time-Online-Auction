@@ -33,6 +33,8 @@ import UserManage from "../pages/admin/user/UserManage"
 import StoreManage from "../pages/admin/store/StoreManage"
 import ProductManage from "../pages/admin/product/ProductManage"
 import SubscriptionManage from "../pages/admin/subcription/SubcriptionManage";
+import AuctionManage from "../pages/admin/auction/AuctionManage";
+import CategoryManage from "../pages/admin/category/CategoryManage";
 
 /* ROUTE GUARD */
 import ProtectedRoute from "./ProtectedRoute";
@@ -73,6 +75,8 @@ export default function AppRoutes() {
           <Route path="/admin/store-manage" element={<StoreManage />} />
           <Route path="/admin/product-manage" element={<ProductManage />} />
           <Route path="/admin/subcription-manage" element={<SubscriptionManage />} />
+          <Route path="/admin/auction-manage" element={<AuctionManage />} />
+          <Route path="/admin/category-manage" element={<CategoryManage />} />
         </Route>
 
       </Routes>

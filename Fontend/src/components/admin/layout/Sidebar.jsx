@@ -1,4 +1,14 @@
-import {LayoutDashboard,Gavel,Users,CreditCard,Settings, LogOut,} from "lucide-react";
+import {
+  LayoutDashboard,
+  Gavel,
+  Users,
+  CreditCard,
+  Settings,
+  LogOut,
+  Store,
+  Folder,
+  Package
+} from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 
@@ -45,10 +55,26 @@ export default function Sidebar({ collapsed }) {
         />
 
         <SidebarItem
-          icon={<Gavel size={20} />}
+          icon={<Store size={20} />}
           label="Cửa hàng"
           active={location.pathname === "/admin/store-manage"}
           onClick={() => navigate("/admin/store-manage")}
+          collapsed={collapsed}
+        />
+
+        <SidebarItem
+          icon={<Folder size={20} />}
+          label="Danh mục"
+          active={location.pathname === "/admin/category-manage"}
+          onClick={() => navigate("/admin/category-manage")}
+          collapsed={collapsed}
+        />
+
+        <SidebarItem
+          icon={<Gavel size={20} />}
+          label="Đấu giá"
+          active={location.pathname === "/admin/auction-manage"}
+          onClick={() => navigate("/admin/auction-manage")}
           collapsed={collapsed}
         />
 
@@ -61,7 +87,7 @@ export default function Sidebar({ collapsed }) {
         />
 
         <SidebarItem
-          icon={<Settings size={20} />}
+          icon={<Package size={20} />}
           label="Sản phẩm"
           active={location.pathname === "/admin/product-manage"}
           onClick={() => navigate("/admin/product-manage")}
