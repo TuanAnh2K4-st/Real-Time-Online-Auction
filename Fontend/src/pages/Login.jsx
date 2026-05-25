@@ -39,7 +39,12 @@ export default function Login() {
       showNotification('Đăng nhập thành công!', 'info');
 
       // Điều hướng về trang chính sau khi đăng nhập
-      navigate('/');
+      const role = data?.data?.role || data?.data?.roles;
+        if (role &&(String(role).toUpperCase().includes('ADMIN') ||(Array.isArray(role) && role.some(r => String(r).toUpperCase().includes('ADMIN'))))) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
     } catch (err) {
       // `axiosClient` trả về lỗi ở dạng object; cố gắng lấy message
       const message = err?.message || err?.error || JSON.stringify(err) || 'Đăng nhập thất bại';

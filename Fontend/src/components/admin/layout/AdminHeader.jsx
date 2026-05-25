@@ -1,6 +1,56 @@
-import {Menu,ChevronLeft,Sun,Moon,ExternalLink,} from "lucide-react";
+import {
+  Menu,
+  ChevronLeft,
+  Sun,
+  Moon,
+  ExternalLink,
+  User
+} from "lucide-react";
 
-export default function AdminHeader({collapsed,setCollapsed,isDarkMode,setIsDarkMode,}) {
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../../context/AuthContext";
+import { getMyProfile } from "../../../services/api/profileApi";
+
+export default function AdminHeader({
+  collapsed,
+  setCollapsed,
+  isDarkMode,
+  setIsDarkMode,
+}) {
+  const { user } = useContext(AuthContext);
+
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await getMyProfile();
+        const data = res?.data ?? res;
+
+        if (!cancelled) {
+          setProfile(data);
+        }
+      } catch (err) {
+        console.error("Lỗi lấy profile:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const displayName =
+    profile?.fullName ||
+    user?.username ||
+    "Quản trị viên";
+
+  const avatarUrl =
+    profile?.avatarUrl || null;
   return (
     <header className="h-16 border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-[#0b1120]/50 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-40">
 
@@ -35,17 +85,25 @@ export default function AdminHeader({collapsed,setCollapsed,isDarkMode,setIsDark
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
             <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase italic">
-              Quản trị viên
+              {displayName}
             </p>
 
             <p className="text-[9px] text-emerald-500 font-bold uppercase">
-              Online
+              {user?.role || "ADMIN"}
             </p>
           </div>
 
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-xs">
-            V
-          </div>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="avatar"
+              className="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-white/10"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white">
+              <User size={16} />
+            </div>
+          )}
         </div>
       </div>
     </header>
