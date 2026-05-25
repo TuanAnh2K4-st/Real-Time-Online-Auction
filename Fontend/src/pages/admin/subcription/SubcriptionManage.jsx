@@ -10,61 +10,7 @@ import {
   PlusCircle, Filter, CheckCircle, XCircle, AlertCircle, Info,
   Sparkles, ShieldAlert, Award, Gem, HelpCircle, Check
 } from 'lucide-react';
-
-// --- MOCK DATA BAN ĐẦU ---
-const INITIAL_STATS = [
-  { label: 'Tổng doanh thu gói VIP', value: '1.240.000.000 ₫', trend: '+12.5%', isUp: true, icon: <TrendingUp className="w-5 h-5" /> },
-  { label: 'Phiên đấu đang chạy', value: '42', sub: '12 Live - 30 Normal', icon: <Gavel className="w-5 h-5" /> },
-  { label: 'Thành viên trả phí', value: '124', trend: '+18%', isUp: true, icon: <Users className="w-5 h-5" /> },
-  { label: 'Gói VIP Active', value: '89', trend: '-2%', isUp: false, icon: <CreditCard className="w-5 h-5" /> },
-];
-
-const MOCK_AUCTIONS = [
-  { id: 1, product: "Rolex Submariner 2023", seller: "Hoàng Gia Luxury", currentPrice: 450000000, status: "ACTIVE", type: "LIVE" },
-  { id: 2, product: "Tranh sơn mài Cổ", seller: "Antique Heritage", currentPrice: 85000000, status: "PENDING", type: "NORMAL" },
-  { id: 3, product: "iPhone 15 Pro Max Gold", seller: "TechWorld VN", currentPrice: 32000000, status: "COMPLETED", type: "NORMAL" },
-];
-
-const INITIAL_PLANS = [
-  { id: 1, name: "Gói Đấu Giá Bạc (Silver)", price: 199000, durationDays: 30, maxLiveRooms: 3, tier: 'silver' },
-  { id: 2, name: "Gói Đấu Giá Vàng (Gold Pro)", price: 549000, durationDays: 90, maxLiveRooms: 10, tier: 'gold' },
-  { id: 3, name: "Gói Kim Cương (Diamond Live)", price: 1499000, durationDays: 180, maxLiveRooms: 35, tier: 'diamond' },
-];
-
-const INITIAL_USER_SUBSCRIPTIONS = [
-  { 
-    id: 1, 
-    user: { id: 101, name: "Trần Thế Anh", email: "theanh.tran@gmail.com", avatar: "A" }, 
-    plan: INITIAL_PLANS[2], 
-    startDate: "2026-03-01T08:00:00", 
-    endDate: "2026-08-28T08:00:00", 
-    status: "ACTIVE" 
-  },
-  { 
-    id: 2, 
-    user: { id: 102, name: "Nguyễn Thị Mai Chi", email: "maichi99@yahoo.com", avatar: "M" }, 
-    plan: INITIAL_PLANS[1], 
-    startDate: "2026-01-15T14:30:00", 
-    endDate: "2026-04-15T14:30:00", 
-    status: "EXPIRED" 
-  },
-  { 
-    id: 3, 
-    user: { id: 103, name: "Lê Hoàng Long", email: "longlh.tech@gmail.com", avatar: "L" }, 
-    plan: INITIAL_PLANS[0], 
-    startDate: "2026-05-10T10:00:00", 
-    endDate: "2026-06-09T10:00:00", 
-    status: "ACTIVE" 
-  },
-  { 
-    id: 4, 
-    user: { id: 104, name: "Phạm Hải Đăng", email: "haidang.bds@hotmail.com", avatar: "Đ" }, 
-    plan: INITIAL_PLANS[1], 
-    startDate: "2026-02-10T09:15:00", 
-    endDate: "2026-05-11T09:15:00", 
-    status: "CANCELLED" 
-  }
-];
+import { getAllSubscriptionsApi, createSubscriptionApi, deleteSubscriptionApi, filterUserSubscriptionsApi, cancelUserSubscriptionApi} from "../../../services/api/adminSubscription";
 
 // --- COMPONENTS ---
 
@@ -141,15 +87,15 @@ const SubscriptionChart = () => {
   );
 };
 
-export default function App() {
+export default function SubscriptionManage() {
   const [activeTab, setActiveTab] = useState('subscriptions'); 
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
 
   // States dành cho Quản lý Gói & Đăng ký
-  const [subTab, setSubTab] = useState('users-sub'); // 'users-sub' | 'plans'
-  const [plans, setPlans] = useState(INITIAL_PLANS);
-  const [userSubs, setUserSubs] = useState(INITIAL_USER_SUBSCRIPTIONS);
+  const [subTab, setSubTab] = useState('users-sub');
+  const [plans, setPlans] = useState([]);
+  const [userSubs, setUserSubs] = useState([]);
   
   // State Bộ lọc & Tìm kiếm
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,7 +131,7 @@ export default function App() {
   const [userSubForm, setUserSubForm] = useState({
     userName: '',
     userEmail: '',
-    planId: INITIAL_PLANS[0]?.id || 1,
+    planId: plans[0]?.id || '',
     status: 'ACTIVE'
   });
 
@@ -239,36 +185,37 @@ export default function App() {
     setShowPlanModal(true);
   };
 
-  const handleSavePlan = (e) => {
+  const handleSavePlan = async (e) => {
     e.preventDefault();
+
     if (!planForm.name.trim()) {
       showToast('Tên gói cước không được bỏ trống', 'warning');
       return;
     }
 
-    const calculatedTier = getTierByPrice(Number(planForm.price));
+    try {
+      const payload = {
+        name: planForm.name,
+        price: Number(planForm.price),
+        durationDays: Number(planForm.durationDays),
+        maxLiveRooms: Number(planForm.maxLiveRooms)
+      };
 
-    if (currentPlan) {
-      // Sửa gói cũ
-      setPlans(plans.map(p => p.id === currentPlan.id ? { 
-        ...p, 
-        ...planForm, 
-        price: Number(planForm.price),
-        tier: calculatedTier 
-      } : p));
-      showToast(`Đã cập nhật gói cước "${planForm.name}" thành công!`);
-    } else {
-      // Tạo gói mới
-      const newId = plans.length > 0 ? Math.max(...plans.map(p => p.id)) + 1 : 1;
-      setPlans([...plans, { 
-        id: newId, 
-        ...planForm, 
-        price: Number(planForm.price),
-        tier: calculatedTier 
-      }]);
-      showToast(`Đã thêm gói cước mới "${planForm.name}" thành công!`);
+      if (currentPlan) {
+        // update (nếu có API thì đổi ở đây)
+        await createSubscriptionApi(payload); // hoặc update API nếu backend có
+        showToast("Cập nhật gói thành công");
+      } else {
+        await createSubscriptionApi(payload);
+        showToast("Tạo gói thành công");
+      }
+
+      setShowPlanModal(false);
+      fetchPlans(); // reload real data
+    } catch (err) {
+      console.error(err);
+      showToast("Lỗi khi lưu gói", "error");
     }
-    setShowPlanModal(false);
   };
 
   const handleDeletePlan = (id) => {
@@ -280,10 +227,15 @@ export default function App() {
       title: 'Xác nhận xóa gói cước?',
       message: `Bạn đang thực hiện xóa gói cước "${planToDelete.name}". Những người dùng hiện đang đăng ký gói này vẫn giữ nguyên hạn mức cũ đến khi hết chu kỳ. Thao tác không thể hoàn tác.`,
       type: 'danger',
-      onConfirm: () => {
-        setPlans(plans.filter(p => p.id !== id));
+      onConfirm: async () => {
+        try {
+          await deleteSubscriptionApi(id);
+          showToast(`Đã xóa gói "${planToDelete.name}"`, 'warning');
+          fetchPlans();
+        } catch (err) {
+          console.error(err);
+        }
         setConfirmModal({ ...confirmModal, isOpen: false });
-        showToast(`Đã xóa gói "${planToDelete.name}" thành công!`, 'warning');
       }
     });
   };
@@ -300,37 +252,27 @@ export default function App() {
     setShowUserSubModal(true);
   };
 
-  const handleSaveUserSub = (e) => {
+  const handleSaveUserSub = async (e) => {
     e.preventDefault();
-    if (!userSubForm.userName.trim() || !userSubForm.userEmail.trim()) return;
 
-    const selectedPlan = plans.find(p => p.id === Number(userSubForm.planId)) || plans[0];
-    const newId = userSubs.length > 0 ? Math.max(...userSubs.map(s => s.id)) + 1 : 1;
-    
-    // Giả lập logic tương tự @PrePersist của Java Entity Backend
-    const startDate = new Date().toISOString();
-    const endDays = selectedPlan.durationDays;
-    const endDateObj = new Date();
-    endDateObj.setDate(endDateObj.getDate() + endDays);
-    const endDate = endDateObj.toISOString();
+    try {
+      const payload = {
+        userName: userSubForm.userName,
+        userEmail: userSubForm.userEmail,
+        planId: Number(userSubForm.planId),
+        status: userSubForm.status
+      };
 
-    const newSub = {
-      id: newId,
-      user: {
-        id: Math.floor(Math.random() * 900) + 100,
-        name: userSubForm.userName,
-        email: userSubForm.userEmail,
-        avatar: userSubForm.userName.charAt(0).toUpperCase()
-      },
-      plan: selectedPlan,
-      startDate: startDate,
-      endDate: endDate,
-      status: userSubForm.status
-    };
+      await createSubscriptionApi(payload);
 
-    setUserSubs([newSub, ...userSubs]);
-    setShowUserSubModal(false);
-    showToast(`Đã kích hoạt thành công gói ${selectedPlan.name} cho khách hàng ${userSubForm.userName}!`);
+      showToast("Kích hoạt VIP thành công");
+      setShowUserSubModal(false);
+
+      fetchUserSubs();
+    } catch (err) {
+      console.error(err);
+      showToast("Lỗi khi tạo subscription", "error");
+    }
   };
 
   const handleChangeSubStatus = (subId, newStatus) => {
@@ -348,31 +290,147 @@ export default function App() {
       title: `${statusMapText[newStatus]} VIP cho khách hàng?`,
       message: `Xác nhận chuyển trạng thái gói đăng ký của khách hàng ${subObj.user.name} sang "${newStatus}". Quyền lợi truy cập phòng đấu giá của họ sẽ được điều chỉnh ngay lập tức.`,
       type: newStatus === 'ACTIVE' ? 'info' : 'warning',
-      onConfirm: () => {
-        setUserSubs(userSubs.map(sub => {
-          if (sub.id === subId) {
-            return { ...sub, status: newStatus };
-          }
-          return sub;
-        }));
+      onConfirm: async () => {
+        try {
+          await cancelUserSubscriptionApi(subId, newStatus);
+          showToast(`Đã cập nhật trạng thái ${newStatus}`);
+          fetchUserSubs();
+        } catch (err) {
+          console.error(err);
+        }
+
         setConfirmModal({ ...confirmModal, isOpen: false });
-        showToast(`Đã chuyển trạng thái sang ${newStatus} cho ${subObj.user.name}.`);
       }
     });
   };
 
   // --- FILTERING ---
-  const filteredUserSubs = userSubs.filter(sub => {
-    const matchesSearch = sub.user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          sub.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          sub.plan.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || sub.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredUserSubs = userSubs;
+
+  const fetchUserSubs = async () => {
+    try {
+      const payload = {
+        ...(searchQuery?.trim() && { userName: searchQuery.trim() }),
+        ...(statusFilter !== "ALL" && { status: statusFilter })
+      };
+
+      console.log("FILTER PAYLOAD:", payload);
+
+      const res = await filterUserSubscriptionsApi(payload);
+      setUserSubs(res?.data?.data || res?.data || []);
+    } catch (err) {
+      console.error("Load user subs error:", err);
+    }
+  };
+
+  const fetchPlans = async () => {
+    try {
+      const res = await getAllSubscriptionsApi();
+      setPlans(res?.data || []);
+    } catch (err) {
+      console.error("Load plans error:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fetchUserSubs();
+    }, 300); // debounce search
+
+    return () => clearTimeout(timeout);
+  }, [statusFilter, searchQuery]);
 
   return (
-      <>
+    <>
           <div className="p-8">
+            
+            {/* TAB TỔNG QUAN (DASHBOARD) */}
+            {activeTab === 'dashboard' && (
+              <div className="animate-fadeIn space-y-8">
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <Activity className="w-5 h-5 text-blue-500" />
+                    <h1 className="text-2xl font-black dark:text-white tracking-tight uppercase italic">Tổng quan hệ thống</h1>
+                  </div>
+                  <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Cập nhật lúc: {new Date().toLocaleTimeString()}</p>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {INITIAL_STATS.map((stat, i) => (
+                    <div key={i} className="bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 p-5 rounded-3xl group relative overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                          {stat.icon}
+                        </div>
+                        <span className={`text-[10px] font-black ${stat.isUp ? 'text-emerald-500' : 'text-red-500'}`}>
+                          {stat.trend}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-[10px] font-bold uppercase">{stat.label}</p>
+                      <h3 className="text-xl font-black dark:text-white mt-1">{stat.value}</h3>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Chart Main */}
+                  <div className="lg:col-span-8 bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm">
+                    <h2 className="text-sm font-black dark:text-white uppercase mb-6 flex items-center gap-2">
+                      <TrendingUp size={16} className="text-blue-500"/> Doanh thu tuần này
+                    </h2>
+                    <RevenueChart />
+                  </div>
+
+                  {/* Chart Side */}
+                  <div className="lg:col-span-4 bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm">
+                    <h2 className="text-sm font-black dark:text-white uppercase mb-6 flex items-center gap-2">
+                      <CreditCard size={16} className="text-cyan-500"/> Gói đăng ký VIP
+                    </h2>
+                    <SubscriptionChart />
+                  </div>
+
+                  {/* Table */}
+                  <div className="lg:col-span-12 bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm">
+                    <div className="px-6 py-4 border-b border-slate-200 dark:border-white/5 flex justify-between items-center">
+                      <h2 className="text-sm font-black dark:text-white uppercase">Sản phẩm đang đấu giá</h2>
+                      <span className="text-[10px] bg-blue-500/10 text-blue-500 font-bold px-2 py-1 rounded-full uppercase tracking-wider">3 Đang chạy</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="bg-slate-50 dark:bg-slate-900/50">
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Sản phẩm</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Loại</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Giá</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Trạng thái</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                          {MOCK_AUCTIONS.map((auction) => (
+                            <tr key={auction.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                              <td className="px-6 py-4 font-bold text-xs dark:text-white">{auction.product}</td>
+                              <td className="px-6 py-4">
+                                <span className={`text-[9px] font-black px-2 py-1 rounded-md ${auction.type === 'LIVE' ? 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'}`}>
+                                  {auction.type}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-xs font-black dark:text-white">{formatCurrency(auction.currentPrice)}</td>
+                              <td className="px-6 py-4"><StatusBadge status={auction.status} /></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* TAB TÀI CHÍNH - QUẢN LÝ SUBSCRIPTIONS */}
             {activeTab === 'subscriptions' && (
               <div className="space-y-8 animate-fadeIn">
@@ -511,7 +569,6 @@ export default function App() {
                               <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Gói sử dụng</th>
                               <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Hạn mức Live</th>
                               <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Hạn hiệu lực</th>
-                              <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Giá dịch vụ</th>
                               <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Trạng thái</th>
                               <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase text-center">Thao tác nhanh</th>
                             </tr>
@@ -525,26 +582,26 @@ export default function App() {
                                     <td className="px-6 py-4">
                                       <div className="flex items-center gap-3">
                                         <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500/10 to-indigo-500/10 text-blue-600 dark:text-blue-400 font-bold flex items-center justify-center text-sm border border-blue-500/20 shadow-sm">
-                                          {sub.user.avatar}
+                                          {sub?.user?.avatar || "U"}
                                         </div>
                                         <div>
                                           <div className="text-xs font-black dark:text-white flex items-center gap-1.5">
-                                            {sub.user.name} 
-                                            <span className="text-[9px] px-1.5 py-0.2 bg-slate-100 dark:bg-white/10 text-slate-400 rounded-md font-bold">#{sub.id}</span>
+                                            {sub?.username} 
+                                            <span className="text-[9px] px-1.5 py-0.2 bg-slate-100 dark:bg-white/10 text-slate-400 rounded-md font-bold"></span>
                                           </div>
-                                          <div className="text-[10px] text-slate-400 mt-0.5">{sub.user.email}</div>
+                                          <div className="text-[10px] text-slate-400 mt-0.5">{sub?.email}</div>
                                         </div>
                                       </div>
                                     </td>
                                     <td className="px-6 py-4">
                                       <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-tight">
-                                        {sub.plan.name}
+                                        {sub?.subscriptionPlanName}
                                       </span>
                                     </td>
                                     <td className="px-6 py-4">
                                       <div className="flex items-center gap-1">
                                         <span className="text-xs font-black text-emerald-500">
-                                          {sub.plan.maxLiveRooms}
+                                          {sub?.maxLiveRooms}
                                         </span>
                                         <span className="text-[10px] text-slate-400">phòng active</span>
                                       </div>
@@ -566,17 +623,13 @@ export default function App() {
                                         <div className="w-full bg-slate-100 dark:bg-white/10 h-1 rounded-full overflow-hidden">
                                           <div 
                                             className={`h-full rounded-full ${sub.status === 'ACTIVE' ? (remaining > 15 ? 'bg-emerald-500' : 'bg-amber-500') : 'bg-red-500'}`}
-                                            style={{ width: `${sub.status === 'ACTIVE' ? Math.min(100, Math.max(0, (remaining / sub.plan.durationDays) * 100)) : 0}%` }}
+                                            style={{ width: `${sub.status === 'ACTIVE' ? Math.min(100, Math.max(0, (remaining / sub?.plan?.durationDays) * 100)) : 0}%` }}
                                           ></div>
                                         </div>
                                         <div className="text-[9px] text-slate-400 flex items-center gap-1">
                                           <span>Hết vào: {new Date(sub.endDate).toLocaleDateString('vi-VN')}</span>
                                         </div>
                                       </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                      <div className="text-xs font-black dark:text-white">{formatCurrency(sub.plan.price)}</div>
-                                      <div className="text-[9px] text-slate-400 mt-0.5">Trọn gói {sub.plan.durationDays} ngày</div>
                                     </td>
                                     <td className="px-6 py-4">
                                       {sub.status === 'ACTIVE' && (
@@ -748,10 +801,6 @@ export default function App() {
             )}
 
           </div>
-
-      {/* --- MODAL DIALOGS --- */}
-
-      {/* 1. Modal Thêm/Sửa SubscriptionPlan - SIÊU TỐI GIẢN & THÂN THIỆN */}
       {showPlanModal && (
         <div className="fixed inset-0 bg-slate-950/70 dark:bg-[#020617]/90 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/5 w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl animate-scaleUp flex flex-col lg:flex-row">
@@ -821,7 +870,7 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Thời lượng sử dụng (duration_days)</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Thời lượng sử dụng</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                         <Calendar size={14} />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Gavel, Users, CreditCard, 
   Settings, Bell, Search, TrendingUp, 
@@ -10,6 +10,8 @@ import {
   AlertTriangle, Crown, Store as StoreIcon, Truck, User,
   Plus, Edit3, CheckCircle2, Box, Eye, Check, AlertCircle, FileText, Image as ImageIcon, Upload, Trash, UserPlus
 } from 'lucide-react';
+import { filterStoresApi, createStoreApi, updateStoreApi} from "../../../services/api/adminStoreApi";
+import { getProvinces, getWardsByProvince } from "../../../services/api/addressApi";
 
 // --- MOCK SUBCATEGORY TEMPLATES FOR JSON ATTRIBUTES ---
 const SUBCATEGORY_TEMPLATES = {
@@ -282,7 +284,7 @@ const SidebarItem = ({ icon, label, active, onClick, collapsed }) => (
   </button>
 );
 export default function StoreManagement () {
-  const [stores, setStores] = useState(INITIAL_STORES);
+  const [stores, setStores] = useState([]);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -295,7 +297,59 @@ export default function StoreManagement () {
   const [selectedWardId, setSelectedWardId] = useState('');
   const [formStatus, setFormStatus] = useState('ACTIVE');
 
-  const filteredWards = WARDS.filter(w => w.provinceId === parseInt(selectedProvinceId));
+  const [provinces, setProvinces] = useState([]);
+  const [wards, setWards] = useState([]);
+
+  const loadStores = async () => {
+    try {
+      const response = await filterStoresApi({
+        storeName: searchQuery || null,
+        status: filterStatus === "ALL" ? null : filterStatus
+      });
+
+      setStores(response.data || []);
+    } catch (error) {
+      console.error("Lỗi load stores:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadStores();
+  }, [searchQuery, filterStatus]);
+
+  const loadProvinces = async () => {
+    try {
+
+      const response = await getProvinces();
+
+      setProvinces(response.data || []);
+
+    } catch (error) {
+      console.error("Lỗi load provinces:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadProvinces();
+  }, []);
+
+  const loadWards = async (provinceId) => {
+
+    if (!provinceId) {
+      setWards([]);
+      return;
+    }
+
+    try {
+
+      const response = await getWardsByProvince(provinceId);
+
+      setWards(response.data || []);
+
+    } catch (error) {
+      console.error("Lỗi load wards:", error);
+    }
+  };
 
   const resetForm = () => {
     setFormStoreName('');
@@ -314,53 +368,47 @@ export default function StoreManagement () {
   const handleOpenEdit = (store) => {
     setEditingStore(store);
     setFormStoreName(store.storeName);
-    setFormStreet(store.address.street);
-    setSelectedProvinceId(store.address.province.provinceId.toString());
-    setSelectedWardId(store.address.ward.wardId.toString());
-    setFormStatus(store.storeStatus);
+    setFormStreet('');
+    setSelectedProvinceId('');
+    setSelectedWardId('');
+    setFormStatus(store.status);
     setIsModalOpen(true);
   };
 
-  const handleSubmitForm = (e) => {
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
-    if (!formStoreName || !formStreet || !selectedProvinceId || !selectedWardId) {
-      alert("Vui lòng nhập đầy đủ thông tin kho hàng bắt buộc!");
-      return;
-    }
 
-    const provinceObj = PROVINCES.find(p => p.provinceId === parseInt(selectedProvinceId));
-    const wardObj = WARDS.find(w => w.wardId === parseInt(selectedWardId));
+    try {
 
-    if (editingStore) {
-      setStores(stores.map(s => s.storeId === editingStore.storeId ? {
-        ...s,
+      const payload = {
         storeName: formStoreName,
-        storeStatus: formStatus,
-        address: {
-          ...s.address,
-          street: formStreet,
-          province: provinceObj,
-          ward: wardObj
-        }
-      } : s));
-    } else {
-      const newStore = {
-        storeId: Date.now(),
-        storeName: formStoreName,
-        storeStatus: formStatus,
-        createdAt: new Date().toISOString(),
-        itemCount: 0,
-        address: {
-          addressId: Date.now() + 1,
-          street: formStreet,
-          province: provinceObj,
-          ward: wardObj
-        }
+        provinceId: parseInt(selectedProvinceId),
+        wardId: parseInt(selectedWardId),
+        street: formStreet
       };
-      setStores([...stores, newStore]);
+
+      if (editingStore) {
+
+        await updateStoreApi(editingStore.storeId, {
+          ...payload,
+          status: formStatus
+        });
+
+      } else {
+
+        await createStoreApi(payload);
+
+      }
+
+      await loadStores();
+
+      setIsModalOpen(false);
+      resetForm();
+
+    } catch (error) {
+      console.error("Lỗi save store:", error);
+      alert(error?.message || "Có lỗi xảy ra");
     }
-    setIsModalOpen(false);
-    resetForm();
   };
 
   const handleDeleteStore = (storeId) => {
@@ -368,13 +416,6 @@ export default function StoreManagement () {
       setStores(stores.filter(s => s.storeId !== storeId));
     }
   };
-
-  const filteredStores = stores.filter(s => {
-    const matchStatus = filterStatus === 'ALL' || s.storeStatus === filterStatus;
-    const matchSearch = s.storeName.toLowerCase().includes(searchQuery.toLowerCase().trim()) || 
-                        s.address.street.toLowerCase().includes(searchQuery.toLowerCase().trim());
-    return matchStatus && matchSearch;
-  });
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -440,7 +481,7 @@ export default function StoreManagement () {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {filteredStores.map((store) => (
+              {stores.map((store) => (
                 <tr key={store.storeId} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -455,20 +496,19 @@ export default function StoreManagement () {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <p className="text-xs font-medium dark:text-slate-300">{store.address.street}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{store.address.ward.name}, {store.address.province.name}</p>
+                      <p className="text-xs font-medium dark:text-slate-300">{store.address}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="px-2 py-1 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-bold">
-                      {store.storeId === 1 ? 1420 : store.storeId === 2 ? 850 : 0} Items
+                      {store.totalItems} Items
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <p className="text-xs text-slate-500">{new Date(store.createdAt).toLocaleDateString('vi-VN')}</p>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <StoreStatusBadge status={store.storeStatus} />
+                    <StoreStatusBadge status={store.status} />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
@@ -494,7 +534,7 @@ export default function StoreManagement () {
           </table>
         </div>
 
-        {filteredStores.length === 0 && (
+        {stores.length === 0 && (
           <div className="p-16 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
              <AlertTriangle size={36} className="mb-3 opacity-30 text-amber-500" />
              <p className="text-xs font-black uppercase tracking-widest italic mb-2">Không tìm thấy kho hàng phù hợp</p>
@@ -552,14 +592,16 @@ export default function StoreManagement () {
                     required
                     value={selectedProvinceId}
                     onChange={(e) => {
-                      setSelectedProvinceId(e.target.value);
+                      const provinceId = e.target.value;
+                      setSelectedProvinceId(provinceId);
                       setSelectedWardId('');
+                      loadWards(provinceId);
                     }}
                     className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500"
                   >
                     <option value="">-- Chọn tỉnh thành --</option>
-                    {PROVINCES.map(p => (
-                      <option key={p.provinceId} value={p.provinceId}>{p.name}</option>
+                    {provinces.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
                 </div>
@@ -574,8 +616,8 @@ export default function StoreManagement () {
                     className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 disabled:opacity-55 disabled:cursor-not-allowed"
                   >
                     <option value="">-- Chọn phường xã --</option>
-                    {filteredWards.map(w => (
-                      <option key={w.wardId} value={w.wardId}>{w.name}</option>
+                    {wards.map(w => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
                     ))}
                   </select>
                 </div>
