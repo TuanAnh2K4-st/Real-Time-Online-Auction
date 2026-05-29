@@ -50,6 +50,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/provinces/**").permitAll()
                 .requestMatchers("/ws/**").permitAll() // WebSocket
                 .requestMatchers("/api/auctions/*/detail").permitAll() // xem chi tiết auction
+                .requestMatchers("/api/live-auctions/rooms/*/detail").permitAll() // xem phòng live
+                .requestMatchers("/api/live-auctions/public/**").permitAll() // phiên live trang chủ
                 .requestMatchers("/api/auctions/home/**").permitAll() // trang chủ
                 .anyRequest().authenticated()
             )

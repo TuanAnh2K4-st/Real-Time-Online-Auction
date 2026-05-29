@@ -56,7 +56,7 @@ export default function AppRoutes() {
         <Route path="/list-live-auctions" element={<ListLiveAuction />} />
         {/* PROTECTED */}
         <Route path="/auction/:auctionId" element={<NormalAuctionDetail />} />
-        <Route path="/live-auction" element={<LiveAuctionDetail />} />
+        <Route path="/live-auction/:roomCode?" element={<LiveAuctionDetail />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/my-notification" element={<MyNotification/>} />
         <Route path="/cart" element={<Cart />} />

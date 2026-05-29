@@ -293,7 +293,7 @@ export default function Header() {
                         { icon: <Gavel className="w-5 h-5" />, label: 'Tài sản đang đấu giá', color: 'text-purple-400', bg: 'bg-purple-400/10' },
                         { icon: <PlusCircle className="w-5 h-5" />, label: 'Đăng sản phẩm kiểm duyệt', color: 'text-amber-400', bg: 'bg-amber-400/10' },
                         { icon: <PlayCircle className="w-5 h-5" />, label: 'Mở phiên đấu giá phổ thông', color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
-                        { icon: <Radio className="w-5 h-5" />, label: 'Mở phiên Live', color: 'text-rose-400', bg: 'bg-rose-400/10' },
+                        { icon: <Radio className="w-5 h-5" />, label: 'Mở phiên đấu giá trực tuyến', color: 'text-rose-400', bg: 'bg-rose-400/10' },
                         { icon: <Heart className="w-5 h-5" />, label: 'Sản phẩm yêu thích', color: 'text-red-400', bg: 'bg-red-400/10' },
                         { icon: <Lock className="w-5 h-5" />, label: 'Đổi mật khẩu', color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
                         { icon: <Crown className="w-5 h-5" />, label: 'Nâng cấp gói dịch vụ', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
@@ -323,6 +323,11 @@ export default function Header() {
                           }                          
                           if (item.label === 'Nâng cấp gói dịch vụ') {
                             navigate('/subscription');
+                            setIsUserMenuOpen(false);
+                            return;
+                          }
+                          if (item.label === 'Mở phiên đấu giá trực tuyến') {
+                            navigate('/create-live-auction');
                             setIsUserMenuOpen(false);
                             return;
                           }

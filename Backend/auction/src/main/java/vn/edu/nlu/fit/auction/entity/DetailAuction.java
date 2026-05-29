@@ -40,5 +40,12 @@ public class DetailAuction {
 
     @Column(name = "end_time")
     private LocalDateTime endTime;
-   
+
+    /** Nhóm các mục đấu giá trong cùng một phiên live */
+    @Column(name = "session_code", length = 36)
+    private String sessionCode;
+
+    @Column(name = "session_title", length = 255)
+    private String sessionTitle;
+
 }

@@ -464,11 +464,9 @@ public class AuctionService {
                 .collect(Collectors.toList());
         res.setChatHistory(chatHistory);
 
-        // Cọc tham gia (chỉ đấu giá phổ thông NORMAL)
-        if (auction.getAuctionType() != AuctionType.NORMAL) {
-            res.setDepositRequiredAmount(BigDecimal.ZERO);
-            res.setHasPaidDeposit(true);
-        } else {
+        // Cọc tham gia (đấu giá phổ thông và live)
+        if (auction.getAuctionType() == AuctionType.NORMAL
+                || auction.getAuctionType() == AuctionType.LIVE) {
             BigDecimal depositRequired = computeDepositAmount(auction.getStartPrice());
             res.setDepositRequiredAmount(depositRequired);
             User viewer = securityUtil.getCurrentUserOrNull();
@@ -483,6 +481,9 @@ public class AuctionService {
                         .orElse(false);
                 res.setHasPaidDeposit(holding);
             }
+        } else {
+            res.setDepositRequiredAmount(BigDecimal.ZERO);
+            res.setHasPaidDeposit(true);
         }
 
         return res;
@@ -507,8 +508,9 @@ public class AuctionService {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
 
-        if (auction.getAuctionType() != AuctionType.NORMAL) {
-            throw new RuntimeException("Chỉ áp dụng đặt cọc cho đấu giá phổ thông");
+        if (auction.getAuctionType() != AuctionType.NORMAL
+                && auction.getAuctionType() != AuctionType.LIVE) {
+            throw new RuntimeException("Loại đấu giá không hỗ trợ đặt cọc");
         }
         if (auction.getAuctionStatus() != AuctionStatus.ACTIVE) {
             throw new RuntimeException("Phiên đấu giá không hoạt động");
@@ -638,7 +640,8 @@ public class AuctionService {
             return;
         }
 
-        if (auction.getAuctionType() == AuctionType.NORMAL) {
+        if (auction.getAuctionType() == AuctionType.NORMAL
+                || auction.getAuctionType() == AuctionType.LIVE) {
             boolean deposited = auctionParticipantRepository
                     .findByAuctionIdAndUserId(auction.getAuctionId(), user.getUserId())
                     .filter(p -> p.getDepositStatus() == DepositStatus.HOLDING)
