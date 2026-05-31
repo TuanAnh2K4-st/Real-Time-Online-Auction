@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.Live.CreateLiveRoomRequest;
 import vn.edu.nlu.fit.auction.dto.request.Live.CreateLiveSessionRequest;
 import vn.edu.nlu.fit.auction.dto.request.Live.LiveAuctionItemRequest;
+import vn.edu.nlu.fit.auction.dto.response.PageResponse;
 import vn.edu.nlu.fit.auction.dto.response.Live.LiveEligibilityResponse;
 import vn.edu.nlu.fit.auction.dto.response.Live.LiveHomeCardResponse;
 import vn.edu.nlu.fit.auction.dto.response.Live.LiveRoomDetailResponse;
@@ -671,4 +672,92 @@ public class LiveAuctionService {
         }
         throw new RuntimeException("Không thể tạo mã phòng, vui lòng thử lại");
     }
+
+    @Transactional(readOnly = true)
+    public PageResponse<LiveHomeCardResponse> getLiveSessions(int page) {
+
+        List<DetailAuction> allDetails =
+                detailAuctionRepository.findAllWithSessionCodeOrderByStartTimeDesc();
+
+        if (allDetails.isEmpty()) {
+            return new PageResponse<>(
+                    List.of(),
+                    page,
+                    9,
+                    0,
+                    0,
+                    true
+            );
+        }
+
+        Map<String, List<DetailAuction>> bySession = new LinkedHashMap<>();
+
+        for (DetailAuction detail : allDetails) {
+            bySession.computeIfAbsent(
+                    detail.getSessionCode(),
+                    k -> new ArrayList<>()
+            ).add(detail);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<LiveHomeCardResponse> cards = new ArrayList<>();
+
+        for (List<DetailAuction> group : bySession.values()) {
+
+            group.sort(Comparator.comparing(DetailAuction::getOrderIndex));
+
+            finalizeOverdueAuctionsInSchedule(group, now);
+
+            if (isSessionFullyEnded(group, now)) {
+                continue;
+            }
+
+            cards.add(toHomeCard(group, now));
+        }
+
+        cards.sort((a, b) ->
+                Integer.compare(
+                        sessionSortScore(b),
+                        sessionSortScore(a)
+                )
+        );
+
+        // ===== PAGINATION =====
+
+        int pageSize = 9;
+
+        int totalElements = cards.size();
+
+        int totalPages =
+                (int) Math.ceil((double) totalElements / pageSize);
+
+        int start = page * pageSize;
+
+        if (start >= totalElements) {
+            return new PageResponse<>(
+                    List.of(),
+                    page,
+                    pageSize,
+                    totalElements,
+                    totalPages,
+                    true
+            );
+        }
+
+        int end = Math.min(start + pageSize, totalElements);
+
+        List<LiveHomeCardResponse> content =
+                cards.subList(start, end);
+
+        return new PageResponse<>(
+                content,
+                page,
+                pageSize,
+                totalElements,
+                totalPages,
+                page >= totalPages - 1
+        );
+    }
+    
 }

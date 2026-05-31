@@ -34,21 +34,24 @@ const formatSessionTime = (iso) => {
     minute: '2-digit',
     day: '2-digit',
     month: '2-digit',
+    year: 'numeric',
   });
 };
 
-const resolveSessionDateTime = (timeStr) => {
-  const [h, m] = timeStr.split(':').map(Number);
-  const now = new Date();
-  let d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
-  if (d <= now) d.setDate(d.getDate() + 1);
-  const sessionDate = [
-    d.getFullYear(),
-    String(d.getMonth() + 1).padStart(2, '0'),
-    String(d.getDate()).padStart(2, '0'),
-  ].join('-');
-  return { sessionDate, startTime: timeStr };
+// Nhận chuỗi datetime-local "YYYY-MM-DDTHH:mm"
+const resolveSessionDateTime = (datetimeLocal) => {
+  if (!datetimeLocal) return { sessionDate: '', startTime: '' };
+  const [datePart, timePart] = datetimeLocal.split('T');
+  return { sessionDate: datePart, startTime: timePart };
 };
+
+// Helpers định dạng tiền VND
+const formatVND = (num) => {
+  const n = Number(String(num).replace(/\D/g, ''));
+  if (!n && n !== 0) return '';
+  return new Intl.NumberFormat('vi-VN').format(n);
+};
+const parseVND = (str) => Number(String(str).replace(/\D/g, '')) || 0;
 
 const mapProductForUi = (p) => ({
   id: p.productId,
@@ -56,6 +59,93 @@ const mapProductForUi = (p) => ({
   store: p.itemStatus === 'APPROVED' ? 'Đã duyệt' : p.itemStatus,
   image: p.imageUrl || 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?auto=format&fit=crop&q=80&w=400',
 });
+
+// ── PriceInput: ô nhập giá rõ ràng, format VND tự động ──
+const PriceInput = ({ label, icon, value, onChange }) => {
+  const [raw, setRaw] = React.useState(value ? formatVND(value) : '');
+  const [focused, setFocused] = React.useState(false);
+
+  React.useEffect(() => {
+    setRaw(value ? formatVND(value) : '');
+  }, [value]);
+
+  const handleChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '');
+    setRaw(digits ? formatVND(digits) : '');
+    onChange(digits ? Number(digits) : 0);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Label */}
+      <label className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors ${
+        focused ? 'text-red-400' : 'text-slate-400'
+      }`}>
+        <span className={`p-1.5 rounded-lg transition-colors ${
+          focused ? 'bg-red-600/20 text-red-400' : 'bg-white/5 text-slate-400'
+        }`}>{icon}</span>
+        {label}
+      </label>
+
+      {/* Input */}
+      <div className={`relative rounded-2xl transition-all duration-200 ${
+        focused
+          ? 'shadow-[0_0_0_2px_rgba(220,38,38,0.6),0_0_30px_rgba(220,38,38,0.1)] bg-[#1a0a0a]'
+          : 'shadow-[0_0_0_1.5px_rgba(255,255,255,0.12)] bg-slate-900 hover:shadow-[0_0_0_1.5px_rgba(255,255,255,0.22)]'
+      }`}>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={raw}
+          onChange={handleChange}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="0"
+          className="w-full bg-transparent px-5 pt-4 pb-3 text-2xl font-black text-white outline-none placeholder:text-slate-700 tracking-tight leading-none"
+        />
+        {/* Đơn vị */}
+        <div className="px-5 pb-3">
+          {value > 0 ? (
+            <p className={`text-sm font-bold transition-colors ${
+              focused ? 'text-red-400' : 'text-slate-400'
+            }`}>
+              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}
+            </p>
+          ) : (
+            <p className="text-sm text-slate-700 font-bold">0 ₫</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── SelectField ──
+const SelectField = ({ label, icon, value, onChange, options }) => (
+  <div className="flex flex-col gap-2">
+    <label className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-400">
+      <span className="p-1.5 rounded-lg bg-white/5 text-slate-400">{icon}</span>
+      {label}
+    </label>
+    <div className="relative rounded-2xl shadow-[0_0_0_1.5px_rgba(255,255,255,0.12)] bg-slate-900 hover:shadow-[0_0_0_1.5px_rgba(255,255,255,0.22)] transition-all">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-transparent px-5 pt-4 pb-3 text-2xl font-black text-white outline-none appearance-none cursor-pointer leading-none"
+        style={{ paddingBottom: '0.75rem' }}
+      >
+        {options.map(({ label: optLabel, value: optVal }) => (
+          <option key={optVal} value={optVal} className="bg-slate-900 text-white text-base">{optLabel}</option>
+        ))}
+      </select>
+      {/* Fake bottom line để cân bằng với PriceInput */}
+      <div className="px-5 pb-3">
+        <p className="text-sm text-slate-600 font-bold">Chọn thời gian</p>
+      </div>
+      <ChevronDown className="absolute right-4 top-5 w-5 h-5 text-slate-500 pointer-events-none" />
+    </div>
+  </div>
+);
 
 const SubscriptionGate = ({ eligibility }) => (
   <div className="max-w-2xl mx-auto py-24 text-center space-y-8 animate-in fade-in duration-700">
@@ -291,14 +381,23 @@ const CreateLivePage = ({
 
             <div className="md:col-span-3 space-y-4">
               <label className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-4">
-                <Calendar className="w-4 h-4 text-red-600" /> Giờ bắt đầu
+                <Calendar className="w-4 h-4 text-red-600" /> Ngày &amp; Giờ bắt đầu
               </label>
               <input
-                type="time"
-                className="w-full bg-slate-950 border-2 border-white/5 rounded-3xl px-8 py-6 font-bold text-white outline-none focus:border-red-600/50 transition-all"
-                value={newLive.startTime}
-                onChange={(e) => setNewLive({ ...newLive, startTime: e.target.value })}
+                type="datetime-local"
+                className="w-full bg-slate-950 border-2 border-white/5 rounded-3xl px-8 py-6 font-bold text-white outline-none focus:border-red-600/50 transition-all color-scheme-dark"
+                value={newLive.sessionDateTime}
+                min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                onChange={(e) => setNewLive({ ...newLive, sessionDateTime: e.target.value })}
               />
+              {newLive.sessionDateTime && (
+                <p className="text-[10px] font-bold text-red-400 px-4">
+                  {new Date(newLive.sessionDateTime).toLocaleString('vi-VN', {
+                    weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })}
+                </p>
+              )}
             </div>
           </div>
 
@@ -316,85 +415,21 @@ const CreateLivePage = ({
               {newLive.selectedItems.map((item, idx) => (
                 <div
                   key={idx}
-                  className="bg-slate-950/60 border border-white/5 rounded-[3rem] p-8 hover:border-red-600/20 transition-all group animate-in slide-in-from-bottom-4"
+                  className="bg-slate-950/70 border border-white/5 rounded-3xl overflow-hidden hover:border-red-600/20 transition-all group"
                 >
-                  <div className="flex flex-col xl:flex-row gap-10 items-center">
-                    <div className="flex items-center gap-6 xl:w-1/4 w-full">
-                      <div className="w-12 h-12 rounded-full bg-red-600/10 text-red-600 flex items-center justify-center font-black text-sm shrink-0 border border-red-600/20 shadow-inner">
-                        {idx + 1}
-                      </div>
-                      <img
-                        src={item.product.image}
-                        className="w-16 h-16 rounded-2xl object-cover border-2 border-white/5 group-hover:border-red-600/30 transition-all"
-                        alt="thumb"
-                      />
-                      <div className="min-w-0">
-                        <p className="text-md font-black text-white truncate leading-tight uppercase italic">
-                          {item.product.title}
-                        </p>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1.5">
-                          {item.product.store}
-                        </p>
-                      </div>
+                  <div className="flex items-center gap-4 px-6 py-4 border-b border-white/5">
+                    <div className="w-10 h-10 rounded-full bg-red-600/10 text-red-500 flex items-center justify-center font-black text-sm shrink-0 border border-red-600/20">
+                      {idx + 1}
                     </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 flex-1 w-full">
-                      <div className="space-y-3">
-                        <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2 ml-2">
-                          <Tag className="w-3.5 h-3.5" /> Giá sàn (đ)
-                        </label>
-                        <input
-                          type="number"
-                          value={item.startPrice}
-                          onChange={(e) => updateItemConfig(idx, 'startPrice', e.target.value)}
-                          className="w-full bg-slate-900/40 border-2 border-white/5 rounded-2xl px-6 py-4 text-sm font-black text-white outline-none focus:border-red-600/40"
-                        />
-                      </div>
-                      <div className="space-y-3">
-                        <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2 ml-2">
-                          <TrendingUp className="w-3.5 h-3.5" /> Bước giá (đ)
-                        </label>
-                        <input
-                          type="number"
-                          value={item.bidStep}
-                          onChange={(e) => updateItemConfig(idx, 'bidStep', e.target.value)}
-                          className="w-full bg-slate-900/40 border-2 border-white/5 rounded-2xl px-6 py-4 text-sm font-black text-white outline-none focus:border-red-600/40"
-                        />
-                      </div>
-                      <div className="space-y-3">
-                        <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2 ml-2">
-                          <Clock className="w-3.5 h-3.5" /> Live (Phút)
-                        </label>
-                        <select
-                          value={item.duration}
-                          onChange={(e) => updateItemConfig(idx, 'duration', e.target.value)}
-                          className="w-full bg-slate-900/40 border-2 border-white/5 rounded-2xl px-6 py-4 text-sm font-black text-white outline-none appearance-none cursor-pointer"
-                        >
-                          {[1, 2, 3, 5, 10].map((v) => (
-                            <option key={v} value={v}>
-                              {v} phút
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="space-y-3">
-                        <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2 ml-2">
-                          <Radio className="w-3.5 h-3.5" /> Nghỉ (Phút)
-                        </label>
-                        <select
-                          value={item.gapTime}
-                          onChange={(e) => updateItemConfig(idx, 'gapTime', e.target.value)}
-                          className="w-full bg-slate-900/40 border-2 border-white/5 rounded-2xl px-6 py-4 text-sm font-black text-white outline-none appearance-none cursor-pointer"
-                        >
-                          {[0, 1, 2, 5].map((v) => (
-                            <option key={v} value={v}>
-                              {v} phút
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                    <img
+                      src={item.product.image}
+                      className="w-14 h-14 rounded-xl object-cover border border-white/10 shrink-0"
+                      alt="thumb"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-white truncate uppercase italic">{item.product.title}</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{item.product.store}</p>
                     </div>
-
                     <button
                       onClick={() =>
                         setNewLive({
@@ -402,10 +437,61 @@ const CreateLivePage = ({
                           selectedItems: newLive.selectedItems.filter((_, i) => i !== idx),
                         })
                       }
-                      className="p-5 rounded-2xl bg-white/5 hover:bg-red-600/10 text-slate-600 hover:text-red-500 transition-all shrink-0 border border-white/5"
+                      className="p-2.5 rounded-xl bg-white/5 hover:bg-red-600/15 text-slate-500 hover:text-red-400 transition-all shrink-0 border border-white/5"
                     >
-                      <Trash2 className="w-6 h-6" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-4 bg-slate-950/30">
+                    <div className="bg-slate-950/80 rounded-2xl p-5 flex flex-col">
+                      <PriceInput
+                        label="Giá sàn"
+                        icon={<Tag className="w-3 h-3" />}
+                        value={item.startPrice}
+                        onChange={(v) => updateItemConfig(idx, 'startPrice', v)}
+                      />
+                    </div>
+
+                    <div className="bg-slate-950/80 rounded-2xl p-5 flex flex-col">
+                      <PriceInput
+                        label="Bước giá"
+                        icon={<Tag className="w-3 h-3" />}
+                        value={item.bidStep}
+                        onChange={(v) => updateItemConfig(idx, 'bidStep', v)}
+                      />
+                    </div>
+
+                    <div className="bg-slate-950/80 rounded-2xl p-5">
+                      <SelectField
+                        label="Thời gian đấu"
+                        icon={<Clock className="w-3 h-3" />}
+                        value={item.duration}
+                        onChange={(v) => updateItemConfig(idx, 'duration', Number(v))}
+                        options={[
+                          { value: 1, label: '1 phút' },
+                          { value: 2, label: '2 phút' },
+                          { value: 3, label: '3 phút' },
+                          { value: 5, label: '5 phút' },
+                          { value: 10, label: '10 phút' },
+                        ]}
+                      />
+                    </div>
+
+                    <div className="bg-slate-950/80 rounded-2xl p-5">
+                      <SelectField
+                        label="Nghỉ giữa"
+                        icon={<Radio className="w-3 h-3" />}
+                        value={item.gapTime}
+                        onChange={(v) => updateItemConfig(idx, 'gapTime', Number(v))}
+                        options={[
+                          { value: 0, label: 'Không nghỉ' },
+                          { value: 1, label: '1 phút' },
+                          { value: 2, label: '2 phút' },
+                          { value: 5, label: '5 phút' },
+                        ]}
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -427,7 +513,7 @@ const CreateLivePage = ({
               isSubmitting ||
               !newLive.title ||
               !newLive.roomId ||
-              !newLive.startTime ||
+              !newLive.sessionDateTime ||
               newLive.selectedItems.length === 0
             }
             className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-20 text-white py-8 rounded-[3rem] font-black uppercase text-md tracking-[0.4em] shadow-[0_30px_60px_rgba(220,38,38,0.3)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-6"
@@ -464,7 +550,7 @@ const CreateLiveAuction = () => {
   const [newLive, setNewLive] = useState({
     title: '',
     roomId: '',
-    startTime: '',
+    sessionDateTime: '',   // datetime-local string: "YYYY-MM-DDTHH:mm"
     selectedItems: [],
   });
 
@@ -586,11 +672,11 @@ const CreateLiveAuction = () => {
   };
 
   const handleCreateLive = async () => {
-    if (!newLive.title || !newLive.roomId || !newLive.startTime || newLive.selectedItems.length === 0) {
+    if (!newLive.title || !newLive.roomId || !newLive.sessionDateTime || newLive.selectedItems.length === 0) {
       return;
     }
 
-    const { sessionDate, startTime } = resolveSessionDateTime(newLive.startTime);
+    const { sessionDate, startTime } = resolveSessionDateTime(newLive.sessionDateTime);
 
     setIsSubmitting(true);
     try {
@@ -608,7 +694,7 @@ const CreateLiveAuction = () => {
         })),
       });
       showToast('Tạo phiên live thành công!', 'success');
-      setNewLive({ title: '', roomId: '', startTime: '', selectedItems: [] });
+      setNewLive({ title: '', roomId: '', sessionDateTime: '', selectedItems: [] });
       setView('dashboard');
       await loadSessions();
       await loadProducts();
@@ -759,8 +845,11 @@ const CreateLiveAuction = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(220,38,38,0.2); }
         select { background-image: none; }
-        input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.4; cursor: pointer; scale: 1.3; }
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; cursor: pointer; scale: 1.2; }
+        input[type="datetime-local"]::-webkit-datetime-edit { color: white; }
+        input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper { color: white; }
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .color-scheme-dark { color-scheme: dark; }
       `}</style>
     </div>
   );

@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.Live.CreateLiveRoomRequest;
 import vn.edu.nlu.fit.auction.dto.request.Live.CreateLiveSessionRequest;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
+import vn.edu.nlu.fit.auction.dto.response.PageResponse;
 import vn.edu.nlu.fit.auction.dto.response.Live.LiveEligibilityResponse;
 import vn.edu.nlu.fit.auction.dto.response.Live.LiveHomeCardResponse;
 import vn.edu.nlu.fit.auction.dto.response.Live.LiveRoomDetailResponse;
@@ -85,5 +86,18 @@ public class LiveAuctionController {
         LiveSessionResponse session = liveAuctionService.createLiveSession(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>("Tạo phiên live thành công", session));
+    }
+
+    @GetMapping("/public/sessions/all")
+    public ResponseEntity<ApiResponse<PageResponse<LiveHomeCardResponse>>> getLiveSessions(
+        @RequestParam(defaultValue = "0") int page
+    ) {
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        "Lấy danh sách live auction thành công",
+                        liveAuctionService.getLiveSessions(page)
+                )
+        );
     }
 }
