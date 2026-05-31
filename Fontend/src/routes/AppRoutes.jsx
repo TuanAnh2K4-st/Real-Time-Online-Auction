@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import UserLayout from "../layouts/UserLayout";
+import AdminLayout from "../layouts/AdminLayout";
+
 /* PUBLIC */
 import Home from "../pages/Home";
 import Login from "../pages/Login";
@@ -27,7 +30,6 @@ import ChangePassword from "../pages/ChangePassword";
 import Subscription from "../pages/Subscription";
 
 /* ADMIN */
-import AdminLayout from "../components/admin/layout/AdminLayout";
 import Dashboard from "../pages/admin/dashboard/Dashboard"
 import UserManage from "../pages/admin/user/UserManage"
 import StoreManage from "../pages/admin/store/StoreManage"
@@ -45,29 +47,32 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* PUBLIC */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/oauth2/success" element={<OAuth2Success />} />
-        <Route path="/user-guide" element={<UserGuide />} />
-        <Route path="/legal" element={<Legal />} />
-        <Route path="/list-normal-auctions" element={<ListNormalAuction />} />
-        <Route path="/list-live-auctions" element={<ListLiveAuction />} />
-        {/* PROTECTED */}
-        <Route path="/auction/:auctionId" element={<NormalAuctionDetail />} />
-        <Route path="/live-auction/:roomCode?" element={<LiveAuctionDetail />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/my-notification" element={<MyNotification/>} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/wallet" element={<Wallet />} />
-        <Route path="/my-products" element={<MyProduct />} />
-        <Route path="/create-normal-auction" element={<CreateNormalAuction />} />
-        <Route path="/create-live-auction" element={<CreateLiveAuction />} />
-        <Route path="/favourite" element={<Favourite />} />
-        <Route path="/change-password" element={<ChangePassword />} />
-        {/* SELLER */}
-        <Route path="/subscription" element={<Subscription />} />       
+        <Route element={<UserLayout />}>
+          {/* PUBLIC */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/oauth2/success" element={<OAuth2Success />} />
+          <Route path="/user-guide" element={<UserGuide />} />
+          <Route path="/legal" element={<Legal />} />
+          <Route path="/list-normal-auctions" element={<ListNormalAuction />} />
+          <Route path="/list-live-auctions" element={<ListLiveAuction />} />
+          {/* PROTECTED */}
+          <Route path="/auction/:auctionId" element={<NormalAuctionDetail />} />
+          <Route path="/live-auction/:roomCode?" element={<LiveAuctionDetail />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/my-notification" element={<MyNotification/>} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/my-products" element={<MyProduct />} />
+          <Route path="/create-normal-auction" element={<CreateNormalAuction />} />
+          <Route path="/create-live-auction" element={<CreateLiveAuction />} />
+          <Route path="/favourite" element={<Favourite />} />
+          <Route path="/change-password" element={<ChangePassword />} />
+          {/* SELLER */}
+          <Route path="/subscription" element={<Subscription />} />
+          
+        </Route>       
         {/* ADMIN */}
         <Route element={<AdminLayout />}>
           <Route path="/admin/dashboard" element={<Dashboard />} />

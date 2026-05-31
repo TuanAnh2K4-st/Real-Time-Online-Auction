@@ -8,7 +8,6 @@ import {
   Layers, ChevronDown, FileText, CheckCircle2,
   Users, Verified, Command, ShoppingCart, LogOut, Settings, Package, Wallet, PlusCircle, PlayCircle, Lock
 } from 'lucide-react';
-import Header from '../components/Header';
 import LiveSessionProductsModal from '../components/LiveSessionProductsModal';
 import { getTop4ActiveNormalAuctionsApi } from "../services/api/auctionNormalApi";
 import { getPublicLiveSessions } from "../services/api/createLiveAuctionApi";
@@ -282,7 +281,6 @@ export default function Home() {
   }, []);
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-blue-500/30">
-      <Header />
       <main className="space-y-24 pb-24">
         <HeroBanner />
         <SellerSection />
@@ -358,25 +356,6 @@ export default function Home() {
           }}
         />
       )}
-
-      <footer className="bg-slate-950 border-t border-white/5 pt-24 pb-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 mb-20">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="flex items-center gap-3"><div className="bg-blue-600 p-2 rounded-xl"><Gavel className="w-6 h-6 text-white" /></div><span className="text-2xl font-black text-white uppercase tracking-tighter italic">DauGiaViet</span></div>
-              <p className="text-slate-500 max-w-sm leading-relaxed">Nền tảng đấu giá trực tuyến tiên phong tại Việt Nam, mang lại sự minh bạch, an toàn và chuyên nghiệp trong từng phiên đấu.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-8 lg:col-span-2">
-              <div className="space-y-4"><h5 className="text-white font-black uppercase text-xs tracking-widest">Dịch vụ</h5><ul className="space-y-2 text-sm text-slate-500 font-bold"><li className="hover:text-blue-400 cursor-pointer transition-colors">Đấu giá Live</li><li className="hover:text-blue-400 cursor-pointer transition-colors">Ký gửi tài sản</li><li className="hover:text-blue-400 cursor-pointer transition-colors">Kiểm định chuyên sâu</li></ul></div>
-              <div className="space-y-4"><h5 className="text-white font-black uppercase text-xs tracking-widest">Hỗ trợ</h5><ul className="space-y-2 text-sm text-slate-500 font-bold"><li className="hover:text-blue-400 cursor-pointer transition-colors">Trung tâm trợ giúp</li><li className="hover:text-blue-400 cursor-pointer transition-colors">Quy tắc sàn</li><li className="hover:text-blue-400 cursor-pointer transition-colors">Chính sách bảo mật</li></ul></div>
-            </div>
-          </div>
-          <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">© 2026 DauGiaViet - Advanced Auction Tech</p>
-            <div className="flex gap-6">{['FB', 'INSTA', 'TT'].map(s => <span key={s} className="text-[10px] font-black text-slate-600 hover:text-blue-400 cursor-pointer transition-colors">{s}</span>)}</div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
