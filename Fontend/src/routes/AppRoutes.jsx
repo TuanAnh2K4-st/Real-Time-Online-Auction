@@ -47,12 +47,12 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/oauth2/success" element={<OAuth2Success />} />
         <Route element={<UserLayout />}>
           {/* PUBLIC */}
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/oauth2/success" element={<OAuth2Success />} />
           <Route path="/user-guide" element={<UserGuide />} />
           <Route path="/legal" element={<Legal />} />
           <Route path="/list-normal-auctions" element={<ListNormalAuction />} />
@@ -74,7 +74,7 @@ export default function AppRoutes() {
           
         </Route>       
         {/* ADMIN */}
-        <Route element={<AdminLayout />}>
+        <Route element={<AdminRoute> <AdminLayout /> </AdminRoute>}>
           <Route path="/admin/dashboard" element={<Dashboard />} />
           <Route path="/admin/user-manage" element={<UserManage />} />
           <Route path="/admin/store-manage" element={<StoreManage />} />

@@ -30,7 +30,7 @@ const TOP_SELLERS = [
 ];
 
 const FALLBACK_LIVE_IMAGE =
-  "https://images.unsplash.com/photo-1560393464-5c69a73c5770?auto=format&fit=crop&q=80&w=800";
+  "https://images.unsplash.com/photo-1560393464-5c69a73c5770?auto=HeroBanner format&fit=crop&q=80&w=800";
 
 const MOCK_USER = {
   name: "Alex Vũ",

@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/live-auctions/rooms/*/detail").permitAll() // xem phòng live
                 .requestMatchers("/api/live-auctions/public/**").permitAll() // phiên live trang chủ
                 .requestMatchers("/api/auctions/home/**").permitAll() // trang chủ
+                .requestMatchers("/api/auctions/normal/filter").permitAll() // filter auction trang chủ
                 .anyRequest().authenticated()
             )
 

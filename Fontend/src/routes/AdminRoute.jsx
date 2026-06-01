@@ -2,13 +2,20 @@ import { Navigate } from "react-router-dom";
 
 export default function AdminRoute({ children }) {
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  if (role !== "ADMIN") {
+  // Đọc role từ object "user" (được lưu bởi AuthContext)
+  // vì localStorage không có key "role" riêng lẻ
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const role = String(user?.role || "").toUpperCase();
+    if (!role.includes("ADMIN")) {
+      return <Navigate to="/" replace />;
+    }
+  } catch {
     return <Navigate to="/" replace />;
   }
 

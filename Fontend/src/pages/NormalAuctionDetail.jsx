@@ -3,12 +3,13 @@ import { useParams } from 'react-router-dom';
 import { 
   Gavel, Clock, FileText, 
   MessageCircle, Send, History,
-  Tag, Coins, Loader2, AlertCircle, Landmark
+  Tag, Coins, Loader2, AlertCircle, Landmark, Heart
 } from 'lucide-react';
 import normalAuctionDetailApi from '../services/api/normalAuctionDetailApi';
 import { connectWebSocket, disconnectWebSocket, sendBid, sendChatMessage } from '../services/websocket';
 import { AuthContext } from '../context/AuthContext';
 import Header from '../components/Header';
+import { addFavouriteNormalAuction, removeFavouriteNormalAuction, checkFavouriteNormalAuction } from '../services/api/favouriteApi';
 
 const formatCurrency = (amount) => {
   if (!amount) return "0 ₫";
@@ -66,6 +67,10 @@ const NormalAuctionDetail = () => {
   const [timeLeft, setTimeLeft] = useState("00:00:00");
   const [isEnded, setIsEnded] = useState(false);
 
+  // Favourite state
+  const [isFavourite, setIsFavourite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
+
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
 
@@ -95,6 +100,36 @@ const NormalAuctionDetail = () => {
   useEffect(() => {
     loadAuctionDetail(true);
   }, [loadAuctionDetail]);
+
+  // Check favourite status on load
+  useEffect(() => {
+    if (!user || !auctionId) return;
+    checkFavouriteNormalAuction(auctionId)
+      .then(res => {
+        const val = res?.data ?? res;
+        setIsFavourite(val === true || val?.isFavourite === true);
+      })
+      .catch(() => {}); // silently ignore
+  }, [user, auctionId]);
+
+  const handleToggleFavourite = async () => {
+    if (!user) { setBidError('Vui lòng đăng nhập để theo dõi'); return; }
+    setFavLoading(true);
+    try {
+      if (isFavourite) {
+        await removeFavouriteNormalAuction(auctionId);
+        setIsFavourite(false);
+      } else {
+        await addFavouriteNormalAuction(auctionId);
+        setIsFavourite(true);
+      }
+    } catch (err) {
+      setBidError(err?.message || 'Không thể cập nhật yêu thích');
+      setTimeout(() => setBidError(''), 3000);
+    } finally {
+      setFavLoading(false);
+    }
+  };
 
   // 2. WebSocket connection
   useEffect(() => {
@@ -315,10 +350,27 @@ const NormalAuctionDetail = () => {
           <div className="lg:col-span-5 space-y-8">
             <div className="p-8 bg-gradient-to-br from-blue-600/20 to-slate-950 rounded-[3rem] border border-blue-500/30 space-y-8 shadow-2xl">
               
-              {/* Title */}
-              <div>
-                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{auction.category}</span>
-                <h2 className="text-xl font-black text-white mt-1 leading-tight">{auction.productName}</h2>
+              {/* Title + Favourite */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{auction.category}</span>
+                  <h2 className="text-xl font-black text-white mt-1 leading-tight">{auction.productName}</h2>
+                </div>
+                <button
+                  onClick={handleToggleFavourite}
+                  disabled={favLoading}
+                  title={isFavourite ? 'Bỏ theo dõi' : 'Thêm vào yêu thích'}
+                  className={`shrink-0 p-3 rounded-2xl border transition-all ${
+                    isFavourite
+                      ? 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/10'
+                  } disabled:opacity-50`}
+                >
+                  {favLoading
+                    ? <Loader2 className="w-5 h-5 animate-spin" />
+                    : <Heart className={`w-5 h-5 transition-all ${isFavourite ? 'fill-red-400 scale-110' : ''}`} />
+                  }
+                </button>
               </div>
 
               {/* Price & Time */}

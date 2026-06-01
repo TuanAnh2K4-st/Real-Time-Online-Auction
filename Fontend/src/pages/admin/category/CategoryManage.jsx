@@ -2,8 +2,15 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, X, Plus, Calendar, Tag, Folder, Layers, Trash2, Edit3, 
   ChevronRight, ChevronDown, Sparkles, Filter, Moon, Sun, Info, 
-  CornerDownRight, ListCollapse, FolderPlus, HelpCircle, Clock
+  CornerDownRight, ListCollapse, FolderPlus, HelpCircle, Clock, AlertTriangle
 } from 'lucide-react';
+import {
+  getAllCategories,
+  filterCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory
+} from "../../../services/api/adminCategoryApi";
 
 // Dữ liệu mẫu mô phỏng chính xác cấu trúc quan hệ JPA/Hibernate Category (gồm Parent & Children)
 const INITIAL_CATEGORIES = [
@@ -59,7 +66,7 @@ const INITIAL_CATEGORIES = [
 ];
 
 export default function App() {
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('ALL'); // ALL, ROOT (Danh mục gốc), SUB (Danh mục con)
@@ -76,21 +83,49 @@ export default function App() {
   // Trạng thái thu gọn/mở rộng các danh mục con trong giao diện cây danh mục
   const [expandedRootIds, setExpandedRootIds] = useState({ 1: true, 2: true });
 
-  // Bộ lọc tìm kiếm thông minh
-  const filteredCategories = useMemo(() => {
-    return categories.filter(cat => {
-      const matchSearch = cat.name.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      let matchType = true;
-      if (filterType === 'ROOT') {
-        matchType = cat.parent === null;
-      } else if (filterType === 'SUB') {
-        matchType = cat.parent !== null;
-      }
+  const loadCategories = async () => {
+    try {
+      // axiosClient đã unwrap response.data rồi, nên response chính là data
+      const response = await getAllCategories();
+      const list = Array.isArray(response) ? response : (response?.data ?? []);
+      setCategories(list);
+    } catch (error) {
+      console.error("Load categories error:", error);
+    }
+  };
 
-      return matchSearch && matchType;
-    });
-  }, [categories, searchQuery, filterType]);
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+
+      handleFilter(searchQuery, filterType);
+
+    }, 500);
+
+    return () => clearTimeout(timer);
+
+  }, [searchQuery, filterType]);
+
+  // Bộ lọc tìm kiếm thông minh
+  const handleFilter = async (
+    keyword = searchQuery,
+    type = filterType
+  ) => {
+    try {
+      // axiosClient đã unwrap response.data rồi
+      const response = await filterCategories({ keyword, type });
+      const list = Array.isArray(response) ? response
+        : Array.isArray(response?.data) ? response.data
+        : [];
+      setCategories(list);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
 
   // Mở rộng hoặc thu gọn danh mục cha
   const toggleExpand = (id) => {
@@ -118,7 +153,7 @@ export default function App() {
   };
 
   // Xử lý nộp Form (Thêm / Sửa)
-  const handleSubmitForm = (e) => {
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
 
     if (!formName.trim()) return;
@@ -127,109 +162,71 @@ export default function App() {
       ? categories.find(c => c.categoryId === parseInt(formParentId))
       : null;
 
-    if (modalType === 'CREATE') {
-      const newId = categories.length > 0 ? Math.max(...categories.map(c => c.categoryId)) + 1 : 1;
-      
-      const newCategory = {
-        categoryId: newId,
-        name: formName.trim(),
-        createAt: new Date().toISOString(),
-        parent: parentCategory ? { categoryId: parentCategory.categoryId, name: parentCategory.name } : null,
-        childrenIds: []
-      };
+    if (modalType === "CREATE") {
 
-      // Cập nhật quan hệ con trong danh mục cha nếu có
-      let updatedList = [...categories, newCategory];
-      if (parentCategory) {
-        updatedList = updatedList.map(c => {
-          if (c.categoryId === parentCategory.categoryId) {
-            return {
-              ...c,
-              childrenIds: [...c.childrenIds, newId]
-            };
-          }
-          return c;
+      try {
+
+        await createCategory({
+          name: formName,
+          parentId: formParentId
+            ? Number(formParentId)
+            : null
         });
+
+        await loadCategories();
+
+        setIsModalOpen(false);
+
+      } catch (error) {
+        // axiosClient reject với error.response?.data trực tiếp
+        alert(error?.message || error?.error || "Tạo danh mục thất bại");
       }
 
-      setCategories(updatedList);
-      setSelectedCategory(newCategory);
-    } else {
-      // Logic Chỉnh sửa danh mục
-      if (currentEditId === parseInt(formParentId)) {
-        alert("Một danh mục không thể làm cha của chính nó!");
-        return;
+      return;
+    }else {
+      try {
+
+        await updateCategory(currentEditId, {
+          name: formName,
+          parentId: formParentId
+            ? Number(formParentId)
+            : null
+        });
+
+        await loadCategories();
+
+        setIsModalOpen(false);
+
+      } catch (error) {
+        alert(error?.message || error?.error || "Cập nhật thất bại");
       }
 
-      const oldCategory = categories.find(c => c.categoryId === currentEditId);
-
-      const updatedList = categories.map(cat => {
-        // Cập nhật chính danh mục đó
-        if (cat.categoryId === currentEditId) {
-          return {
-            ...cat,
-            name: formName.trim(),
-            parent: parentCategory ? { categoryId: parentCategory.categoryId, name: parentCategory.name } : null
-          };
-        }
-
-        // Loại bỏ ID khỏi danh sách childrenIds của danh mục cha cũ nếu đổi cha
-        if (oldCategory.parent && cat.categoryId === oldCategory.parent.categoryId && (!parentCategory || parentCategory.categoryId !== oldCategory.parent.categoryId)) {
-          return {
-            ...cat,
-            childrenIds: cat.childrenIds.filter(id => id !== currentEditId)
-          };
-        }
-
-        // Thêm ID vào danh sách childrenIds của danh mục cha mới nếu đổi cha
-        if (parentCategory && cat.categoryId === parentCategory.categoryId && (!oldCategory.parent || oldCategory.parent.categoryId !== parentCategory.categoryId)) {
-          return {
-            ...cat,
-            childrenIds: [...cat.childrenIds, currentEditId]
-          };
-        }
-
-        return cat;
-      });
-
-      setCategories(updatedList);
-      const updatedSelected = updatedList.find(c => c.categoryId === currentEditId);
-      if (updatedSelected) setSelectedCategory(updatedSelected);
-    }
-
+      return;
+    };
     setIsModalOpen(false);
   };
 
   // Xóa danh mục (xử lý an toàn ràng buộc dữ liệu phân cấp)
-  const handleDeleteCategory = (categoryId) => {
-    const targetCat = categories.find(c => c.categoryId === categoryId);
-    
-    // Ràng buộc 1: Nếu danh mục có danh mục con, không được phép xóa trực tiếp
-    if (targetCat.childrenIds.length > 0) {
-      alert(`Không thể xóa danh mục "${targetCat.name}" vì danh mục này đang chứa các danh mục con. Vui lòng di dời hoặc xóa các danh mục con trước!`);
+  const handleDeleteCategory = async (categoryId) => {
+
+    if (!window.confirm("Bạn có chắc muốn xóa?")) {
       return;
     }
 
-    if (confirm(`Bạn có chắc chắn muốn xóa danh mục "${targetCat.name}" không?`)) {
-      let updatedList = categories.filter(c => c.categoryId !== categoryId);
+    try {
 
-      // Loại bỏ ID con trong thực thể cha nếu có
-      if (targetCat.parent) {
-        updatedList = updatedList.map(c => {
-          if (c.categoryId === targetCat.parent.categoryId) {
-            return {
-              ...c,
-              childrenIds: c.childrenIds.filter(id => id !== categoryId)
-            };
-          }
-          return c;
-        });
-      }
+      await deleteCategory(categoryId);
 
-      setCategories(updatedList);
-      if (selectedCategory?.categoryId === categoryId) {
+      await loadCategories();
+
+      if (
+        selectedCategory?.categoryId === categoryId
+      ) {
         setSelectedCategory(null);
       }
+
+    } catch (error) {
+      alert(error?.message || error?.error || "Xóa thất bại");
     }
   };
 
@@ -259,7 +256,9 @@ export default function App() {
                 type="text"
                 placeholder="Tìm tên danh mục..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                }}
                 className={`w-full border rounded-xl py-2 pl-9 pr-8 text-xs focus:outline-none focus:border-indigo-500 transition-all bg-white dark:bg-[#0b1120] border-slate-200 dark:border-white/5`}
               />
               {searchQuery && (
@@ -278,7 +277,10 @@ export default function App() {
               ].map(type => (
                 <button
                   key={type.code}
-                  onClick={() => setFilterType(type.code)}
+                  onClick={() => {
+                    setFilterType(type.code);
+                    handleFilter(searchQuery, type.code);
+                  }}
                   className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase transition-all border bg-white dark:bg-[#0b1120] border-slate-200 dark:border-white/5`}
                 >
                   {type.name}
@@ -313,7 +315,7 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                  {filteredCategories.map((cat) => {
+                  {categories.map((cat) => {
                     const hasParent = cat.parent !== null;
                     if (hasParent && !searchQuery && filterType === 'ALL') {
                       return null; 
@@ -436,7 +438,7 @@ export default function App() {
               </table>
             </div>
 
-            {filteredCategories.length === 0 && (
+            {categories.length === 0 && (
               <div className="p-16 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
                 <AlertTriangle size={36} className="mb-3 opacity-30 text-amber-500" />
                 <p className="text-xs font-black uppercase tracking-widest italic mb-2">Không tìm thấy danh mục thầu nào</p>
@@ -598,9 +600,7 @@ export default function App() {
                 <select
                   value={formParentId}
                   onChange={(e) => setFormParentId(e.target.value)}
-                  className={`w-full border rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-indigo-500 ${
-                    isDarkMode ? 'bg-[#0b1120] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'
-                  }`}
+                  className="w-full border rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-indigo-500 bg-white border-slate-200"
                 >
                   <option value="">Không có (Đặt làm Danh mục gốc)</option>
                   {categories

@@ -331,6 +331,11 @@ export default function Header() {
                             setIsUserMenuOpen(false);
                             return;
                           }
+                          if (item.label === 'Sản phẩm yêu thích') {
+                            navigate('/favourite');
+                            setIsUserMenuOpen(false);
+                            return;
+                          }
                         }}  
                         className="flex items-center justify-between p-3 rounded-2xl hover:bg-white/5 transition-colors group w-full text-left">
                           <div className="flex items-center gap-3">
