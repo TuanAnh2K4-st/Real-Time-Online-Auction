@@ -21,6 +21,12 @@ import {
   AlertCircle,
   Landmark,
 } from 'lucide-react';
+import {
+  client,
+  joinAsHost,
+  joinAsAudience,
+  leaveChannel
+} from "../services/agoraService";
 import { getLiveRoomDetail } from '../services/api/liveAuctionDetailApi';
 import normalAuctionDetailApi from '../services/api/normalAuctionDetailApi';
 import { connectWebSocket, disconnectWebSocket, sendBid, sendChatMessage } from '../services/websocket';
@@ -225,6 +231,86 @@ const LiveAuctionDetail = () => {
   const isViewerSeller =
     user && roomDetail && String(user.userId) === String(roomDetail.sellerId);
 
+  useEffect(() => {
+
+    if (!roomDetail?.roomCode) return;
+
+    const initAgora = async () => {
+
+      try {
+
+        if (isViewerSeller) {
+
+          const tracks =
+            await joinAsHost(roomDetail.roomCode);
+
+          tracks[1].play("video-container");
+
+        } else {
+
+          await joinAsAudience(roomDetail.roomCode);
+
+        }
+
+      } catch (err) {
+        console.error("Agora Error:", err);
+      }
+
+    };
+
+    initAgora();
+
+    return () => {
+      leaveChannel();
+    };
+
+  }, [
+    roomDetail?.roomCode,
+    isViewerSeller
+  ]);
+
+  useEffect(() => {
+
+    const handlePublished =
+      async (user, mediaType) => {
+
+        await client.subscribe(
+          user,
+          mediaType
+        );
+
+        if (mediaType === "video") {
+
+          user.videoTrack.play(
+            "video-container"
+          );
+
+        }
+
+        if (mediaType === "audio") {
+
+          user.audioTrack.play();
+
+        }
+
+      };
+
+    client.on(
+      "user-published",
+      handlePublished
+    );
+
+    return () => {
+
+      client.off(
+        "user-published",
+        handlePublished
+      );
+
+    };
+
+  }, []);
+
   const needsDeposit =
     user &&
     auction &&
@@ -402,10 +488,14 @@ const LiveAuctionDetail = () => {
         <div className="lg:w-[60%] overflow-y-auto custom-scrollbar p-6 lg:p-8 space-y-8 bg-slate-950/20">
           <div className="relative aspect-[16/9] rounded-[2.5rem] overflow-hidden border border-white/5 shadow-2xl bg-slate-900 group">
             {sessionStatus === 'live' && (
-              <img
-                src={currentProduct.images[imageIndex]}
-                className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-105"
-                alt="product"
+              // <img
+              //   src={currentProduct.images[imageIndex]}
+              //   className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-105"
+              //   alt="product"
+              // />
+              <div
+                id="video-container"
+                className="w-full h-full"
               />
             )}
             {sessionStatus !== 'live' && (
