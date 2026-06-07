@@ -306,6 +306,11 @@ export default function Header() {
                             setIsUserMenuOpen(false);
                             return;
                           }
+                          if (item.label === 'Đơn hàng của tôi') {
+                            navigate('/my-orders');
+                            setIsUserMenuOpen(false);
+                            return;
+                          }
                           if (item.label === 'Đăng sản phẩm kiểm duyệt') {
                             navigate('/my-products');
                             setIsUserMenuOpen(false);

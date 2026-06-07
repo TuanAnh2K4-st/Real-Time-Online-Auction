@@ -25,6 +25,7 @@ import CreateNormalAuction from "../pages/CreateNormalAuction";
 import CreateLiveAuction from "../pages/CreateLiveAuction"
 import Favourite from "../pages/Favourite"
 import ChangePassword from "../pages/ChangePassword";
+import MyOrders from "../pages/MyOrders";
 
 /* SELLER */
 import Subscription from "../pages/Subscription";
@@ -69,6 +70,7 @@ export default function AppRoutes() {
           <Route path="/create-live-auction" element={<CreateLiveAuction />} />
           <Route path="/favourite" element={<Favourite />} />
           <Route path="/change-password" element={<ChangePassword />} />
+          <Route path="/my-orders" element={<MyOrders />} />
           {/* SELLER */}
           <Route path="/subscription" element={<Subscription />} />
           

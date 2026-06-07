@@ -385,7 +385,7 @@ const CreateLivePage = ({
               </label>
               <input
                 type="datetime-local"
-                className="w-full bg-slate-950 border-2 border-white/5 rounded-3xl px-8 py-6 font-bold text-white outline-none focus:border-red-600/50 transition-all color-scheme-dark"
+                className="w-full bg-slate-950 border-2 border-white/5 rounded-3xl px-8 py-6 font-bold text-white outline-none focus:border-red-600/50 transition-all color-scheme-white"
                 value={newLive.sessionDateTime}
                 min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
                 onChange={(e) => setNewLive({ ...newLive, sessionDateTime: e.target.value })}
