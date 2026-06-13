@@ -7,27 +7,84 @@ import { Camera, FileText, Gavel, ChevronRight, ChevronLeft, Info, CheckCircle2,
 import Header from '../components/Header';
 
 // Templates for subcategory technical fields (local templates)
-const SUBCATEGORY_TEMPLATES = {
+export const SUBCATEGORY_TEMPLATES = {
   laptop: {
     label: 'Laptop',
     fields: [
-      { name: 'cpu', label: 'CPU', placeholder: 'ví dụ: Apple M3, i9-14900H', required: true },
-      { name: 'ram', label: 'RAM', placeholder: 'ví dụ: 16GB, 64GB', required: true },
-      { name: 'storage', label: 'Ổ cứng', placeholder: 'ví dụ: 1TB SSD', required: true }
+      { name: 'brand', label: 'Thương hiệu', placeholder: 'Apple, Dell, ASUS, Lenovo...', required: true },
+      { name: 'model', label: 'Model', placeholder: 'MacBook Pro M3, XPS 15...', required: true },
+      { name: 'cpu', label: 'CPU', placeholder: 'Apple M3 Pro, Intel Core i7-14700H...', required: true },
+      { name: 'ram', label: 'RAM', placeholder: '8GB, 16GB, 32GB...', required: true },
+      { name: 'storage', label: 'Ổ cứng', placeholder: '512GB SSD, 1TB SSD...', required: true },
+      { name: 'screen', label: 'Màn hình', placeholder: '14 inch Retina, 15.6 inch OLED...', required: true }
     ]
   },
+
   phone: {
     label: 'Điện thoại',
     fields: [
-      { name: 'screen', label: 'Màn hình', placeholder: 'ví dụ: 6.8 inch ProMotion', required: true },
-      { name: 'battery', label: 'Pin', placeholder: 'ví dụ: 4500mAh', required: true }
+      { name: 'brand', label: 'Thương hiệu', placeholder: 'Apple, Samsung, Xiaomi...', required: true },
+      { name: 'model', label: 'Model', placeholder: 'iPhone 16 Pro Max, Galaxy S26 Ultra...', required: true },
+      { name: 'screen', label: 'Màn hình', placeholder: '6.8 inch Dynamic AMOLED', required: true },
+      { name: 'chip', label: 'Chip xử lý', placeholder: 'A20 Pro, Snapdragon 8 Elite...', required: true },
+      { name: 'storage', label: 'Bộ nhớ', placeholder: '128GB, 256GB, 512GB...', required: true },
+      { name: 'battery', label: 'Dung lượng pin', placeholder: '5000mAh', required: true }
     ]
   },
-  mechanical: {
-    label: 'Đồng hồ cơ',
+
+  watch: {
+    label: 'Đồng hồ',
     fields: [
-      { name: 'movement', label: 'Bộ máy', placeholder: 'ví dụ: Calibre 3235', required: true },
-      { name: 'caseSize', label: 'Kích thước', placeholder: 'ví dụ: 40mm', required: true }
+      { name: 'brand', label: 'Thương hiệu', placeholder: 'Rolex, Omega, Casio, Seiko...', required: true },
+      { name: 'model', label: 'Model', placeholder: 'Submariner, Speedmaster...', required: true },
+      { name: 'movement', label: 'Loại máy', placeholder: 'Automatic, Quartz, Solar...', required: true },
+      { name: 'caseMaterial', label: 'Chất liệu vỏ', placeholder: 'Thép không gỉ, Titanium...', required: true },
+      { name: 'caseSize', label: 'Đường kính mặt', placeholder: '40mm, 42mm...', required: true },
+      { name: 'strapMaterial', label: 'Chất liệu dây', placeholder: 'Da, Kim loại, Cao su...', required: false }
+    ]
+  },
+
+  painting: {
+    label: 'Tranh',
+    fields: [
+      { name: 'artist', label: 'Tác giả', placeholder: 'Tên họa sĩ hoặc nghệ nhân', required: true },
+      { name: 'artStyle', label: 'Loại tranh', placeholder: 'Sơn dầu, Acrylic, Tranh lụa...', required: true },
+      { name: 'material', label: 'Chất liệu', placeholder: 'Canvas, Giấy mỹ thuật...', required: true },
+      { name: 'size', label: 'Kích thước', placeholder: '80 x 120 cm', required: true },
+      { name: 'yearCreated', label: 'Năm sáng tác', placeholder: '2024', required: false }
+    ]
+  },
+
+  ceramic: {
+    label: 'Đồ gốm',
+    fields: [
+      { name: 'origin', label: 'Xuất xứ', placeholder: 'Bát Tràng, Minh Long...', required: true },
+      { name: 'productType', label: 'Loại sản phẩm', placeholder: 'Bình hoa, Chén, Đĩa...', required: true },
+      { name: 'material', label: 'Chất liệu', placeholder: 'Gốm men lam, Gốm sứ trắng...', required: true },
+      { name: 'size', label: 'Kích thước', placeholder: 'Cao 30cm, Đường kính 20cm...', required: true },
+      { name: 'manufactureYear', label: 'Năm sản xuất', placeholder: '2020', required: false }
+    ]
+  },
+
+  card: {
+    label: 'Thẻ bài sưu tầm',
+    fields: [
+      { name: 'series', label: 'Bộ thẻ', placeholder: 'Pokemon, Yu-Gi-Oh!, One Piece...', required: true },
+      { name: 'cardName', label: 'Tên thẻ', placeholder: 'Charizard GX, Blue Eyes White Dragon...', required: true },
+      { name: 'rarity', label: 'Độ hiếm', placeholder: 'Rare, Ultra Rare, Secret Rare...', required: true },
+      { name: 'edition', label: 'Phiên bản', placeholder: 'First Edition, Limited Edition...', required: false },
+      { name: 'grading', label: 'Điểm đánh giá', placeholder: 'PSA 10, BGS 9.5...', required: false }
+    ]
+  },
+
+  figure: {
+    label: 'Mô hình',
+    fields: [
+      { name: 'series', label: 'Bộ sưu tập', placeholder: 'Gundam, Marvel, Naruto...', required: true },
+      { name: 'character', label: 'Nhân vật', placeholder: 'Iron Man, Luffy, RX-78-2...', required: true },
+      { name: 'manufacturer', label: 'Nhà sản xuất', placeholder: 'Bandai, Hot Toys, Good Smile...', required: true },
+      { name: 'scale', label: 'Tỷ lệ', placeholder: '1/6, 1/12, 1/100...', required: false },
+      { name: 'material', label: 'Chất liệu', placeholder: 'PVC, ABS, Resin...', required: false }
     ]
   }
 };
@@ -69,7 +126,16 @@ const App = () => {
   const rootCategory = rootCategories.find(c => String(c.id) === String(formData.category));
   const activeChild = childCategories.find(c => String(c.id) === String(formData.subcategory));
   // Find matching local template by subcategory name (lowercased)
-  const activeSubcategory = activeChild ? SUBCATEGORY_TEMPLATES[activeChild.name?.toLowerCase()] : null;
+  const categoryMap = {
+    "Laptop": "laptop",
+    "Điện thoại": "phone",
+    "Đồng hồ": "watch",
+    "Tranh": "painting",
+    "Đồ gốm": "ceramic",
+    "Thẻ bài sưu tầm": "card",
+    "Mô hình": "figure"
+  };
+  const activeSubcategory = activeChild ? SUBCATEGORY_TEMPLATES[categoryMap[activeChild.name]] : null;
 
   // Lọc danh sách sản phẩm
   const filteredList = useMemo(() => {

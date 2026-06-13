@@ -60,5 +60,27 @@ public interface AuctionRepository extends JpaRepository<Auction, Integer> {
         Page<Auction> filterNormalAuctions( @Param("keyword") String keyword,@Param("categoryId") Integer categoryId,@Param("minPrice") BigDecimal minPrice,@Param("maxPrice") BigDecimal maxPrice,Pageable pageable
     );
 
+    // ===== ADMIN: Lấy tất cả auctions với filter =====
+    @Query("""
+        SELECT a
+        FROM Auction a
+        JOIN a.product p
+        JOIN a.seller s
+        WHERE
+            (:keyword IS NULL OR
+                LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(s.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+            AND (:auctionStatus IS NULL OR a.auctionStatus = :auctionStatus)
+            AND (:auctionType IS NULL OR a.auctionType = :auctionType)
+        """)
+    Page<Auction> adminFilterAuctions(
+            @Param("keyword") String keyword,
+            @Param("auctionStatus") AuctionStatus auctionStatus,
+            @Param("auctionType") AuctionType auctionType,
+            Pageable pageable
+    );
+
 }
+
 

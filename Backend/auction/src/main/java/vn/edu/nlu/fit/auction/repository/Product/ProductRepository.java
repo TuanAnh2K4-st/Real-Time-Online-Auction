@@ -71,5 +71,27 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<ProductAuctionResponse> getProductsForCreateAuction(
             @Param("userId") Integer userId
     );
-    
+
+    // ===== ADMIN: Lấy TẤT CẢ products APPROVED chưa có auction =====
+    @Query("""
+        SELECT new vn.edu.nlu.fit.auction.dto.response.ProductAuctionResponse(
+            p.productId,
+            p.productName,
+            p.createdAt,
+            si.itemStatus,
+            pi.imageUrl
+        )
+        FROM Product p
+        JOIN StoreItem si ON si.product = p
+        LEFT JOIN ProductImage pi
+            ON pi.product = p AND pi.isPrimary = true
+        WHERE si.itemStatus = vn.edu.nlu.fit.auction.enums.StoreItemStatus.APPROVED
+        AND NOT EXISTS (
+            SELECT a FROM Auction a WHERE a.product = p
+        )
+        ORDER BY p.createdAt DESC
+    """)
+    List<ProductAuctionResponse> getAllApprovedProductsForAuction();
+
 }
+
