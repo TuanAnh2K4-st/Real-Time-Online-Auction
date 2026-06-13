@@ -1,61 +1,57 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext, useMemo } from 'react';
 import { 
   User, 
   Mail, 
   Phone, 
   MapPin, 
   ShieldCheck, 
-  ChevronRight, 
   Camera, 
-  LogOut, 
-  Bell,
-  ArrowLeft,
-  Package,
   Home,
   UserRound,
   Save,
   ChevronDown,
-  Eye,
-  EyeOff,
-  Truck,
-  CheckCircle,
-  Clock,
-  ShieldAlert,
-  KeyRound,
   Briefcase,
   Info,
-  Check,
-  X
+  Store
 } from 'lucide-react';
 import { 
   getMyProfile, 
   updateProfile, 
   updateAvatar, 
-  changePassword, 
   getProvinces, 
   getWardsByProvince 
 } from "../services/api/profileApi";
 import { getMeApi } from "../services/api/authApi";
+import { getMyBusiness, updateBusiness } from "../services/api/businessApi";
+import { AuthContext } from "../context/AuthContext";
 import Header from '../components/Header';
 
 // NOTE: provinces/wards will be loaded from API (see profileApi.getProvinces / getWardsByProvince)
 
-export default function App() {
+export default function Profile() {
+  const { user: authUser } = useContext(AuthContext);
+  const isSeller = useMemo(
+    () => authUser?.role && String(authUser.role).toUpperCase().includes('SELLER'),
+    [authUser?.role]
+  );
+
   const [isEditing, setIsEditing] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState('orders');
-  const [showPass, setShowPass] = useState({ old: false, new: false, confirm: false });
+  const [isEditingBusiness, setIsEditingBusiness] = useState(false);
   const fileInputRef = useRef(null);
   const [selectedAvatarFile, setSelectedAvatarFile] = useState(null);
 
-  // State mật khẩu
-  const [passwordForm, setPasswordForm] = useState({
-    oldPassword: "",
-    newPassword: "",
-    confirmPassword: ""
-  });
-
   // State dữ liệu người dùng (khởi tạo rỗng, sẽ load từ API)
   const [userData, setUserData] = useState(null);
+
+  // Doanh nghiệp (seller)
+  const [businessData, setBusinessData] = useState(null);
+  const [businessLoading, setBusinessLoading] = useState(false);
+  const [businessLoadError, setBusinessLoadError] = useState(false);
+  const [businessForm, setBusinessForm] = useState({
+    businessName: '',
+    taxCode: '',
+    bio: '',
+  });
 
   // Form chỉnh sửa (khởi tạo tối thiểu)
   const [editForm, setEditForm] = useState({
@@ -68,21 +64,6 @@ export default function App() {
     avatarUrl: "",
     address: { province: "", ward: "", fullStreet: "" }
   });
-
-  // Kiểm tra độ mạnh mật khẩu
-  const passwordRequirements = useMemo(() => {
-    const p = passwordForm.newPassword;
-    return [
-      { id: 'length', label: 'Tối thiểu 12 ký tự', met: p.length >= 12 },
-      { id: 'upper', label: 'Chữ hoa (A-Z)', met: /[A-Z]/.test(p) },
-      { id: 'lower', label: 'Chữ thường (a-z)', met: /[a-z]/.test(p) },
-      { id: 'number', label: 'Chữ số (0-9)', met: /[0-9]/.test(p) },
-      { id: 'special', label: 'Ký tự đặc biệt (@#$...)', met: /[^A-Za-z0-9]/.test(p) },
-    ];
-  }, [passwordForm.newPassword]);
-
-  const isPasswordValid = passwordRequirements.every(req => req.met);
-  const isConfirmValid = passwordForm.confirmPassword === passwordForm.newPassword && passwordForm.confirmPassword !== "";
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -192,6 +173,41 @@ export default function App() {
     loadProvs();
   }, []);
 
+  useEffect(() => {
+    if (!isSeller) {
+      setBusinessData(null);
+      setBusinessLoadError(false);
+      setIsEditingBusiness(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setBusinessLoading(true);
+      setBusinessLoadError(false);
+      try {
+        const br = await getMyBusiness();
+        const bd = br?.data ?? br;
+        if (!cancelled && bd) {
+          setBusinessData(bd);
+          setBusinessForm({
+            businessName: bd.businessName || '',
+            taxCode: bd.taxCode || '',
+            bio: bd.bio || '',
+          });
+        }
+      } catch (err) {
+        console.error('Load business error', err);
+        if (!cancelled) {
+          setBusinessData(null);
+          setBusinessLoadError(true);
+        }
+      } finally {
+        if (!cancelled) setBusinessLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isSeller]);
+
   const loadWards = async (provinceId) => {
     if (!provinceId) return;
     try {
@@ -261,20 +277,37 @@ export default function App() {
     }
   };
 
-  const handleChangePassword = async () => {
+  const saveBusiness = async () => {
     try {
-      const payload = {
-        oldPassword: passwordForm.oldPassword,
-        newPassword: passwordForm.newPassword,
-        confirmPassword: passwordForm.confirmPassword,
-      };
-      await changePassword(payload);
-      alert('Đổi mật khẩu thành công');
-      setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+      const res = await updateBusiness({
+        businessName: businessForm.businessName,
+        taxCode: businessForm.taxCode,
+        bio: businessForm.bio,
+      });
+      const updated = res?.data ?? res;
+      if (updated) {
+        setBusinessData(updated);
+        setBusinessForm({
+          businessName: updated.businessName || '',
+          taxCode: updated.taxCode || '',
+          bio: updated.bio || '',
+        });
+      }
+      setIsEditingBusiness(false);
+      alert('Cập nhật thông tin doanh nghiệp thành công');
     } catch (err) {
-      console.error('Change password error', err);
-      alert(err?.message || 'Lỗi khi đổi mật khẩu');
+      console.error('Save business error', err);
+      alert(err?.message || 'Lỗi khi cập nhật thông tin doanh nghiệp');
     }
+  };
+
+  const cancelBusinessEdit = () => {
+    setBusinessForm({
+      businessName: businessData?.businessName || '',
+      taxCode: businessData?.taxCode || '',
+      bio: businessData?.bio || '',
+    });
+    setIsEditingBusiness(false);
   };
 
   const provinceList = provinces;
@@ -289,21 +322,6 @@ export default function App() {
       </div>
     );
   }
-
-  const orders = [
-    { id: "ORD-8821", name: "Đồng hồ Omega Seamaster 1960", status: "PENDING", date: "22/04/2026", price: "45.000.000đ" },
-    { id: "ORD-7712", name: "Tranh sơn dầu Phố Cổ - Bùi Xuân Phái", status: "SHIPPING", date: "20/04/2026", price: "120.000.000đ" },
-    { id: "ORD-6540", name: "Bình gốm Chu Đậu cổ", status: "COMPLETED", date: "15/04/2026", price: "15.500.000đ" }
-  ];
-
-  const getStatusStyle = (status) => {
-    switch(status) {
-      case 'PENDING': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-      case 'SHIPPING': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'COMPLETED': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans pb-20 selection:bg-blue-500/30 overflow-x-hidden">
@@ -534,157 +552,112 @@ export default function App() {
               )}
             </div>
 
-            {/* TAB SECTION: Orders & Security */}
-            <div className="bg-slate-900/40 border border-white/10 rounded-[3.5rem] p-8 md:p-10 backdrop-blur-xl min-h-[400px] shadow-2xl">
-              
-              <div className="flex items-center p-1.5 bg-slate-950/60 rounded-2xl w-fit mb-10 border border-white/5 shadow-inner">
-                <button 
-                  onClick={() => setActiveSubTab('orders')}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeSubTab === 'orders' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 hover:text-slate-300'}`}
-                >
-                  <Package className="w-4 h-4" /> Giao dịch
-                </button>
-                <button 
-                  onClick={() => setActiveSubTab('password')}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeSubTab === 'password' ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/20' : 'text-slate-500 hover:text-slate-300'}`}
-                >
-                  <KeyRound className="w-4 h-4" /> Bảo mật
-                </button>
-              </div>
-
-              {activeSubTab === 'orders' && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
-                  <div className="flex items-center justify-between mb-4 px-2">
-                    <h4 className="text-xl font-black text-white italic uppercase tracking-tighter">Thương vụ gần đây</h4>
-                    <span className="text-[9px] font-bold text-slate-500 uppercase px-3 py-1 bg-slate-950 rounded-full border border-white/5 tracking-widest">{orders.length} Đơn hàng</span>
+            {/* Thông tin doanh nghiệp — chỉ seller */}
+            {isSeller && (
+              <div className="bg-slate-900/40 border border-white/10 rounded-[3.5rem] p-8 md:p-10 backdrop-blur-xl min-h-[320px] shadow-2xl">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 shrink-0">
+                      <Store className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-white tracking-tighter italic uppercase leading-none">
+                        Thông tin doanh nghiệp
+                      </h3>
+                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">
+                        Dữ liệu cửa hàng / công ty đăng ký khi trở thành người bán
+                      </p>
+                    </div>
                   </div>
-                  {orders.map((order) => (
-                    <div key={order.id} className="group bg-slate-950/40 border border-white/5 p-5 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-blue-500/30 hover:bg-slate-950/60 transition-all duration-300">
-                      <div className="flex items-center gap-5">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all duration-300 group-hover:scale-110 shadow-lg ${getStatusStyle(order.status)}`}>
-                          {order.status === 'PENDING' && <Clock className="w-5 h-5" />}
-                          {order.status === 'SHIPPING' && <Truck className="w-5 h-5" />}
-                          {order.status === 'COMPLETED' && <CheckCircle className="w-5 h-5" />}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black text-slate-500 uppercase">{order.id}</span>
-                            <span className="text-[8px] px-2 py-0.5 rounded bg-white/5 text-slate-400 font-black uppercase tracking-tighter">{order.date}</span>
-                          </div>
-                          <h5 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">{order.name}</h5>
-                          <p className="text-xs font-black text-blue-500 mt-0.5">{order.price}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between md:justify-end gap-6">
-                        <div className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border transition-all duration-300 ${getStatusStyle(order.status)}`}>
-                          {order.status === 'PENDING' ? 'Chờ xác nhận' : order.status === 'SHIPPING' ? 'Đang giao' : 'Hoàn thành'}
-                        </div>
-                        <button className="w-10 h-10 rounded-xl bg-slate-900 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-500 transition-all duration-300">
-                          <ChevronRight className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
 
-              {activeSubTab === 'password' && (
-                <div className="max-w-4xl animate-in fade-in slide-in-from-left-4 duration-500 grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-6">
-                    <div className="mb-4">
-                      <h4 className="text-xl font-black text-white italic uppercase tracking-tighter">Thiết lập mật khẩu</h4>
-                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">Bảo vệ tài khoản bằng mật khẩu cấp độ cao</p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-2">Mật khẩu cũ</label>
-                        <div className="relative">
-                          <input 
-                            type={showPass.old ? "text" : "password"} 
-                            value={passwordForm.oldPassword}
-                            onChange={(e) => setPasswordForm(p => ({...p, oldPassword: e.target.value}))}
-                            className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white outline-none focus:border-blue-500 transition-all"
-                            placeholder="••••••••"
-                          />
-                          <button onClick={() => setShowPass(p => ({...p, old: !p.old}))} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
-                            {showPass.old ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-2">Mật khẩu mới</label>
-                        <div className="relative">
-                          <input 
-                            type={showPass.new ? "text" : "password"} 
-                            value={passwordForm.newPassword}
-                            onChange={(e) => setPasswordForm(p => ({...p, newPassword: e.target.value}))}
-                            className={`w-full bg-slate-950/50 border rounded-2xl px-6 py-4 text-sm text-white outline-none transition-all ${passwordForm.newPassword && !isPasswordValid ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-blue-500'}`}
-                            placeholder="Tối thiểu 12 ký tự..."
-                          />
-                          <button onClick={() => setShowPass(p => ({...p, new: !p.new}))} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
-                            {showPass.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-2">Nhập lại mật khẩu mới</label>
-                        <div className="relative">
-                          <input 
-                            type={showPass.confirm ? "text" : "password"} 
-                            value={passwordForm.confirmPassword}
-                            onChange={(e) => setPasswordForm(p => ({...p, confirmPassword: e.target.value}))}
-                            className={`w-full bg-slate-950/50 border rounded-2xl px-6 py-4 text-sm text-white outline-none transition-all ${passwordForm.confirmPassword && !isConfirmValid ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-blue-500'}`}
-                            placeholder="Xác nhận mật khẩu..."
-                          />
-                          <button onClick={() => setShowPass(p => ({...p, confirm: !p.confirm}))} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
-                            {showPass.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                        {passwordForm.confirmPassword && !isConfirmValid && (
-                          <p className="text-[10px] text-red-500 font-bold ml-2">Mật khẩu xác nhận không khớp</p>
-                        )}
-                      </div>
-
-                      <button 
-                        onClick={handleChangePassword}
-                        disabled={!isPasswordValid || !isConfirmValid || !passwordForm.oldPassword}
-                        className="w-full py-4 mt-4 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-95 flex items-center justify-center gap-3"
-                      >
-                        <ShieldAlert className="w-4 h-4" /> Cập nhật mật khẩu
+                  {!isEditingBusiness ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingBusiness(true)}
+                      disabled={!businessData || businessLoading}
+                      className="bg-violet-600 text-white px-8 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-violet-500 transition-all shadow-lg shadow-violet-900/40 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Chỉnh sửa
+                    </button>
+                  ) : (
+                    <div className="flex gap-3">
+                      <button type="button" onClick={cancelBusinessEdit} className="bg-slate-800 text-white px-6 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-700 transition-all active:scale-95">
+                        Hủy bỏ
+                      </button>
+                      <button type="button" onClick={saveBusiness} className="bg-emerald-600 text-white px-8 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/40 active:scale-95">
+                        <Save className="w-4 h-4" /> Lưu thay đổi
                       </button>
                     </div>
-                  </div>
-
-                  {/* Password Strength Checklist */}
-                  <div className="bg-slate-950/40 border border-white/5 rounded-[2.5rem] p-8 self-start mt-4 md:mt-24 space-y-4">
-                    <h5 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4" /> Tiêu chuẩn bảo mật
-                    </h5>
-                    <div className="space-y-3">
-                        {passwordRequirements.map((req) => (
-                            <div key={req.id} className="flex items-center gap-3">
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all duration-500 ${req.met ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' : 'bg-slate-900 border-white/10 text-slate-600'}`}>
-                                    {req.met ? <Check className="w-3 h-3" /> : <X className="w-2 h-2" />}
-                                </div>
-                                <span className={`text-[11px] font-bold uppercase tracking-tight transition-colors ${req.met ? 'text-emerald-400' : 'text-slate-500'}`}>
-                                    {req.label}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                    
-                    <div className="mt-8 p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-                        <p className="text-[10px] text-blue-300 leading-relaxed font-medium italic">
-                            * Gợi ý: Hãy sử dụng mật khẩu độc nhất không trùng lặp với các nền tảng khác để tối ưu bảo mật tài sản số của bạn.
-                        </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
+
+                {businessLoading ? (
+                  <div className="text-center py-16 text-slate-500 text-sm">Đang tải thông tin doanh nghiệp...</div>
+                ) : businessLoadError || !businessData ? (
+                  <div className="text-center py-16 text-amber-500/90 text-sm">
+                    Không tải được thông tin doanh nghiệp. Vui lòng đăng nhập lại hoặc thử sau.
+                  </div>
+                ) : isEditingBusiness ? (
+                  <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300 max-w-3xl">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">
+                        Tên doanh nghiệp / cửa hàng
+                      </label>
+                      <input
+                        value={businessForm.businessName}
+                        onChange={(e) => setBusinessForm((p) => ({ ...p, businessName: e.target.value }))}
+                        className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white outline-none focus:border-violet-500 focus:bg-slate-950 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">
+                        Mã số thuế
+                      </label>
+                      <input
+                        value={businessForm.taxCode}
+                        onChange={(e) => setBusinessForm((p) => ({ ...p, taxCode: e.target.value }))}
+                        className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white outline-none focus:border-violet-500 focus:bg-slate-950 transition-all"
+                        placeholder="VD: 0123456789"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">
+                        Giới thiệu doanh nghiệp
+                      </label>
+                      <textarea
+                        value={businessForm.bio}
+                        onChange={(e) => setBusinessForm((p) => ({ ...p, bio: e.target.value }))}
+                        rows={5}
+                        className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white outline-none focus:border-violet-500 focus:bg-slate-950 transition-all resize-none"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
+                    <div className="md:col-span-2 bg-slate-950/30 p-8 rounded-3xl border border-white/5">
+                      <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Tên hiển thị</p>
+                      <p className="text-lg font-bold text-white">{businessData.businessName || '—'}</p>
+                    </div>
+                    <div className="bg-slate-950/30 p-6 rounded-3xl border border-white/5">
+                      <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Mã số thuế</p>
+                      <p className="text-sm font-bold text-slate-200">{businessData.taxCode || '—'}</p>
+                    </div>
+                    <div className="bg-slate-950/30 p-6 rounded-3xl border border-white/5">
+                      <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Mã doanh nghiệp</p>
+                      <p className="text-sm font-bold text-slate-400">#{businessData.businessId}</p>
+                    </div>
+                    <div className="md:col-span-2 bg-slate-950/30 p-8 rounded-3xl border border-white/5">
+                      <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Info className="w-3 h-3" /> Giới thiệu
+                      </p>
+                      <p className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap">
+                        {businessData.bio?.trim() ? businessData.bio : 'Chưa có mô tả.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

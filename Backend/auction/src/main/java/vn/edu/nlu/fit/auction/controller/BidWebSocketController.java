@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.BidRequest;
 import vn.edu.nlu.fit.auction.dto.request.ChatMessageRequest;
-import vn.edu.nlu.fit.auction.service.AuctionService;
+import vn.edu.nlu.fit.auction.service.Auction.AuctionService;
 
 @Controller
 @RequiredArgsConstructor

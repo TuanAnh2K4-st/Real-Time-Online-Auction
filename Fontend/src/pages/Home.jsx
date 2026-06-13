@@ -4,12 +4,13 @@ import {
   Search, Bell, User, Gavel, Radio, Clock,
   ChevronRight, Heart, ShieldCheck, Zap,
   ArrowRight, Menu, X, TrendingUp, Award,
-  Star, Share2, Eye, Trophy, Smartphone,
+  Star, Share2, Trophy, Smartphone,
   Layers, ChevronDown, FileText, CheckCircle2,
   Users, Verified, Command, ShoppingCart, LogOut, Settings, Package, Wallet, PlusCircle, PlayCircle, Lock
 } from 'lucide-react';
-import Header from '../components/Header';
-import { getTop4ActiveNormalAuctionsApi } from "../services/api/homeApi";
+import LiveSessionProductsModal from '../components/LiveSessionProductsModal';
+import { getTop4ActiveNormalAuctionsApi } from "../services/api/auctionNormalApi";
+import { getPublicLiveSessions } from "../services/api/createLiveAuctionApi";
 
 // Helper
 const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -28,10 +29,8 @@ const TOP_SELLERS = [
   { id: 3, name: "Antique Heritage", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200", successSales: "2,100+", rating: 5.0, category: "Cổ vật & Nghệ thuật" }
 ];
 
-const LIVE_SESSIONS = [
-  { id: 1, title: "Siêu phẩm Đồng hồ Thụy Sĩ - Patek Philippe Nautilus", isLive: true, productCount: 12, viewers: 3840, image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800", host: "Luxury Watch VN", description: "Phiên đấu giá đặc biệt dành cho các nhà sưu tầm đồng hồ hạng sang." },
-  { id: 2, title: "Đại tiệc Kim cương & Đá quý thiên nhiên", isLive: false, time: "20:00 Tối nay", productCount: 8, viewers: 1200, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=800", host: "Ancarat Jewels", description: "Bộ sưu tập trang sức độc bản được kiểm định bởi GIA." }
-];
+const FALLBACK_LIVE_IMAGE =
+  "https://images.unsplash.com/photo-1560393464-5c69a73c5770?auto=HeroBanner format&fit=crop&q=80&w=800";
 
 const MOCK_USER = {
   name: "Alex Vũ",
@@ -158,19 +157,79 @@ const SellerSection = () => (
   </section>
 );
 
-const LiveAuctionCard = ({ session }) => (
-  <div className="relative group bg-slate-900/50 rounded-[2.5rem] p-4 border border-white/5 shadow-2xl hover:border-blue-500/30 transition-all duration-500">
-    <div className="relative h-80 rounded-[2rem] overflow-hidden mb-6"><img src={session.image} alt={session.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" /><div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
-      <div className="absolute top-5 left-5 flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full text-[10px] font-black tracking-widest shadow-lg shadow-red-900/40"><span className="w-2 h-2 bg-white rounded-full animate-ping"></span> {session.isLive ? 'LIVE NOW' : session.time}</div>
-      <div className="absolute top-5 right-5 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[10px] font-bold flex items-center gap-2 border border-white/10"><Eye className="w-4 h-4 text-blue-400" /> {session.viewers.toLocaleString()}</div>
-      <div className="absolute bottom-8 left-8 right-8"><h3 className="text-2xl font-black text-white leading-tight mb-2 group-hover:text-blue-400 transition-colors">{session.title}</h3><p className="text-slate-400 text-sm line-clamp-1">{session.description}</p></div>
+const LiveAuctionCard = ({ session, onEnterRoom, onViewProducts }) => {
+  const isLive = session.live;
+  const isEnded = session.sessionStatus === 'ended';
+  const image = session.imageUrl || FALLBACK_LIVE_IMAGE;
+
+  return (
+    <div className="relative group bg-slate-900/50 rounded-[2.5rem] p-4 border border-white/5 shadow-2xl hover:border-blue-500/30 transition-all duration-500">
+      <div className="relative h-80 rounded-[2rem] overflow-hidden mb-6">
+        <img
+          src={image}
+          alt={session.title}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+        <div
+          className={`absolute top-5 left-5 flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black tracking-widest shadow-lg ${
+            isLive
+              ? 'bg-red-500 text-white shadow-red-900/40'
+              : isEnded
+                ? 'bg-slate-700 text-slate-300'
+                : 'bg-blue-600/90 text-white shadow-blue-900/30'
+          }`}
+        >
+          {isLive && <span className="w-2 h-2 bg-white rounded-full animate-ping" />}
+          {session.timeLabel}
+        </div>
+        <div className="absolute top-5 right-5 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[10px] font-bold flex items-center gap-2 border border-white/10">
+          <Radio className="w-4 h-4 text-blue-400" />
+          {session.roomCode}
+        </div>
+        <div className="absolute bottom-8 left-8 right-8">
+          <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">{session.host}</p>
+          <h3 className="text-2xl font-black text-white leading-tight mb-2 group-hover:text-blue-400 transition-colors line-clamp-2">
+            {session.title}
+          </h3>
+          <p className="text-slate-400 text-sm line-clamp-2">{session.description}</p>
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 px-2 pb-2">
+        <div className="flex items-center justify-between p-4 bg-white/5 rounded-3xl border border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-600/20 rounded-2xl text-blue-400 border border-blue-500/20">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Sản phẩm trong phiên</p>
+              <p className="text-sm font-black text-white">{session.productCount} vật phẩm</p>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => onEnterRoom(session.roomCode)}
+            disabled={isEnded}
+            className="py-4 bg-blue-600 disabled:opacity-40 text-white rounded-2xl font-black text-sm hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 group"
+          >
+            Vào phòng
+            <Gavel className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewProducts(session)}
+            className="py-4 bg-white/5 text-white rounded-2xl font-black text-sm hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2"
+          >
+            <Package className="w-4 h-4 text-slate-400" />
+            Xem sản phẩm
+          </button>
+        </div>
+      </div>
     </div>
-    <div className="flex flex-col gap-4 px-2 pb-2">
-      <div className="flex items-center justify-between p-4 bg-white/5 rounded-3xl border border-white/5"><div className="flex items-center gap-3"><div className="p-3 bg-blue-600/20 rounded-2xl text-blue-400 border border-blue-500/20"><Layers className="w-5 h-5" /></div><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Danh mục sản phẩm</p><p className="text-sm font-black text-white">{session.productCount} Vật phẩm</p></div></div><button className="flex items-center gap-2 text-xs font-black text-blue-400 hover:text-blue-300 transition-colors">Chi tiết <ChevronDown className="w-4 h-4" /></button></div>
-      <div className="grid grid-cols-2 gap-3"><button className="py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 group">Vào phòng <Gavel className="w-4 h-4 group-hover:rotate-12 transition-transform" /></button><button className="py-4 bg-white/5 text-white rounded-2xl font-black text-sm hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2">Xem danh sách <ChevronRight className="w-4 h-4 text-slate-500" /></button></div>
-    </div>
-  </div>
-);
+  );
+};
 
 const ProductCard = ({ item }) => {
   const navigate = useNavigate();
@@ -186,36 +245,93 @@ const ProductCard = ({ item }) => {
 };
 
 export default function Home() {
+  const navigate = useNavigate();
   const [normalAuctions, setNormalAuctions] = useState([]);
+  const [liveSessions, setLiveSessions] = useState([]);
+  const [loadingLive, setLoadingLive] = useState(true);
+  const [productsModal, setProductsModal] = useState(null);
 
   useEffect(() => {
     const fetchAuctions = async () => {
-    try {
-      const res = await getTop4ActiveNormalAuctionsApi();
+      try {
+        const res = await getTop4ActiveNormalAuctionsApi();
+        const data = res?.data?.data || res?.data || [];
+        setNormalAuctions(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Load auctions error:", err);
+        setNormalAuctions([]);
+      }
+    };
 
-      console.log("API res:", res);
-
-      const data = res?.data?.data || res?.data || [];
-
-      setNormalAuctions(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Load auctions error:", err);
-      setNormalAuctions([]);
-    }
-  };
+    const fetchLiveSessions = async () => {
+      setLoadingLive(true);
+      try {
+        const res = await getPublicLiveSessions(4);
+        setLiveSessions(res?.data ?? []);
+      } catch (err) {
+        console.error("Load live sessions error:", err);
+        setLiveSessions([]);
+      } finally {
+        setLoadingLive(false);
+      }
+    };
 
     fetchAuctions();
+    fetchLiveSessions();
   }, []);
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-blue-500/30">
-      <Header />
       <main className="space-y-24 pb-24">
         <HeroBanner />
         <SellerSection />
         <section className="max-w-7xl mx-auto px-6 relative py-12">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[500px] bg-blue-600/5 rounded-full blur-[150px] -z-10"></div>
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6"><div className="space-y-4"><div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/10 text-blue-400 rounded-lg border border-blue-500/20 text-[10px] font-black uppercase tracking-widest">Đang diễn ra</div><h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter">PHIÊN ĐẤU <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 underline decoration-blue-500/30 underline-offset-8">LIVE CAO CẤP</span></h2></div><button className="group flex items-center gap-2 text-sm font-black text-slate-400 hover:text-white transition-colors">Xem lịch phát sóng <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></button></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">{LIVE_SESSIONS.map(session => <LiveAuctionCard key={session.id} session={session} />)}</div>
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/10 text-blue-400 rounded-lg border border-blue-500/20 text-[10px] font-black uppercase tracking-widest">
+                Đang diễn ra
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter">
+                PHIÊN ĐẤU{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 underline decoration-blue-500/30 underline-offset-8">
+                  LIVE CAO CẤP
+                </span>
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/list-live-auctions')}
+              className="group flex items-center gap-2 text-sm font-black text-slate-400 hover:text-white transition-colors"
+            >
+              Xem lịch phát sóng
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+          {loadingLive ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-[520px] rounded-[2.5rem] bg-slate-900/40 border border-white/5 animate-pulse" />
+              ))}
+            </div>
+          ) : liveSessions.length === 0 ? (
+            <div className="py-20 text-center border border-dashed border-white/10 rounded-[2.5rem] bg-slate-900/20">
+              <Radio className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+              <p className="text-slate-500 font-bold">Chưa có phiên live nào. Hãy quay lại sau!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {liveSessions.map((session) => (
+                <LiveAuctionCard
+                  key={session.sessionCode}
+                  session={session}
+                  onEnterRoom={(code) => navigate(`/live-auction/${code}`)}
+                  onViewProducts={(s) =>
+                    setProductsModal({ roomCode: s.roomCode, title: s.title })
+                  }
+                />
+              ))}
+            </div>
+          )}
         </section>
         <section className="relative py-24 bg-slate-900/30"><div className="max-w-7xl mx-auto px-6"><div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8"><div className="text-center md:text-left space-y-2"><h2 className="text-3xl font-black text-white tracking-tighter uppercase">Sàn đấu phổ thông</h2><p className="text-slate-500 font-medium">Hàng ngàn vật phẩm đang chờ đợi bạn gõ búa.</p></div><div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/5">{['Mới nhất', 'Giá cao', 'Sắp kết thúc'].map((sort, i) => <button key={sort} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${i === 0 ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>{sort}</button>)}</div></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">{normalAuctions.map(item => (<ProductCard key={item.auctionId || item.id} item={item} />))}</div>
@@ -228,24 +344,18 @@ export default function Home() {
           { label: "Tỷ lệ an toàn", value: "99.9%", icon: <ShieldCheck /> }
         ].map((stat, i) => (<div key={i} className="p-10 bg-gradient-to-b from-white/5 to-transparent rounded-[2.5rem] border border-white/5 text-center group hover:-translate-y-2 transition-all duration-500"><div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-400 mx-auto mb-6 group-hover:scale-110 transition-transform">{stat.icon}</div><h4 className="text-4xl font-black text-white mb-2">{stat.value}</h4><p className="text-slate-500 text-xs font-black uppercase tracking-[0.2em]">{stat.label}</p></div>))}</div></section>
       </main>
-      <footer className="bg-slate-950 border-t border-white/5 pt-24 pb-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 mb-20">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="flex items-center gap-3"><div className="bg-blue-600 p-2 rounded-xl"><Gavel className="w-6 h-6 text-white" /></div><span className="text-2xl font-black text-white uppercase tracking-tighter italic">DauGiaViet</span></div>
-              <p className="text-slate-500 max-w-sm leading-relaxed">Nền tảng đấu giá trực tuyến tiên phong tại Việt Nam, mang lại sự minh bạch, an toàn và chuyên nghiệp trong từng phiên đấu.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-8 lg:col-span-2">
-              <div className="space-y-4"><h5 className="text-white font-black uppercase text-xs tracking-widest">Dịch vụ</h5><ul className="space-y-2 text-sm text-slate-500 font-bold"><li className="hover:text-blue-400 cursor-pointer transition-colors">Đấu giá Live</li><li className="hover:text-blue-400 cursor-pointer transition-colors">Ký gửi tài sản</li><li className="hover:text-blue-400 cursor-pointer transition-colors">Kiểm định chuyên sâu</li></ul></div>
-              <div className="space-y-4"><h5 className="text-white font-black uppercase text-xs tracking-widest">Hỗ trợ</h5><ul className="space-y-2 text-sm text-slate-500 font-bold"><li className="hover:text-blue-400 cursor-pointer transition-colors">Trung tâm trợ giúp</li><li className="hover:text-blue-400 cursor-pointer transition-colors">Quy tắc sàn</li><li className="hover:text-blue-400 cursor-pointer transition-colors">Chính sách bảo mật</li></ul></div>
-            </div>
-          </div>
-          <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">© 2026 DauGiaViet - Advanced Auction Tech</p>
-            <div className="flex gap-6">{['FB', 'INSTA', 'TT'].map(s => <span key={s} className="text-[10px] font-black text-slate-600 hover:text-blue-400 cursor-pointer transition-colors">{s}</span>)}</div>
-          </div>
-        </div>
-      </footer>
+
+      {productsModal && (
+        <LiveSessionProductsModal
+          roomCode={productsModal.roomCode}
+          sessionTitle={productsModal.title}
+          onClose={() => setProductsModal(null)}
+          onEnterRoom={(code) => {
+            setProductsModal(null);
+            navigate(`/live-auction/${code}`);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,66 +1,91 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import UserLayout from "../layouts/UserLayout";
+import AdminLayout from "../layouts/AdminLayout";
+
+/* PUBLIC */
+import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import Home from "../pages/Home";
 import OAuth2Success from "../pages/OAuth2Success";
-import Profile from "../pages/Profile";
-import MyProduct from "../pages/MyProduct";
-import CreateNormalAuction from "../pages/CreateNormalAuction";
-import NormalAuctionDetail from "../pages/NormalAuctionDetail";
+import UserGuide from "../pages/UserGuide";
+import Legal from "../pages/Legal";
 import ListNormalAuction from "../pages/ListNormalAuction";
 import ListLiveAuction from "../pages/ListLiveAuction";
-import UserGuide from "../pages/UserGuide";
+
+/* Protected */
+import NormalAuctionDetail from "../pages/NormalAuctionDetail";
 import LiveAuctionDetail from "../pages/LiveAuctionDetail";
+import Profile from "../pages/Profile";
+import MyNotification from "../pages/MyNotification"
 import Cart from "../pages/Cart"
+import  Wallet from "../pages/Wallet";
+import MyProduct from "../pages/MyProduct";
+import CreateNormalAuction from "../pages/CreateNormalAuction";
+import CreateLiveAuction from "../pages/CreateLiveAuction"
+import Favourite from "../pages/Favourite"
+import ChangePassword from "../pages/ChangePassword";
+import MyOrders from "../pages/MyOrders";
 
-// PROFILE (nested)
-// import ProfileLayout from "../pages/profile/ProfileLayout";
-// import ProfileInfo from "../pages/profile/ProfileInfo";
-// import ChangePassword from "../pages/profile/ChangePassword";
-// import Orders from "../pages/profile/Orders";
-// import Auctions from "../pages/profile/Auctions";
-// import MyProduct from "../pages/profile/MyProduct";
-// import CreateAuctionNormal from "../pages/profile/CreateAuctionNormal";
+/* SELLER */
+import Subscription from "../pages/Subscription";
 
-// BUSINESS (nested)
-import BusinessLayout from "../pages/business/BusinessLayout";
-import BusinessInfo from "../pages/business/BusinessInfo";
+/* ADMIN */
+import Dashboard from "../pages/admin/dashboard/Dashboard"
+import UserManage from "../pages/admin/user/UserManage"
+import StoreManage from "../pages/admin/store/StoreManage"
+import ProductManage from "../pages/admin/product/ProductManage"
+import SubscriptionManage from "../pages/admin/subcription/SubcriptionManage";
+import AuctionManage from "../pages/admin/auction/AuctionManage";
+import CategoryManage from "../pages/admin/category/CategoryManage";
 
-//Test
-import HomeTest from "../pages/Test/HomeTest2";
-import LoginTest from "../pages/Test/LoginTest";
-import RegisterTest from "../pages/Test/RegisterTest";
-import Legal from "../pages/Test/Legal";
-import Profile2 from "../pages/Test/Profile";
-
+/* ROUTE GUARD */
+import ProtectedRoute from "./ProtectedRoute";
+import SellerRoute from "./SellerRoute";
+import AdminRoute from "./AdminRoute";
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* TEST */}
-        <Route path="/homeTest2" element={<HomeTest />} />
-        <Route path="/loginTest" element={<LoginTest />} />
-        <Route path="/registerTest" element={<RegisterTest />} />
-        <Route path="/legal" element={<Legal />} />
-        <Route path="/profileTest" element={<Profile2 />} />
-
-        {/* PUBLIC */}
-        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/oauth2/success" element={<OAuth2Success />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/my-products" element={<MyProduct />} />
-        <Route path="/create-normal-auction" element={<CreateNormalAuction />} />
-        <Route path="/auction/:auctionId" element={<NormalAuctionDetail />} />
-        <Route path="/list-normal-auctions" element={<ListNormalAuction />} />
-        <Route path="/list-live-auctions" element={<ListLiveAuction />} />
-        <Route path="/user-guide" element={<UserGuide />} />
-        <Route path="/live-auction" element={<LiveAuctionDetail />} />
-        <Route path="/cart" element={<Cart />} />
-        
+        <Route path="/oauth2/success" element={<OAuth2Success />} />
+        <Route element={<UserLayout />}>
+          {/* PUBLIC */}
+          <Route path="/" element={<Home />} />
+          <Route path="/user-guide" element={<UserGuide />} />
+          <Route path="/legal" element={<Legal />} />
+          <Route path="/list-normal-auctions" element={<ListNormalAuction />} />
+          <Route path="/list-live-auctions" element={<ListLiveAuction />} />
+          {/* PROTECTED */}
+          <Route path="/auction/:auctionId" element={<NormalAuctionDetail />} />
+          <Route path="/live-auction/:roomCode?" element={<LiveAuctionDetail />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/my-notification" element={<MyNotification/>} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/my-products" element={<MyProduct />} />
+          <Route path="/create-normal-auction" element={<CreateNormalAuction />} />
+          <Route path="/create-live-auction" element={<CreateLiveAuction />} />
+          <Route path="/favourite" element={<Favourite />} />
+          <Route path="/change-password" element={<ChangePassword />} />
+          <Route path="/my-orders" element={<MyOrders />} />
+          {/* SELLER */}
+          <Route path="/subscription" element={<Subscription />} />
+          
+        </Route>       
+        {/* ADMIN */}
+        <Route element={<AdminRoute> <AdminLayout /> </AdminRoute>}>
+          <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/user-manage" element={<UserManage />} />
+          <Route path="/admin/store-manage" element={<StoreManage />} />
+          <Route path="/admin/product-manage" element={<ProductManage />} />
+          <Route path="/admin/subcription-manage" element={<SubscriptionManage />} />
+          <Route path="/admin/auction-manage" element={<AuctionManage />} />
+          <Route path="/admin/category-manage" element={<CategoryManage />} />
+        </Route>
+
       </Routes>
     </BrowserRouter>
   );

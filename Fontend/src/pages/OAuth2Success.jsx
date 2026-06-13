@@ -14,13 +14,14 @@ export default function OAuth2Success() {
       localStorage.setItem("token", token);
 
       // Gọi /me để lấy user info
-      getMeApi(token)
+      getMeApi()
         .then((res) => {
+          const user = res?.data ?? res;
           login({
             token,
-            username: res.username,
-            userId: res.id,
-            role: res.role,
+            username: user?.username,
+            userId: user?.userId ?? user?.id,
+            role: user?.role,
           });
           navigate("/"); // redirect về trang chính
         })

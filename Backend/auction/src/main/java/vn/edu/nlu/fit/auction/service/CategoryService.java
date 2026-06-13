@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.request.CategoryRequest;
 import vn.edu.nlu.fit.auction.dto.response.CategoryResponse;
 import vn.edu.nlu.fit.auction.entity.Category;
-import vn.edu.nlu.fit.auction.mapper.CategoryMapper;
-import vn.edu.nlu.fit.auction.repository.CategoryRepository;
+import vn.edu.nlu.fit.auction.mapper.Category.CategoryMapper;
+import vn.edu.nlu.fit.auction.repository.Category.CategoryRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +23,7 @@ public class CategoryService {
     public List<CategoryResponse> getRootCategories() {
         return categoryRepository.findByParentIsNull()
                 .stream()
-                .map(mapper::toDTO)
+                .map(mapper::toResponse)
                 .toList();
     }
 
@@ -31,7 +31,7 @@ public class CategoryService {
     public List<CategoryResponse> getByParent(Integer parentId) {
         return categoryRepository.findByParent_CategoryId(parentId)
                 .stream()
-                .map(mapper::toDTO)
+                .map(mapper::toResponse)
                 .toList();
     }
 
@@ -47,7 +47,7 @@ public class CategoryService {
             category.setParent(parent);
         }
 
-        return mapper.toDTO(categoryRepository.save(category));
+        return mapper.toResponse(categoryRepository.save(category));
     }
 
     public CategoryResponse update(Integer id, CategoryRequest request) {
@@ -64,7 +64,7 @@ public class CategoryService {
             category.setParent(null);
         }
 
-        return mapper.toDTO(categoryRepository.save(category));
+        return mapper.toResponse(categoryRepository.save(category));
     }
 
     public void delete(Integer id) {

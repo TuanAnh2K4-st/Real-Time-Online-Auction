@@ -2,9 +2,15 @@ package vn.edu.nlu.fit.auction.entity;
 
 import jakarta.persistence.*;
 import vn.edu.nlu.fit.auction.enums.StoreItemStatus;
+import lombok.*;
 
 @Entity
-@Table(name = "store_items")
+@Table(name = "store_item")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class StoreItem {
     
     @Id
@@ -27,60 +33,4 @@ public class StoreItem {
     @Column(name = "condition_note", columnDefinition = "TEXT")
     private String conditionNote;
 
-    // Constructors
-
-    public StoreItem() {
-    }
-
-    public StoreItem(Integer storeItemId, Product product, Store store, StoreItemStatus itemStatus,
-            String conditionNote) {
-        this.storeItemId = storeItemId;
-        this.product = product;
-        this.store = store;
-        this.itemStatus = itemStatus;
-        this.conditionNote = conditionNote;
-    }
-
-    // Getters and Setters
-
-    public Integer getStoreItemId() {
-        return storeItemId;
-    }
-
-    public void setStoreItemId(Integer storeItemId) {
-        this.storeItemId = storeItemId;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
-    }
-
-    public Store getStore() {
-        return store;
-    }
-
-    public void setStore(Store store) {
-        this.store = store;
-    }
-
-    public StoreItemStatus getItemStatus() {
-        return itemStatus;
-    }
-
-    public void setItemStatus(StoreItemStatus itemStatus) {
-        this.itemStatus = itemStatus;
-    }
-
-    public String getConditionNote() {
-        return conditionNote;
-    }
-
-    public void setConditionNote(String conditionNote) {
-        this.conditionNote = conditionNote;
-    }
-    
 }

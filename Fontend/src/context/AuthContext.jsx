@@ -1,17 +1,25 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState } from "react";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-
-  // Load lại user khi refresh
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+  // Khởi tạo user đồng bộ từ localStorage (lazy initializer)
+  // Tránh trường hợp user = null → có giá trị, gây Header gọi API thừa
+  const [user, setUser] = useState(() => {
+    try {
+      const token = localStorage.getItem("token");
+      const savedUser = localStorage.getItem("user");
+      if (token && savedUser) {
+        return JSON.parse(savedUser);
+      }
+    } catch {
+      // ignore parse error
     }
-  }, []);
+    // Nếu không có token hoặc user, clear hết để đảm bảo trạng thái sạch
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    return null;
+  });
 
   // LOGIN (map từ BE -> FE)
   const login = (data) => {

@@ -1,9 +1,15 @@
 package vn.edu.nlu.fit.auction.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Table(name = "wards")
+@Table(name = "ward")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Ward {
     
     @Id
@@ -18,41 +24,4 @@ public class Ward {
     @JoinColumn(name = "province_id", nullable = false)
     private Province province;
 
-    // Constructor
-
-    public Ward() {
-    }
-
-    public Ward(Integer wardId, String name, Province province) {
-        this.wardId = wardId;
-        this.name = name;
-        this.province = province;
-    }
-
-    // Getters and Setters
-
-    public Integer getWardId() {
-        return wardId;
-    }
-
-    public void setWardId(Integer wardId) {
-        this.wardId = wardId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Province getProvince() {
-        return province;
-    }
-
-    public void setProvince(Province province) {
-        this.province = province;
-    }
-    
 }

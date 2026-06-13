@@ -7,27 +7,84 @@ import { Camera, FileText, Gavel, ChevronRight, ChevronLeft, Info, CheckCircle2,
 import Header from '../components/Header';
 
 // Templates for subcategory technical fields (local templates)
-const SUBCATEGORY_TEMPLATES = {
+export const SUBCATEGORY_TEMPLATES = {
   laptop: {
     label: 'Laptop',
     fields: [
-      { name: 'cpu', label: 'CPU', placeholder: 'ví dụ: Apple M3, i9-14900H', required: true },
-      { name: 'ram', label: 'RAM', placeholder: 'ví dụ: 16GB, 64GB', required: true },
-      { name: 'storage', label: 'Ổ cứng', placeholder: 'ví dụ: 1TB SSD', required: true }
+      { name: 'brand', label: 'Thương hiệu', placeholder: 'Apple, Dell, ASUS, Lenovo...', required: true },
+      { name: 'model', label: 'Model', placeholder: 'MacBook Pro M3, XPS 15...', required: true },
+      { name: 'cpu', label: 'CPU', placeholder: 'Apple M3 Pro, Intel Core i7-14700H...', required: true },
+      { name: 'ram', label: 'RAM', placeholder: '8GB, 16GB, 32GB...', required: true },
+      { name: 'storage', label: 'Ổ cứng', placeholder: '512GB SSD, 1TB SSD...', required: true },
+      { name: 'screen', label: 'Màn hình', placeholder: '14 inch Retina, 15.6 inch OLED...', required: true }
     ]
   },
+
   phone: {
     label: 'Điện thoại',
     fields: [
-      { name: 'screen', label: 'Màn hình', placeholder: 'ví dụ: 6.8 inch ProMotion', required: true },
-      { name: 'battery', label: 'Pin', placeholder: 'ví dụ: 4500mAh', required: true }
+      { name: 'brand', label: 'Thương hiệu', placeholder: 'Apple, Samsung, Xiaomi...', required: true },
+      { name: 'model', label: 'Model', placeholder: 'iPhone 16 Pro Max, Galaxy S26 Ultra...', required: true },
+      { name: 'screen', label: 'Màn hình', placeholder: '6.8 inch Dynamic AMOLED', required: true },
+      { name: 'chip', label: 'Chip xử lý', placeholder: 'A20 Pro, Snapdragon 8 Elite...', required: true },
+      { name: 'storage', label: 'Bộ nhớ', placeholder: '128GB, 256GB, 512GB...', required: true },
+      { name: 'battery', label: 'Dung lượng pin', placeholder: '5000mAh', required: true }
     ]
   },
-  mechanical: {
-    label: 'Đồng hồ cơ',
+
+  watch: {
+    label: 'Đồng hồ',
     fields: [
-      { name: 'movement', label: 'Bộ máy', placeholder: 'ví dụ: Calibre 3235', required: true },
-      { name: 'caseSize', label: 'Kích thước', placeholder: 'ví dụ: 40mm', required: true }
+      { name: 'brand', label: 'Thương hiệu', placeholder: 'Rolex, Omega, Casio, Seiko...', required: true },
+      { name: 'model', label: 'Model', placeholder: 'Submariner, Speedmaster...', required: true },
+      { name: 'movement', label: 'Loại máy', placeholder: 'Automatic, Quartz, Solar...', required: true },
+      { name: 'caseMaterial', label: 'Chất liệu vỏ', placeholder: 'Thép không gỉ, Titanium...', required: true },
+      { name: 'caseSize', label: 'Đường kính mặt', placeholder: '40mm, 42mm...', required: true },
+      { name: 'strapMaterial', label: 'Chất liệu dây', placeholder: 'Da, Kim loại, Cao su...', required: false }
+    ]
+  },
+
+  painting: {
+    label: 'Tranh',
+    fields: [
+      { name: 'artist', label: 'Tác giả', placeholder: 'Tên họa sĩ hoặc nghệ nhân', required: true },
+      { name: 'artStyle', label: 'Loại tranh', placeholder: 'Sơn dầu, Acrylic, Tranh lụa...', required: true },
+      { name: 'material', label: 'Chất liệu', placeholder: 'Canvas, Giấy mỹ thuật...', required: true },
+      { name: 'size', label: 'Kích thước', placeholder: '80 x 120 cm', required: true },
+      { name: 'yearCreated', label: 'Năm sáng tác', placeholder: '2024', required: false }
+    ]
+  },
+
+  ceramic: {
+    label: 'Đồ gốm',
+    fields: [
+      { name: 'origin', label: 'Xuất xứ', placeholder: 'Bát Tràng, Minh Long...', required: true },
+      { name: 'productType', label: 'Loại sản phẩm', placeholder: 'Bình hoa, Chén, Đĩa...', required: true },
+      { name: 'material', label: 'Chất liệu', placeholder: 'Gốm men lam, Gốm sứ trắng...', required: true },
+      { name: 'size', label: 'Kích thước', placeholder: 'Cao 30cm, Đường kính 20cm...', required: true },
+      { name: 'manufactureYear', label: 'Năm sản xuất', placeholder: '2020', required: false }
+    ]
+  },
+
+  card: {
+    label: 'Thẻ bài sưu tầm',
+    fields: [
+      { name: 'series', label: 'Bộ thẻ', placeholder: 'Pokemon, Yu-Gi-Oh!, One Piece...', required: true },
+      { name: 'cardName', label: 'Tên thẻ', placeholder: 'Charizard GX, Blue Eyes White Dragon...', required: true },
+      { name: 'rarity', label: 'Độ hiếm', placeholder: 'Rare, Ultra Rare, Secret Rare...', required: true },
+      { name: 'edition', label: 'Phiên bản', placeholder: 'First Edition, Limited Edition...', required: false },
+      { name: 'grading', label: 'Điểm đánh giá', placeholder: 'PSA 10, BGS 9.5...', required: false }
+    ]
+  },
+
+  figure: {
+    label: 'Mô hình',
+    fields: [
+      { name: 'series', label: 'Bộ sưu tập', placeholder: 'Gundam, Marvel, Naruto...', required: true },
+      { name: 'character', label: 'Nhân vật', placeholder: 'Iron Man, Luffy, RX-78-2...', required: true },
+      { name: 'manufacturer', label: 'Nhà sản xuất', placeholder: 'Bandai, Hot Toys, Good Smile...', required: true },
+      { name: 'scale', label: 'Tỷ lệ', placeholder: '1/6, 1/12, 1/100...', required: false },
+      { name: 'material', label: 'Chất liệu', placeholder: 'PVC, ABS, Resin...', required: false }
     ]
   }
 };
@@ -69,7 +126,16 @@ const App = () => {
   const rootCategory = rootCategories.find(c => String(c.id) === String(formData.category));
   const activeChild = childCategories.find(c => String(c.id) === String(formData.subcategory));
   // Find matching local template by subcategory name (lowercased)
-  const activeSubcategory = activeChild ? SUBCATEGORY_TEMPLATES[activeChild.name?.toLowerCase()] : null;
+  const categoryMap = {
+    "Laptop": "laptop",
+    "Điện thoại": "phone",
+    "Đồng hồ": "watch",
+    "Tranh": "painting",
+    "Đồ gốm": "ceramic",
+    "Thẻ bài sưu tầm": "card",
+    "Mô hình": "figure"
+  };
+  const activeSubcategory = activeChild ? SUBCATEGORY_TEMPLATES[categoryMap[activeChild.name]] : null;
 
   // Lọc danh sách sản phẩm
   const filteredList = useMemo(() => {
@@ -169,13 +235,40 @@ const App = () => {
         const res = await filterProducts(payload);
         const raw = Array.isArray(res) ? res : (res?.data ?? res) || [];
         const items = (Array.isArray(raw) ? raw : []).map(p => {
-          const statusRaw = p?.itemStatus;
-          let status = null;
-          if (!statusRaw) status = 'processing';
-          else if (String(statusRaw).toUpperCase() === 'APPROVED') status = 'accepted';
-          else if (String(statusRaw).toUpperCase() === 'REJECTED') status = 'rejected';
-          else if (String(statusRaw).toUpperCase() === 'PENDING') status = 'processing';
-          else status = String(statusRaw).toLowerCase();
+        const statusRaw = String(p?.itemStatus || "").toUpperCase();
+        let status = "";
+        switch (statusRaw) {
+            case "PENDING":
+                status = "pending";
+                break;
+
+            case "RECEIVED":
+                status = "received";
+                break;
+
+            case "APPROVED":
+                status = "approved";
+                break;
+
+            case "REJECTED":
+                status = "rejected";
+                break;
+
+            case "IN_AUCTION":
+                status = "auction";
+                break;
+
+            case "SOLD":
+                status = "sold";
+                break;
+
+            case "DONE":
+                status = "done";
+                break;
+
+            default:
+                status = "pending";
+        }
 
           const date = p?.createdAt ? (new Date(p.createdAt).toLocaleString()) : '';
           const title = p?.productName || p?.product_name || '';
@@ -807,14 +900,39 @@ const App = () => {
                     <div className="flex flex-col md:flex-row items-center md:items-center justify-between w-full md:w-auto md:justify-end gap-6 md:gap-12 border-t md:border-t-0 border-white/5 pt-6 md:pt-0">
                       {/* Section trạng thái & lý do - Cấu trúc lại để không giãn card */}
                       <div className="text-center md:text-right space-y-2 min-w-[140px]">
-                        <div className={`text-[10px] font-black uppercase tracking-[0.3em] ${
-                          item.status === 'accepted' ? 'text-green-500' :
-                          item.status === 'rejected' ? 'text-red-500' :
-                          'text-yellow-500'
+                        <div className={`text-[10px] font-black uppercase tracking-[0.3em]
+                        ${
+                            item.status === "approved"
+                                ? "text-green-500"
+                                : item.status === "rejected"
+                                ? "text-red-500"
+                                : item.status === "auction"
+                                ? "text-purple-500"
+                                : item.status === "sold"
+                                ? "text-emerald-500"
+                                : item.status === "done"
+                                ? "text-blue-500"
+                                : item.status === "received"
+                                ? "text-cyan-500"
+                                : "text-yellow-500"
                         }`}>
-                          {item.status === 'accepted' ? 'Hợp lệ' :
-                           item.status === 'rejected' ? 'Từ chối' :
-                           'Chờ duyệt'}
+                        {
+                            item.status === "pending"
+                                ? "Chờ tiếp nhận"
+                                : item.status === "received"
+                                ? "Đã tiếp nhận"
+                                : item.status === "approved"
+                                ? "Đã kiểm định"
+                                : item.status === "rejected"
+                                ? "Không đạt"
+                                : item.status === "auction"
+                                ? "Đang đấu giá"
+                                : item.status === "sold"
+                                ? "Đã bán"
+                                : item.status === "done"
+                                ? "Hoàn thành"
+                                : ""
+                        }
                         </div>
                         {item.reason && (
                           <div className="flex items-center gap-2 justify-center md:justify-end text-[10px] text-red-400 font-bold bg-red-400/5 px-3 py-1.5 rounded-lg border border-red-400/10 italic max-w-[200px] md:max-w-[250px] mx-auto md:mr-0 line-clamp-1 group-hover:line-clamp-none transition-all">
@@ -887,19 +1005,63 @@ const FieldWrapper = ({ label, error, children }) => (
 // Component hiển thị Icon trạng thái
 const StatusIcon = ({ status }) => {
   const map = {
-    accepted: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
-    rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20' },
-    processing: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' }
-  };
+
+    pending: {
+        icon: Clock,
+        color: "text-yellow-500",
+        bg: "bg-yellow-500/10",
+        border: "border-yellow-500/20"
+    },
+
+    received: {
+        icon: Package,
+        color: "text-cyan-500",
+        bg: "bg-cyan-500/10",
+        border: "border-cyan-500/20"
+    },
+
+    approved: {
+        icon: CheckCircle2,
+        color: "text-green-500",
+        bg: "bg-green-500/10",
+        border: "border-green-500/20"
+    },
+
+    rejected: {
+        icon: XCircle,
+        color: "text-red-500",
+        bg: "bg-red-500/10",
+        border: "border-red-500/20"
+    },
+
+    auction: {
+        icon: Gavel,
+        color: "text-purple-500",
+        bg: "bg-purple-500/10",
+        border: "border-purple-500/20"
+    },
+
+    sold: {
+        icon: CheckCircle2,
+        color: "text-emerald-500",
+        bg: "bg-emerald-500/10",
+        border: "border-emerald-500/20"
+    },
+
+    done: {
+        icon: ShieldCheck,
+        color: "text-blue-500",
+        bg: "bg-blue-500/10",
+        border: "border-blue-500/20"
+    }
+
+};
 
   // Accept various backend status formats
   const key = (status || '').toString().toLowerCase();
-  const normalized = key === 'approved' || key === 'approve' ? 'accepted'
-    : key === 'rejected' ? 'rejected'
-    : key === 'pending' || key === 'p' ? 'processing'
-    : key;
+  const normalized = status;
+  const config = map[normalized] || map.pending;
 
-  const config = map[normalized] || map.processing;
   const Icon = config.icon || Clock;
   return (
     <div className={`w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] flex items-center justify-center shrink-0 border-2 ${config.bg} ${config.border} ${config.color} shadow-2xl relative overflow-hidden group-hover:scale-110 transition-transform duration-500`}>
