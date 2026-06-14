@@ -1,6 +1,6 @@
 import axiosClient from "../axiosClient";
 
-export const getPublicLiveSessions = (limit = 4) => {
+export const getPublicLiveSessions = (limit = 2) => {
   return axiosClient.get("/live-auctions/public/sessions", { params: { limit } });
 };
 

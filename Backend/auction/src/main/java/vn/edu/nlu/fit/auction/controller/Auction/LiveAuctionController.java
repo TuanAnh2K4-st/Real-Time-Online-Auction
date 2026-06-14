@@ -33,7 +33,7 @@ public class LiveAuctionController {
 
     @GetMapping("/public/sessions")
     public ResponseEntity<ApiResponse<List<LiveHomeCardResponse>>> getPublicLiveSessions(
-            @RequestParam(defaultValue = "4") int limit
+            @RequestParam(defaultValue = "2") int limit
     ) {
         return ResponseEntity.ok(
                 new ApiResponse<>("Lấy phiên live trang chủ thành công", liveAuctionService.getPublicLiveSessions(limit))

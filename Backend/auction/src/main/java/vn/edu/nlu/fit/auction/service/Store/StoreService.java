@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.service;
+package vn.edu.nlu.fit.auction.service.Store;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -23,7 +23,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(toEmail);
-            helper.setSubject("🔐 Mã xác thực OTP – BidMaster");
+            helper.setSubject("Mã xác thực OTP – BidMaster");
             helper.setText(buildHtmlContent(otpCode), true);
 
             mailSender.send(message);

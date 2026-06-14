@@ -266,7 +266,7 @@ export default function Home() {
     const fetchLiveSessions = async () => {
       setLoadingLive(true);
       try {
-        const res = await getPublicLiveSessions(4);
+        const res = await getPublicLiveSessions(2);
         setLiveSessions(res?.data ?? []);
       } catch (err) {
         console.error("Load live sessions error:", err);

@@ -21,8 +21,8 @@ import vn.edu.nlu.fit.auction.dto.response.ProductAuctionResponse;
 import vn.edu.nlu.fit.auction.dto.response.Auction.AuctionNormalCardResponse;
 import vn.edu.nlu.fit.auction.dto.response.Auction.AuctionResponse;
 import vn.edu.nlu.fit.auction.dto.response.Auction.NormalAuctionDetailResponse;
-import vn.edu.nlu.fit.auction.service.ProductService;
 import vn.edu.nlu.fit.auction.service.Auction.AuctionService;
+import vn.edu.nlu.fit.auction.service.Product.ProductService;
 
 @RestController
 @RequestMapping("/api/auctions")

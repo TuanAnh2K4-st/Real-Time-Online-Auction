@@ -1,11 +1,12 @@
-package vn.edu.nlu.fit.auction.controller;
+package vn.edu.nlu.fit.auction.controller.Store;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.StoreResponse;
-import vn.edu.nlu.fit.auction.service.StoreService;
+import vn.edu.nlu.fit.auction.service.Store.StoreService;
+
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

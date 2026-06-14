@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.controller;
+package vn.edu.nlu.fit.auction.controller.Category;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.CategoryResponse;
-import vn.edu.nlu.fit.auction.service.CategoryService;
+import vn.edu.nlu.fit.auction.service.Category.CategoryService;
 
 @RestController
 @RequestMapping("/api/categories")

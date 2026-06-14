@@ -11,7 +11,6 @@ export const SUBCATEGORY_TEMPLATES = {
   laptop: {
     label: 'Laptop',
     fields: [
-      { name: 'brand', label: 'Thương hiệu', placeholder: 'Apple, Dell, ASUS, Lenovo...', required: true },
       { name: 'model', label: 'Model', placeholder: 'MacBook Pro M3, XPS 15...', required: true },
       { name: 'cpu', label: 'CPU', placeholder: 'Apple M3 Pro, Intel Core i7-14700H...', required: true },
       { name: 'ram', label: 'RAM', placeholder: '8GB, 16GB, 32GB...', required: true },
@@ -23,7 +22,6 @@ export const SUBCATEGORY_TEMPLATES = {
   phone: {
     label: 'Điện thoại',
     fields: [
-      { name: 'brand', label: 'Thương hiệu', placeholder: 'Apple, Samsung, Xiaomi...', required: true },
       { name: 'model', label: 'Model', placeholder: 'iPhone 16 Pro Max, Galaxy S26 Ultra...', required: true },
       { name: 'screen', label: 'Màn hình', placeholder: '6.8 inch Dynamic AMOLED', required: true },
       { name: 'chip', label: 'Chip xử lý', placeholder: 'A20 Pro, Snapdragon 8 Elite...', required: true },
@@ -35,9 +33,7 @@ export const SUBCATEGORY_TEMPLATES = {
   watch: {
     label: 'Đồng hồ',
     fields: [
-      { name: 'brand', label: 'Thương hiệu', placeholder: 'Rolex, Omega, Casio, Seiko...', required: true },
       { name: 'model', label: 'Model', placeholder: 'Submariner, Speedmaster...', required: true },
-      { name: 'movement', label: 'Loại máy', placeholder: 'Automatic, Quartz, Solar...', required: true },
       { name: 'caseMaterial', label: 'Chất liệu vỏ', placeholder: 'Thép không gỉ, Titanium...', required: true },
       { name: 'caseSize', label: 'Đường kính mặt', placeholder: '40mm, 42mm...', required: true },
       { name: 'strapMaterial', label: 'Chất liệu dây', placeholder: 'Da, Kim loại, Cao su...', required: false }
@@ -58,7 +54,6 @@ export const SUBCATEGORY_TEMPLATES = {
   ceramic: {
     label: 'Đồ gốm',
     fields: [
-      { name: 'origin', label: 'Xuất xứ', placeholder: 'Bát Tràng, Minh Long...', required: true },
       { name: 'productType', label: 'Loại sản phẩm', placeholder: 'Bình hoa, Chén, Đĩa...', required: true },
       { name: 'material', label: 'Chất liệu', placeholder: 'Gốm men lam, Gốm sứ trắng...', required: true },
       { name: 'size', label: 'Kích thước', placeholder: 'Cao 30cm, Đường kính 20cm...', required: true },
@@ -67,10 +62,9 @@ export const SUBCATEGORY_TEMPLATES = {
   },
 
   card: {
-    label: 'Thẻ bài sưu tầm',
+    label: 'Thẻ bài',
     fields: [
       { name: 'series', label: 'Bộ thẻ', placeholder: 'Pokemon, Yu-Gi-Oh!, One Piece...', required: true },
-      { name: 'cardName', label: 'Tên thẻ', placeholder: 'Charizard GX, Blue Eyes White Dragon...', required: true },
       { name: 'rarity', label: 'Độ hiếm', placeholder: 'Rare, Ultra Rare, Secret Rare...', required: true },
       { name: 'edition', label: 'Phiên bản', placeholder: 'First Edition, Limited Edition...', required: false },
       { name: 'grading', label: 'Điểm đánh giá', placeholder: 'PSA 10, BGS 9.5...', required: false }
@@ -82,7 +76,6 @@ export const SUBCATEGORY_TEMPLATES = {
     fields: [
       { name: 'series', label: 'Bộ sưu tập', placeholder: 'Gundam, Marvel, Naruto...', required: true },
       { name: 'character', label: 'Nhân vật', placeholder: 'Iron Man, Luffy, RX-78-2...', required: true },
-      { name: 'manufacturer', label: 'Nhà sản xuất', placeholder: 'Bandai, Hot Toys, Good Smile...', required: true },
       { name: 'scale', label: 'Tỷ lệ', placeholder: '1/6, 1/12, 1/100...', required: false },
       { name: 'material', label: 'Chất liệu', placeholder: 'PVC, ABS, Resin...', required: false }
     ]
@@ -132,7 +125,7 @@ const App = () => {
     "Đồng hồ": "watch",
     "Tranh": "painting",
     "Đồ gốm": "ceramic",
-    "Thẻ bài sưu tầm": "card",
+    "Thẻ bài": "card",
     "Mô hình": "figure"
   };
   const activeSubcategory = activeChild ? SUBCATEGORY_TEMPLATES[categoryMap[activeChild.name]] : null;
