@@ -77,7 +77,7 @@ const mapScheduleToProduct = (item) => ({
   auctionStatus: item.auctionStatus,
 });
 
-const LiveAuctionDetail = () => {
+export default function LiveAuctionDetail() {
   const { roomCode: roomCodeParam } = useParams();
   const [searchParams] = useSearchParams();
   const roomCode = roomCodeParam || searchParams.get('roomCode');
@@ -914,4 +914,3 @@ const LiveAuctionDetail = () => {
   );
 };
 
-export default LiveAuctionDetail;

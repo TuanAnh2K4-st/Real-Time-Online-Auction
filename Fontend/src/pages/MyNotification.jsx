@@ -19,42 +19,6 @@ import {
 } from 'lucide-react';
 import {getMyNotifications, markAsRead, markAllAsRead, deleteNotification} from '../services/api/myNotificationApi';
 
-// // --- DỮ LIỆU GIẢ LẬP (Dựa trên Entity Notification) ---
-// const INITIAL_NOTIFICATIONS = [
-//   {
-//     notificationId: 1,
-//     title: "Chúc mừng! Bạn đã thắng đấu giá",
-//     content: "Vật phẩm 'iPhone 15 Pro Max 1TB' đã thuộc về bạn với mức giá 85.000.000đ. Vui lòng hoàn tất thanh toán trong 48h để hệ thống tiến hành bàn giao vật phẩm mạ vàng 24K này cho bạn sớm nhất.",
-//     isRead: false,
-//     createdAt: "2024-05-21T08:30:00",
-//     type: 'auction_win'
-//   },
-//   {
-//     notificationId: 2,
-//     title: "Xác nhận thanh toán thành công",
-//     content: "Giao dịch thanh toán cho đơn hàng #DG-2024-001 đã được hệ thống xác nhận. Vật phẩm đang được chuẩn bị bàn giao bởi đơn vị vận chuyển TechWorld VN.",
-//     isRead: true,
-//     createdAt: "2024-05-20T15:45:00",
-//     type: 'payment'
-//   },
-//   {
-//     notificationId: 3,
-//     title: "Nhắc nhở: Sắp hết hạn thanh toán",
-//     content: "Bạn còn 12 giờ để thanh toán vật phẩm 'Túi Hermes Birkin 35'. Sau thời gian này kết quả sẽ bị hủy và tài khoản có thể bị đưa vào danh sách hạn chế tham gia đấu giá.",
-//     isRead: false,
-//     createdAt: "2024-05-21T02:00:00",
-//     type: 'alert'
-//   },
-//   {
-//     notificationId: 4,
-//     title: "Cập nhật chính sách đấu giá mới",
-//     content: "Hệ thống vừa cập nhật điều khoản về việc sáp nhập địa giới hành chính khi nhập địa chỉ nhận hàng. Quý khách vui lòng chọn Tỉnh -> Phường/Xã trực tiếp.",
-//     isRead: true,
-//     createdAt: "2024-05-19T09:00:00",
-//     type: 'system'
-//   }
-// ];
-
 const timeAgo = (dateString) => {
   const now = new Date();
   const past = new Date(dateString);
@@ -87,7 +51,7 @@ const mapNotificationType = (type) => {
   }
 };
 
-const App = () => {
+export default function MyNotification() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -394,5 +358,3 @@ const App = () => {
     </div>
   );
 };
-
-export default App;

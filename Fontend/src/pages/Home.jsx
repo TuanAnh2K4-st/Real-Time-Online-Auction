@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Search, Bell, User, Gavel, Radio, Clock,
   ChevronRight, Heart, ShieldCheck, Zap,
@@ -111,7 +111,16 @@ const HeroBanner = () => {
           <p className="text-lg text-slate-400 max-w-xl font-medium leading-relaxed">Hệ thống đấu giá thời gian thực với công nghệ bảo mật tiên tiến. Nơi những giá trị đích thực được tôn vinh và bảo vệ pháp lý nghiêm ngặt.</p>
           <div className="flex flex-wrap gap-5">
             <button className="px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-2xl shadow-blue-900/50 hover:bg-blue-500 hover:-translate-y-1 transition-all flex items-center gap-3 group">Khám phá ngay<ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" /></button>
-            <button className="px-10 py-5 bg-white/5 text-white border border-white/10 rounded-2xl font-black text-lg hover:bg-white/10 transition-all flex items-center gap-3 group"><div className="relative"><div className="absolute inset-0 bg-blue-400 blur-md opacity-0 group-hover:opacity-40 transition-opacity"></div><ShieldCheck className="w-7 h-7 text-blue-400 relative" /></div>Xem pháp lý</button>
+            <Link
+              to="/legal"
+              className="px-10 py-5 bg-white/5 text-white border border-white/10 rounded-2xl font-black text-lg hover:bg-white/10 transition-all flex items-center gap-3 group"
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-blue-400 blur-md opacity-0 group-hover:opacity-40 transition-opacity"></div>
+                <ShieldCheck className="w-7 h-7 text-blue-400 relative" />
+              </div>
+              Xem pháp lý
+            </Link>
           </div>
         </div>
         <div className="lg:col-span-5 relative hidden lg:block">
@@ -333,9 +342,15 @@ export default function Home() {
             </div>
           )}
         </section>
-        <section className="relative py-24 bg-slate-900/30"><div className="max-w-7xl mx-auto px-6"><div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8"><div className="text-center md:text-left space-y-2"><h2 className="text-3xl font-black text-white tracking-tighter uppercase">Sàn đấu phổ thông</h2><p className="text-slate-500 font-medium">Hàng ngàn vật phẩm đang chờ đợi bạn gõ búa.</p></div><div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/5">{['Mới nhất', 'Giá cao', 'Sắp kết thúc'].map((sort, i) => <button key={sort} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${i === 0 ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>{sort}</button>)}</div></div>
+        <section className="relative py-24 bg-slate-900/30"><div className="max-w-7xl mx-auto px-6"><div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8"><div className="text-center md:text-left space-y-2"><h2 className="text-3xl font-black text-white tracking-tighter uppercase">Sàn đấu phổ thông</h2><p className="text-slate-500 font-medium">Hàng ngàn vật phẩm đang chờ đợi bạn gõ búa.</p></div></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">{normalAuctions.map(item => (<ProductCard key={item.auctionId || item.id} item={item} />))}</div>
-          <div className="mt-16 text-center"><button className="px-12 py-5 bg-transparent border-2 border-white/10 rounded-2xl font-black text-sm uppercase tracking-widest text-white hover:bg-white hover:text-slate-950 transition-all duration-500">Tải thêm sản phẩm</button></div>
+          <div className="mt-16 text-center"><button
+              onClick={() => navigate("/list-normal-auctions")}
+              className="px-12 py-5 bg-transparent border-2 border-white/10 rounded-2xl font-black text-sm uppercase tracking-widest text-white hover:bg-white hover:text-slate-950 transition-all duration-500"
+            >
+              Tải thêm sản phẩm
+            </button>
+          </div>
         </div>
         </section>
         <section className="max-w-7xl mx-auto px-6"><div className="grid grid-cols-1 md:grid-cols-3 gap-8">{[

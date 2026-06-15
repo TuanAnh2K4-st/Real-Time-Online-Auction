@@ -84,7 +84,7 @@ export const SUBCATEGORY_TEMPLATES = {
 
 // Use real API data — no local sample data
 
-const App = () => {
+export default function MyProduct() {
   const [activeTab, setActiveTab] = useState('register');
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState('next'); 
@@ -1063,5 +1063,3 @@ const StatusIcon = ({ status }) => {
     </div>
   );
 };
-
-export default App;

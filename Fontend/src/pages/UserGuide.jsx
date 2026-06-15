@@ -107,7 +107,7 @@ const FaqItem = ({ question, answer }) => {
   );
 };
 
-const App = () => {
+export default function UserGuide() {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-blue-500/30">
@@ -303,5 +303,3 @@ const App = () => {
     </div>
   );
 };
-
-export default App;
