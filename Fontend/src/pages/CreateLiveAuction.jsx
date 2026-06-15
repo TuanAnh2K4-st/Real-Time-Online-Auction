@@ -530,7 +530,7 @@ const CreateLivePage = ({
   </div>
 );
 
-const CreateLiveAuction = () => {
+export default function CreateLiveAuction() {
   const navigate = useNavigate();
   const [view, setView] = useState('dashboard');
   const [liveSessions, setLiveSessions] = useState([]);
@@ -854,5 +854,3 @@ const CreateLiveAuction = () => {
     </div>
   );
 };
-
-export default CreateLiveAuction;

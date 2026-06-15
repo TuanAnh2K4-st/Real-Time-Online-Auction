@@ -48,7 +48,7 @@ const formatTimeSince = (time) => {
   return new Date(time).toLocaleString("vi-VN");
 };
 
-const NormalAuctionDetail = () => {
+export default function NormalAuctionDetail() {
   const { auctionId } = useParams();
   const { user } = useContext(AuthContext);
 
@@ -569,5 +569,3 @@ const NormalAuctionDetail = () => {
     </div>
   );
 };
-
-export default NormalAuctionDetail;

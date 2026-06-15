@@ -99,7 +99,7 @@ const CountdownTimer = ({ endTime }) => {
   );
 };
 
-const App = () => {
+export default function ListNormalAuction () {
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -575,5 +575,3 @@ const App = () => {
     </div>
   );
 };
-
-export default App;

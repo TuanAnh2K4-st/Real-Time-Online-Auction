@@ -80,7 +80,7 @@ export default function Sidebar({ collapsed }) {
 
         <SidebarItem
           icon={<CreditCard size={20} />}
-          label="Gói VIP"
+          label="Gói"
           active={location.pathname === "/admin/subcription-manage"}
           onClick={() => navigate("/admin/subcription-manage")}
           collapsed={collapsed}

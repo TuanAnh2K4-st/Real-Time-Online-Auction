@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.controller;
+package vn.edu.nlu.fit.auction.controller.Product;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import vn.edu.nlu.fit.auction.dto.request.CreateProductRequest;
 import vn.edu.nlu.fit.auction.dto.request.FilterProduct;
 import vn.edu.nlu.fit.auction.dto.response.ApiResponse;
 import vn.edu.nlu.fit.auction.dto.response.ProductResponse;
-import vn.edu.nlu.fit.auction.service.ProductService;
+import vn.edu.nlu.fit.auction.service.Product.ProductService;
 
 @RestController
 @RequestMapping("/api/products")

@@ -580,7 +580,7 @@ const CreateAuctionPage = ({
 // ─────────────────────────────────────────
 // Main Controller Component
 // ─────────────────────────────────────────
-const CreateNormalAuction = () => {
+export default function CreateNormalAuction() {
   const [view, setView] = useState('dashboard');
   const [activeTab, setActiveTab] = useState('tracking');
 
@@ -761,5 +761,3 @@ const CreateNormalAuction = () => {
     </div>
   );
 };
-
-export default CreateNormalAuction;

@@ -6,7 +6,7 @@ import {
   Download, ExternalLink, HelpCircle
 } from 'lucide-react';
 
-const App = () => {
+export default function Legal() {
   const [activeTab, setActiveTab] = useState('rules');
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -272,5 +272,3 @@ const Verified = (props) => (
     <path d="m9 12 2 2 4-4" />
   </svg>
 );
-
-export default App;

@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.service;
+package vn.edu.nlu.fit.auction.service.Product;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.auction.service;
+package vn.edu.nlu.fit.auction.service.Category;
 
 import java.time.LocalDateTime;
 import java.util.List;
